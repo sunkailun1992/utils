@@ -9,9 +9,9 @@
         <version>2.3.2.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.gbw</groupId>
+    <groupId>com</groupId>
     <artifactId>utils</artifactId>
-    <version>4.3.0</version>
+    <version>1.0.0</version>
 
 
     <!-- 设置java版本,和编码  -->
@@ -351,36 +351,6 @@
             <version>1.4</version>
         </dependency>
 
-
-        <!-- e签宝需求：httpcomponents包 -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpmime</artifactId>
-            <version>4.5.1</version>
-        </dependency>
-
-        <!-- e签宝-->
-        <dependency>
-            <groupId>esigntech-sdk</groupId>
-            <artifactId>esigntech-sdk</artifactId>
-            <version>2.1.50</version>
-        </dependency>
-        <dependency>
-            <groupId>esigntech-tgtext</groupId>
-            <artifactId>esigntech-tgtext</artifactId>
-            <version>3.3.64.2150</version>
-        </dependency>
-        <dependency>
-            <groupId>esigntech-sdk-utils</groupId>
-            <artifactId>esigntech-sdk-utils</artifactId>
-            <version>3.0.6.2150</version>
-        </dependency>
-        <dependency>
-            <groupId>esigntech-sdk-smUtil</groupId>
-            <artifactId>esigntech-sdk-smUtil</artifactId>
-            <version>1.3.3.2149</version>
-        </dependency>
-
         <!-- 个推推送工具包 -->
         <dependency>
             <groupId>com.getui.push</groupId>
@@ -403,13 +373,6 @@
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
-        <!-- 众安sdk-->
-        <dependency>
-            <groupId>com.zhongan</groupId>
-            <artifactId>za-openapi-sdk</artifactId>
-            <version>2.0.1</version>
-        </dependency>
-
     </dependencies>
 
     <dependencyManagement>
@@ -432,12 +395,4 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <distributionManagement>
-        <repository>
-            <id>maven-releases</id>
-            <name>Nexus Release Repository</name>
-            <url>http://t.cngongbao.com:10003/repository/maven-releases/</url>
-        </repository>
-    </distributionManagement>
 </project>
