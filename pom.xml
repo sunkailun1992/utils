@@ -11,7 +11,7 @@
     </parent>
     <groupId>com</groupId>
     <artifactId>utils</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 
 
     <!-- 设置java版本,和编码  -->
@@ -60,6 +60,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- 用户认证授权 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
         <!-- 增加mongodb支持 -->
