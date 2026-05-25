@@ -26,6 +26,9 @@ public class EntityBase implements Serializable {
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
 
+    @Schema(description = "编码")
+    private String code;
+
     @Schema(description = "说明")
     private String description;
 
@@ -51,6 +54,9 @@ public class EntityBase implements Serializable {
     @TableLogic
     private Boolean isDelete;
 
+    @Schema(description = "标签")
+    private String label;
+
     @Schema(description = "排序")
     private Integer sorting;
 
@@ -58,4 +64,7 @@ public class EntityBase implements Serializable {
     @Schema(hidden = true, description = "版本号")
     private Integer version;
 
+    @Schema(description = "租户id")
+    @TableField(value = "tenant_id", fill = FieldFill.INSERT)
+    private String tenantId;
 }
