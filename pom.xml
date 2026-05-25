@@ -6,31 +6,29 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.3.2.RELEASE</version>
+        <version>3.2.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com</groupId>
     <artifactId>utils</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 
 
     <!-- 设置java版本,和编码  -->
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <!-- 微服务版本 -->
-        <spring-cloud.version>Hoxton.SR9</spring-cloud.version>
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
         <!-- 阿里注册中心 -->
-        <spring-cloud-alibaba.version>2.2.6.RELEASE</spring-cloud-alibaba.version>
+        <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
         <!-- 数据操作 -->
-        <mybatisplus.version>3.5.1</mybatisplus.version>
+        <mybatisplus.version>3.5.15</mybatisplus.version>
         <!-- 接口文档 -->
-        <swagger.version>2.9.2</swagger.version>
-        <!-- 分布式事物 -->
-        <gts.sdk.version>2.8.65</gts.sdk.version>
+        <knife4j.version>4.5.0</knife4j.version>
         <!-- 工具类大全 -->
-        <hutool.version>5.8.0.M3</hutool.version>
+        <hutool.version>5.8.16</hutool.version>
         <!-- 企业应用 -->
-        <mybatis.mate>1.2.7</mybatis.mate>
+        <mybatis.mate>1.3.6</mybatis.mate>
     </properties>
 
     <dependencies>
@@ -88,8 +86,8 @@
 
         <!-- mysql数据库,jsr包 -->
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
         </dependency>
 
         <!-- Spring Boot JDBC -->
@@ -101,21 +99,21 @@
         <!-- alibaba 数据库连接池 -->
         <dependency>
             <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
-            <version>1.2.16</version>
+            <artifactId>druid-spring-boot-3-starter</artifactId>
+            <version>1.2.23</version>
         </dependency>
 
         <!-- 动态数据源 -->
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
-            <version>3.5.1</version>
+            <artifactId>dynamic-datasource-spring-boot3-starter</artifactId>
+            <version>4.3.1</version>
         </dependency>
 
         <!-- Mybatis-plus -->
         <dependency>
             <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>${mybatisplus.version}</version>
         </dependency>
         <dependency>
@@ -126,6 +124,11 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-generator</artifactId>
+            <version>${mybatisplus.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
             <version>${mybatisplus.version}</version>
         </dependency>
         <dependency>
@@ -172,21 +175,14 @@
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson-spring-boot-starter</artifactId>
-            <version>3.11.0</version>
+            <version>3.27.2</version>
         </dependency>
 
-        <!-- api文档,swagger3 -->
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-boot-starter</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-
-        <!-- api文档,swagger3自定义样式 -->
+        <!-- api文档,OpenAPI3自定义样式 -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
-            <artifactId>knife4j-spring-boot-starter</artifactId>
-            <version>3.0.3</version>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+            <version>${knife4j.version}</version>
         </dependency>
 
         <!-- jwt登录授权加密 -->
@@ -200,21 +196,21 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
+            <version>1.18.32</version>
         </dependency>
 
         <!-- http请求：okhttp -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>3.14.7</version>
+            <version>4.12.0</version>
         </dependency>
 
         <!-- google公司java工具包 -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>27.0.1-jre</version>
+            <version>33.1.0-jre</version>
         </dependency>
 
         <!-- 集合工具类-->
@@ -296,24 +292,23 @@
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
-            <version>2.3.29</version>
+            <version>2.3.32</version>
         </dependency>
 
-        <!-- 阿里云 gts分布式事物 -->
+        <!-- seata分布式事物 -->
         <dependency>
             <groupId>io.seata</groupId>
             <artifactId>seata-spring-boot-starter</artifactId>
-            <version>1.4.2</version>
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
-            <version>2.2.1.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>io.seata</groupId>
             <artifactId>seata-all</artifactId>
-            <version>1.4.2</version>
+            <version>2.0.0</version>
         </dependency>
 
         <!-- 引入JSONObject -->
@@ -396,4 +391,23 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <release>${java.version}</release>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.32</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
