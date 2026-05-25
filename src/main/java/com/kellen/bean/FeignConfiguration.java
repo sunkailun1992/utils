@@ -2,12 +2,15 @@ package com.kellen.bean;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
 import com.kellen.utils.DynamicSourceTtl;
+import com.kellen.utils.TenantContextHolder;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 /**
  * @ClassName FeignConfiguration
@@ -20,6 +23,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class FeignConfiguration implements RequestInterceptor {
 
+    private final TenantProperties tenantProperties;
+
+    public FeignConfiguration(TenantProperties tenantProperties) {
+        this.tenantProperties = tenantProperties;
+    }
 
     /**
      * @param template
@@ -43,6 +51,11 @@ public class FeignConfiguration implements RequestInterceptor {
         String currentXid = RootContext.getXID();
         if (!StringUtils.isEmpty(currentXid)) {
             template.header(RootContext.KEY_XID, currentXid);
+        }
+        List<String> headerNames = tenantProperties.getHeaderNames();
+        if (tenantProperties.isEnabled() && StringUtils.isNotBlank(TenantContextHolder.getTenantId())
+                && headerNames != null && !headerNames.isEmpty()) {
+            template.header(headerNames.get(0), TenantContextHolder.getTenantId());
         }
     }
 
