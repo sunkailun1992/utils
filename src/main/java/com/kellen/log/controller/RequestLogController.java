@@ -4,10 +4,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kellen.log.entity.RequestLog;
 import com.kellen.log.entity.RequestLogQuery;
 import com.kellen.log.service.RequestLogService;
-import com.kellen.utils.Json;
+import com.kellen.utils.ApiResponse;
 import com.kellen.utils.annotations.Methods;
 import com.kellen.utils.annotations.RequestRequired;
-import com.kellen.utils.enumeration.ReturnCode;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
@@ -34,14 +33,14 @@ public class RequestLogController {
      * 全局请求日志查询
      *
      * @param requestLogQuery
-     * @return com.utils.Json
+     * @return com.kellen.utils.ApiResponse
      * @author 王一飞
      * @since 2021/3/12  17:27
      */
     @Methods(methodsName = "全局请求日志查询", methods = "select")
     @Operation(summary = "全局请求日志查询", description = "全局请求日志查询")
     @GetMapping("/select")
-    public Json<Page<RequestLog>> select(RequestLogQuery requestLogQuery, Integer pageNumber, Integer pageSize) {
-        return new Json(ReturnCode.成功, requestLogService.pageEnhance(requestLogQuery, pageNumber, pageSize));
+    public ApiResponse<Page<RequestLog>> select(RequestLogQuery requestLogQuery, Integer pageNumber, Integer pageSize) {
+        return ApiResponse.success(requestLogService.pageEnhance(requestLogQuery, pageNumber, pageSize)); // 使用统一成功工厂方法组装标准响应结构。
     }
 }
