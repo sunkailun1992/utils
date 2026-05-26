@@ -17,7 +17,6 @@ import com.kellen.security.UserContextHolder; // 从统一用户上下文读取�
 import com.kellen.utils.*;
 import com.kellen.utils.exception.BusinessException;
 import com.kellen.utils.exception.PreventRepeatException;
-import com.kellen.utils.exception.VersionException;
 import com.kellen.utils.methods.MethodsJudge;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +25,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
@@ -66,13 +64,6 @@ public class AopAspectJ {
     @Autowired
     private ConfigurableApplicationContext applicationContext;
 
-    @Value("${version}")
-    private String version;
-
-    @Value("${compatibleVersion}")
-    private String compatibleVersion;
-
-
     /**
      * 对所有LoginRequired的注解类实现切点
      *
@@ -102,14 +93,10 @@ public class AopAspectJ {
         HttpServletRequest request = getHttpServletRequest();
         //校验
         verify(request);
-        //取出版本号
-        String requestVersion = getVersion(request);
         //数据源
         String dataSource = getDataSource(request);
         //接口幂等
         preventRepeatInit.init(point); // 保留防重复提交能力，但内部不再依赖旧 token。
-        //版本号验证
-        version(requestVersion); // 保留版本校验能力，仍使用请求头 version 与服务配置比对。
         //配置使用数据源
         DynamicSourceTtl.push(dataSource);
     }
@@ -283,72 +270,6 @@ public class AopAspectJ {
         //获得请求
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         return attributes.getRequest();
-    }
-
-
-    /**
-     * @param requestVersion
-     * @auther: 孙凯伦
-     * @email: 376253703@qq.com
-     * @name: version
-     * @description: TODO 版本校验
-     * @return: void
-     * @date: 2021/4/1 2:08 下午
-     */
-    private void version(String requestVersion) throws VersionException {
-        //版本号判断
-        if (StringUtils.isNotBlank(requestVersion)) {
-            //判断请求版本参数是否正常
-            if (requestVersion.split("\\.").length == 3) {
-                //系统版本号
-                //String s = version.split("\\.")[0] + "." + version.split("\\.")[1];
-                String s = version;
-                //请求版本号
-                //String r = requestVersion.split("\\.")[0] + "." + requestVersion.split("\\.")[1];
-                String r = requestVersion;
-                //判断大版本是否一致
-                if (!s.equals(r)) {
-                    //是否成功
-                    Boolean b = true;
-                    //判断是否版本不一致，是否兼容版本
-                    String[] xx = compatibleVersion.split(",");
-                    //循环兼容版本
-                    for (String x : xx) {
-                        if (x.equals(r)) {
-                            b = false;
-                        }
-                    }
-                    //判断未找到兼容版
-                    if (b) {
-                        //抛出异常
-                        throw new VersionException("系统版本：" + version + "与请求版本:" + requestVersion + "不一致");
-                    }
-                }
-            } else {
-                //抛出异常
-                throw new VersionException("请求版本参数异常");
-            }
-        }
-    }
-
-
-    /**
-     * @param request
-     * @auther: 孙凯伦
-     * @email: 376253703@qq.com
-     * @name: getVersion
-     * @description: TODO  获得版本
-     * @return: java.lang.String
-     * @date: 2021/4/1 2:09 下午
-     */
-    private String getVersion(HttpServletRequest request) {
-        //取出用户
-        String version = null;
-        //判断如果有授权就直接取，否则就从集合中取出
-        if (request.getHeader("version") != null) {
-            version = request.getHeader("version");
-        }
-        return version;
     }
 
 
