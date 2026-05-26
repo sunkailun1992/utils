@@ -1,6 +1,5 @@
 package com.kellen.aop;
 
-import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
@@ -13,6 +12,8 @@ import com.kellen.log.entity.ElasticSearchRequestLog;
 import com.kellen.log.entity.RequestLog;
 import com.kellen.log.service.ElasticSearchRequestLogService;
 import com.kellen.log.service.RequestLogService;
+import com.kellen.security.SecurityUser; // 使用 Spring Security 解析后的当前用户作为日志用户来源。
+import com.kellen.security.UserContextHolder; // 从统一用户上下文读取用户信息，替代历史 token Redis 用户读取。
 import com.kellen.utils.*;
 import com.kellen.utils.exception.BusinessException;
 import com.kellen.utils.exception.PreventRepeatException;
@@ -28,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -53,9 +53,6 @@ import java.util.Map;
 @Order(1)
 @Component
 public class AopAspectJ {
-
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
     private PreventRepeatInit preventRepeatInit;
@@ -105,21 +102,14 @@ public class AopAspectJ {
         HttpServletRequest request = getHttpServletRequest();
         //校验
         verify(request);
-        //请求值
-        Object object = args(point);
-        //取出用户
-        String token = getToken(request);
         //取出版本号
         String requestVersion = getVersion(request);
         //数据源
         String dataSource = getDataSource(request);
-        //判断token不为空
-        if (StringUtils.isNotBlank(token)) {
-            //接口幂等
-            preventRepeatInit.init(point, token);
-            //版本号验证
-            version(requestVersion);
-        }
+        //接口幂等
+        preventRepeatInit.init(point); // 保留防重复提交能力，但内部不再依赖旧 token。
+        //版本号验证
+        version(requestVersion); // 保留版本校验能力，仍使用请求头 version 与服务配置比对。
         //配置使用数据源
         DynamicSourceTtl.push(dataSource);
     }
@@ -136,15 +126,8 @@ public class AopAspectJ {
      */
     @After("pointcut()")
     public void after(JoinPoint joinPoint) throws Exception {
-        HttpServletRequest request = getHttpServletRequest();
-        Object object = args(joinPoint);
-        //取出用户
-        String token = getToken(request);
-        //判断token不为空
-        if (StringUtils.isNotBlank(token)) {
-            //后置删除幂等缓存
-            preventRepeatInit.delete(joinPoint, token);
-        }
+        //后置删除幂等缓存
+        preventRepeatInit.delete(joinPoint); // 方法正常结束后释放本次 @PreventRepeat 生成的幂等锁。
         //移除数据源变量，防止堆积
         DynamicSourceTtl.clear();
     }
@@ -171,13 +154,8 @@ public class AopAspectJ {
         //执行后
         String performAfter = MethodsJudge.performAfter(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName(), RequestUtil.getParameterMap(request));
         log.debug("耗时:" + (end - start));
-        //获得请求
-        String token = getToken(request);
-        //判断token不为空
-        if (StringUtils.isNotBlank(token)) {
-            //插入日志
-            setLog(proceedingJoinPoint, request, token, (end - start), RequestUtil.getParameterMap(request), o, performBefore, performAfter);
-        }
+        //插入日志
+        setLog(proceedingJoinPoint, request, (end - start), RequestUtil.getParameterMap(request), o, performBefore, performAfter); // 日志落库不再要求旧 token 存在。
         return o;
     }
 
@@ -193,17 +171,14 @@ public class AopAspectJ {
      */
     @AfterThrowing(value = "pointcut()", throwing = "e")
     public void afterThrow(JoinPoint joinPoint, Throwable e) throws Exception {
-        HttpServletRequest request = getHttpServletRequest();
-        //取出用户
-        String token = getToken(request);
-        //判断token不为空 幂等异常不删除
-        boolean isRepeatEx = e instanceof PreventRepeatException;
+        //幂等异常不删除，保留锁到过期时间
+        boolean isRepeatEx = e instanceof PreventRepeatException; // 判断是否为防重复提交抛出的业务异常。
         if (e instanceof UndeclaredThrowableException) {
-            isRepeatEx = ((UndeclaredThrowableException) e).getUndeclaredThrowable() instanceof PreventRepeatException;
+            isRepeatEx = ((UndeclaredThrowableException) e).getUndeclaredThrowable() instanceof PreventRepeatException; // 兼容 AOP 包装后的幂等异常。
         }
-        if (StringUtils.isNotBlank(token) && !isRepeatEx) {
+        if (!isRepeatEx) {
             //异常删除幂等缓存
-            preventRepeatInit.delete(joinPoint, token);
+            preventRepeatInit.delete(joinPoint); // 非幂等异常释放锁，避免业务异常导致用户长期无法重试。
         }
         //移除数据源变量，防止堆积
         DynamicSourceTtl.clear();
@@ -219,48 +194,61 @@ public class AopAspectJ {
      * @DateTime 2018/7/16  下午3:04
      * @email 376253703@qq.com
      */
-    private void setLog(ProceedingJoinPoint proceedingJoinPoint, HttpServletRequest httpServletRequest, String token, long time, Map<String, String> map, Object o, String performBefore, String performAfter) {
-        Map<String, Object> member = token != null ? JsonUtil.bean(RedisUtils.get(stringRedisTemplate, token), Map.class) : null;
-        RequestLog requestLog = new RequestLog();
-        if (member != null) {
-            requestLog.setUserId(Convert.toLong(member.get("id")));
-            requestLog.setUsername(String.valueOf(member.get("userName")));
-            requestLog.setName(String.valueOf(member.get("name")));
-            requestLog.setUrl(httpServletRequest.getRequestURI());
-            requestLog.setElapsedTime(time);
-            requestLog.setRequest(map);
-            requestLog.setResults(o);
-            requestLog.setSystemName(applicationContext.getEnvironment().getProperty("swagger.name") + "服务");
-            requestLog.setCreateName(String.valueOf(member.get("name")));
-            requestLog.setCreateDateTime(LocalDateTime.now());
-            requestLog.setIp(String.valueOf(member.get("ip")));
-            requestLog.setPerformBefore(performBefore);
-            requestLog.setPerformAfter(performAfter);
-            requestLog.setEnvironment("环境：" + applicationContext.getEnvironment().getProperty("spring.profiles.active") + "，数据源：" + DynamicSourceTtl.get() != null ? DynamicSourceTtl.get() : httpServletRequest.getHeader("dataSource"));
-            try {
-                requestLog.setDescription(MethodsJudge.description(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName(), map));
-                requestLog.setInterfaceName(MethodsJudge.getInterfaceName(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName()));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            /**
-             * mongodb新增
-             */
-            requestLogService.insert(requestLog);
-            /**
-             * elasticsearch新增
-             */
-            ElasticSearchRequestLog elasticSearchRequestLog = GeneralConvertor.convertor(requestLog, ElasticSearchRequestLog.class);
-            elasticSearchRequestLog.setId(IdUtil.simpleUUID());
-            elasticSearchRequestLog.setCreateDateTime(LocalDateTime.now());
-            elasticSearchRequestLogService.insert(elasticSearchRequestLog);
-            /**
-             * 判断超时发送钉钉
-             */
-            dingDing(proceedingJoinPoint, httpServletRequest, time, map, o);
+    private void setLog(ProceedingJoinPoint proceedingJoinPoint, HttpServletRequest httpServletRequest, long time, Map<String, String> map, Object o, String performBefore, String performAfter) {
+        SecurityUser user = UserContextHolder.get(); // 从 Spring Security 过滤器写入的上下文获取当前用户。
+        RequestLog requestLog = new RequestLog(); // 创建请求日志实体，后续统一补齐请求、响应、用户和环境信息。
+        if (user != null) {
+            requestLog.setUserId(parseUserId(user.getUserId())); // 兼容日志表 Long 类型用户 ID，非数字用户 ID 记录为空。
+            requestLog.setUsername(user.getUsername()); // 记录当前认证用户名。
+            requestLog.setName(user.getUsername()); // 历史日志 name 字段沿用用户名填充。
+            requestLog.setCreateName(user.getUsername()); // 日志创建人使用当前认证用户名。
         }
+        requestLog.setUrl(httpServletRequest.getRequestURI()); // 记录当前请求 URI。
+        requestLog.setElapsedTime(time); // 记录接口耗时。
+        requestLog.setRequest(map); // 记录请求参数。
+        requestLog.setResults(o); // 记录接口返回结果。
+        requestLog.setSystemName(applicationContext.getEnvironment().getProperty("swagger.name") + "服务"); // 记录服务名称。
+        requestLog.setCreateDateTime(LocalDateTime.now()); // 记录日志创建时间。
+        requestLog.setIp(IpUtils.getIp(httpServletRequest)); // 记录客户端真实 IP。
+        requestLog.setPerformBefore(performBefore); // 记录 Methods 扩展点执行前结果。
+        requestLog.setPerformAfter(performAfter); // 记录 Methods 扩展点执行后结果。
+        requestLog.setEnvironment("环境：" + applicationContext.getEnvironment().getProperty("spring.profiles.active") + "，数据源：" + (DynamicSourceTtl.get() != null ? DynamicSourceTtl.get() : httpServletRequest.getHeader("dataSource"))); // 记录当前环境和数据源。
+        try {
+            requestLog.setDescription(MethodsJudge.description(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName(), map)); // 记录接口业务描述。
+            requestLog.setInterfaceName(MethodsJudge.getInterfaceName(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName())); // 记录接口展示名称。
+        } catch (Exception e) {
+            e.printStackTrace(); // 保持历史行为，描述解析失败不阻断业务响应。
+        }
+        /**
+         * mongodb新增
+         */
+        requestLogService.insert(requestLog); // 写入 Mongo 请求日志。
+        /**
+         * elasticsearch新增
+         */
+        ElasticSearchRequestLog elasticSearchRequestLog = GeneralConvertor.convertor(requestLog, ElasticSearchRequestLog.class); // 将 Mongo 日志实体转换为 ES 日志实体。
+        elasticSearchRequestLog.setId(IdUtil.simpleUUID()); // 为 ES 日志生成独立 ID。
+        elasticSearchRequestLog.setCreateDateTime(LocalDateTime.now()); // 设置 ES 日志创建时间。
+        elasticSearchRequestLogService.insert(elasticSearchRequestLog); // 写入 ES 请求日志。
+        /**
+         * 判断超时发送钉钉
+         */
+        dingDing(proceedingJoinPoint, httpServletRequest, time, map, o); // 保留慢请求钉钉提醒。
     }
 
+    /**
+     * 请求耗时超限钉钉提醒
+     *
+     * @param proceedingJoinPoint: aop拦截类
+     * @param httpServletRequest:  当前请求
+     * @param time:                接口耗时
+     * @param map:                 请求参数
+     * @param o:                   返回结果
+     * @return void
+     * @author sunkailun
+     * @DateTime 2018/7/16  下午3:04
+     * @email 376253703@qq.com
+     */
     @Async
     public void dingDing(ProceedingJoinPoint proceedingJoinPoint, HttpServletRequest httpServletRequest, long time, Map<String, String> map, Object o) {
         if (time >= 3000) {
@@ -281,20 +269,16 @@ public class AopAspectJ {
         }
     }
 
-    private Object args(JoinPoint joinPoint) {
-        Object object = null;
-        //循环取出对象,排除基础类型
-        for (Object obj : joinPoint.getArgs()) {
-            if (obj != null) {
-                if (ObjectUtils.isBaseType(obj.getClass())) {
-                    object = obj;
-                }
-            }
-        }
-        return object;
-    }
 
-
+    /**
+     * 获取当前请求对象
+     *
+     * @param :
+     * @return jakarta.servlet.http.HttpServletRequest
+     * @author sunkailun
+     * @DateTime 2019/5/6  10:36 AM
+     * @email 376253703@qq.com
+     */
     private HttpServletRequest getHttpServletRequest() {
         //获得请求
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -345,28 +329,6 @@ public class AopAspectJ {
                 throw new VersionException("请求版本参数异常");
             }
         }
-    }
-
-
-    /**
-     * @param request
-     * @auther: 孙凯伦
-     * @email: 376253703@qq.com
-     * @name: getToken
-     * @description: TODO 获得token
-     * @return: java.lang.String
-     * @date: 2021/4/1 2:08 下午
-     */
-    private String getToken(HttpServletRequest request) {
-        //取出用户
-        String token = null;
-        //判断如果有授权就直接取，否则就从集合中取出
-        if (request.getHeader("token") != null) {
-            if (!request.getHeader("token").equals("eaa1929451cd43efb3f4668eed25e3f9")) {
-                token = request.getHeader("token");
-            }
-        }
-        return token;
     }
 
 
@@ -432,6 +394,22 @@ public class AopAspectJ {
                 throw new BusinessException("存在sql注入拦截");
             }
         }
+    }
+
+    /**
+     * 解析日志用户ID
+     *
+     * @param userId: Spring Security上下文中的用户ID
+     * @return java.lang.Long
+     * @author sunkailun
+     * @DateTime 2026/5/26  下午
+     * @email 376253703@qq.com
+     */
+    private Long parseUserId(String userId) {
+        if (!StringUtils.isNumeric(userId)) { // userId 可能是 u_admin_100 这类业务字符串，不能强转 Long。
+            return null; // 非数字用户 ID 不写入 Long 类型日志字段。
+        }
+        return Long.valueOf(userId); // 数字用户 ID 按历史日志字段类型写入。
     }
 
 }
