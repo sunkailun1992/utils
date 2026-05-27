@@ -3,9 +3,12 @@ package com.kellen.config.mybatis;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
+import com.baomidou.mybatisplus.extension.plugins.inner.DataPermissionInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
+import com.kellen.datapermission.DataPermissionProperties;
+import com.kellen.datapermission.DataPermissionSqlHandler;
 import com.kellen.security.config.TenantProperties;
 import com.kellen.utils.context.TenantContextHolder;
 import net.sf.jsqlparser.expression.Expression;
@@ -24,7 +27,7 @@ import java.util.Locale;
  * @author 孙凯伦
  */
 @Configuration
-@EnableConfigurationProperties(TenantProperties.class)
+@EnableConfigurationProperties({TenantProperties.class, DataPermissionProperties.class})
 public class MyBatisPlusConfig {
 
     /**
@@ -33,12 +36,19 @@ public class MyBatisPlusConfig {
     private final TenantProperties tenantProperties;
 
     /**
+     * 数据权限配置属性。
+     */
+    private final DataPermissionProperties dataPermissionProperties;
+
+    /**
      * 构造 MyBatis-Plus 配置。
      *
-     * @param tenantProperties 租户配置属性
+     * @param tenantProperties          租户配置属性
+     * @param dataPermissionProperties 数据权限配置属性
      */
-    public MyBatisPlusConfig(TenantProperties tenantProperties) {
+    public MyBatisPlusConfig(TenantProperties tenantProperties, DataPermissionProperties dataPermissionProperties) {
         this.tenantProperties = tenantProperties; // 保存租户配置，供租户插件读取。
+        this.dataPermissionProperties = dataPermissionProperties; // 保存数据权限配置，供数据权限插件读取。
     }
 
     /**
@@ -51,6 +61,9 @@ public class MyBatisPlusConfig {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor(); // 创建 MyBatis-Plus 统一拦截器容器。
         if (tenantProperties.isEnabled()) {
             interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(tenantLineHandler())); // 开启租户插件后自动为 SQL 拼接租户条件。
+        }
+        if (dataPermissionProperties.isEnabled()) {
+            interceptor.addInnerInterceptor(new DataPermissionInterceptor(new DataPermissionSqlHandler(dataPermissionProperties))); // 开启数据权限插件后自动为 SQL 拼接部门或本人条件。
         }
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL)); // 注册 MySQL 分页插件。
         interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor()); // 注册 @Version 乐观锁插件。

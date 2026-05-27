@@ -49,6 +49,21 @@ public class SecurityAuthProperties {
     private String tenantIdHeader = "X-Tenant-Id";
 
     /**
+     * 网关透传部门ID请求头。
+     */
+    private String deptIdHeader = "X-Dept-Id";
+
+    /**
+     * 网关透传数据权限范围请求头。
+     */
+    private String dataScopeHeader = "X-Data-Scope";
+
+    /**
+     * 网关透传数据权限部门ID集合请求头。
+     */
+    private String dataScopeDeptIdsHeader = "X-Data-Scope-Dept-Ids";
+
+    /**
      * 网关透传权限码请求头。
      */
     private String authoritiesHeader = "X-Permissions";

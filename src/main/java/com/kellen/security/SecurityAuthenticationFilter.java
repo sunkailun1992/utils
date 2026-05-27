@@ -114,8 +114,11 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
             String userId = firstNotBlank(claims.get("userId", String.class), claims.getSubject()); // 优先使用 userId 声明，缺失时用 subject。
             String username = firstNotBlank(claims.get("username", String.class), claims.get("userName", String.class)); // 兼容 username 与 userName 两种声明。
             String tenantId = claims.get("tenantId", String.class); // 读取租户ID声明。
+            String deptId = claims.get("deptId", String.class); // 读取部门ID声明。
+            String dataScope = claims.get("dataScope", String.class); // 读取数据权限范围声明。
+            List<String> dataScopeDeptIds = parseValues(claims.get("dataScopeDeptIds")); // 读取数据权限部门ID集合。
             List<String> authorities = parseAuthorities(claims.get("permissions"), claims.get("roles")); // 读取权限码和角色码。
-            return buildUser(userId, username, tenantId, authorities); // 构造统一安全用户对象。
+            return buildUser(userId, username, tenantId, deptId, dataScope, dataScopeDeptIds, authorities); // 构造统一安全用户对象。
         } catch (Exception ignored) {
             return null; // JWT 无效或过期时不抛出底层异常，由 Spring Security 继续按未认证处理。
         }
@@ -134,10 +137,13 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
         String userId = request.getHeader(securityAuthProperties.getUserIdHeader()); // 读取用户ID头。
         String username = request.getHeader(securityAuthProperties.getUsernameHeader()); // 读取用户名头。
         String tenantId = request.getHeader(securityAuthProperties.getTenantIdHeader()); // 读取租户ID头。
+        String deptId = request.getHeader(securityAuthProperties.getDeptIdHeader()); // 读取部门ID头。
+        String dataScope = request.getHeader(securityAuthProperties.getDataScopeHeader()); // 读取数据权限范围头。
+        List<String> dataScopeDeptIds = parseValues(request.getHeader(securityAuthProperties.getDataScopeDeptIdsHeader())); // 读取数据权限部门ID集合头。
         List<String> authorities = parseAuthorities(
                 request.getHeader(securityAuthProperties.getAuthoritiesHeader()),
                 request.getHeader(securityAuthProperties.getRolesHeader())); // 解析权限头和角色头。
-        return buildUser(userId, username, tenantId, authorities); // 构造统一安全用户对象。
+        return buildUser(userId, username, tenantId, deptId, dataScope, dataScopeDeptIds, authorities); // 构造统一安全用户对象。
     }
 
     /**
@@ -146,14 +152,17 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
      * @param userId      用户ID
      * @param username    用户名
      * @param tenantId    租户ID
-     * @param authorities 权限集合
+     * @param deptId           部门ID
+     * @param dataScope        数据权限范围
+     * @param dataScopeDeptIds 数据权限部门ID集合
+     * @param authorities      权限集合
      * @return 安全用户对象，缺少用户标识时返回 null
      */
-    private SecurityUser buildUser(String userId, String username, String tenantId, List<String> authorities) {
+    private SecurityUser buildUser(String userId, String username, String tenantId, String deptId, String dataScope, List<String> dataScopeDeptIds, List<String> authorities) {
         if (StringUtils.isBlank(userId) && StringUtils.isBlank(username)) {
             return null; // 用户ID和用户名都为空时视为未认证请求。
         }
-        return new SecurityUser(userId, username, tenantId, authorities); // 返回不可变语义的安全用户快照。
+        return new SecurityUser(userId, username, tenantId, deptId, dataScope, dataScopeDeptIds, authorities); // 返回不可变语义的安全用户快照。
     }
 
     /**
@@ -168,6 +177,21 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
         addAuthorities(authorities, permissions, false); // 权限码按原值加入。
         addAuthorities(authorities, roles, true); // 角色码按 ROLE_ 前缀规则加入。
         return authorities; // 返回合并后的权限集合。
+    }
+
+    /**
+     * 解析逗号分隔的原始值。
+     *
+     * @param raw 原始值
+     * @return 字符串集合
+     * @author sunkailun
+     * @DateTime 2026/05/27
+     * @email 376253703@qq.com
+     */
+    private List<String> parseValues(Object raw) {
+        List<String> values = new ArrayList<>(); // 创建结果集合。
+        addAuthorities(values, raw, false); // 复用逗号和集合解析逻辑，但不追加角色前缀。
+        return values; // 返回解析后的字符串集合。
     }
 
     /**
