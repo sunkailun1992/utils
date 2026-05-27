@@ -23,16 +23,6 @@ public class DynamicSourceTtl {
     public final static String SLAVE_DATASOURCE = "gray";
 
     /**
-     * 银行数据源名称。
-     */
-    public final static String BANK_DATASOURCE = "bank";
-
-    /**
-     * 汇中数据源名称。
-     */
-    public final static String HZ_DATASOURCE = "hz";
-
-    /**
      * 主数据源名称。
      */
     public final static String MASTER_DATASOURCE = "master";

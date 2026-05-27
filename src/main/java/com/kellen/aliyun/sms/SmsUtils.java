@@ -51,10 +51,6 @@ public class SmsUtils {
      */
     public static Boolean sendMessage(String phone, SmsEnum smsEnum, String templateParam) {
         log.debug("手机号{}发送短信{}", phone, templateParam);
-        // 判断是否汇中
-        if (DynamicSourceTtl.get().equals(DynamicSourceTtl.HZ_DATASOURCE)) {
-            return false;
-        }
         // 创建DefaultAcsClient实例并初始化
         DefaultProfile profile = DefaultProfile.getProfile("default", AliyunKey.accessKeyId, AliyunKey.accessKeySecret);
         //赋值
