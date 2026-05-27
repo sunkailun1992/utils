@@ -204,6 +204,7 @@
 - `com.kellen.utils.enumeration.SourceValueEnum`：来源值枚举。
 - `com.kellen.utils.enumeration.SystemSourceEnum`：系统来源枚举。
 - `com.kellen.utils.enumeration.AppCodeEnum`：应用编码枚举。
+- `com.kellen.utils.validation.CreditCodeUtil`：统一社会信用代码校验工具。
 - `com.kellen.utils.verify.Phone`：手机号校验注解。
 - `com.kellen.utils.verify.check.PhoneValidator`：手机号校验器。
 
@@ -211,16 +212,9 @@
 
 - 通用枚举才能留在 `utils`。
 - 明显业务专属枚举应迁回业务项目，避免公共包变成业务字典仓库。
-- 校验注解需要同时说明校验目标、空值策略和错误提示。
+- 校验工具和校验注解需要同时说明校验目标、空值策略和错误提示。
 
-## 十、历史业务工具与待收敛区域
-
-当前已确认保留的通用类：
-
-- `com.kellen.utils.validation.CreditCodeUtil`：统一社会信用代码工具，可保留为通用校验工具。
-- `com.kellen.utils.math.FormulaUtils`：只保留表达式执行、BigDecimal 转换、金额计算、费率按天折算等通用能力。
-
-收敛原则：
+## 十、收敛原则
 
 - 如果类只服务单个业务项目，应迁回业务项目。
 - 如果类是多个项目共享的基础能力，应补齐注释、异常边界、示例和归类。
