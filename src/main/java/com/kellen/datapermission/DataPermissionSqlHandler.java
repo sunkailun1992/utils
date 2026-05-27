@@ -187,6 +187,9 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      * @email 376253703@qq.com
      */
     private boolean ignoreMappedStatement(String mappedStatementId) {
+        if (StringUtils.isBlank(mappedStatementId)) {
+            return false; // Mapper 方法ID为空时无法命中忽略配置。
+        }
         return properties.getIgnoreMappedStatementIds().stream().filter(StringUtils::isNotBlank).anyMatch(mappedStatementId::equals); // 完整匹配 Mapper 方法ID。
     }
 
