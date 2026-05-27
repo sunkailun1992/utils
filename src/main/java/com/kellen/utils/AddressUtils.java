@@ -33,7 +33,7 @@ public class AddressUtils {
         String returnStr = null;
         try {
             //请求
-            returnStr = OkhttpUtils.send(builder, HttpWay.POST, urlStr + "ip=" + ip + "&ak=vmhRnIi0bhUSMrhZnbgG4Y0fS8C8Kb8i&coor=bd09ll", "", HttpType.JSON).string();
+            returnStr = OkHttpUtils.send(builder, HttpWay.POST, urlStr + "ip=" + ip + "&ak=vmhRnIi0bhUSMrhZnbgG4Y0fS8C8Kb8i&coor=bd09ll", "", HttpType.JSON).string();
             //编码转换
             returnStr = decodeUnicode(returnStr);
             //返回内容

@@ -1,7 +1,7 @@
 package com.kellen.security;
 
 import com.kellen.bean.SecurityAuthProperties;
-import com.kellen.utils.JwtUtil;
+import com.kellen.utils.JwtUtils;
 import com.kellen.utils.TenantContextHolder;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -110,7 +110,7 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
             return null; // 没有 Bearer 前缀时不按 JWT 处理。
         }
         try {
-            Claims claims = JwtUtil.parseJwt(authorization.substring(BEARER_PREFIX.length())); // 去掉 Bearer 前缀并校验 JWT 签名。
+            Claims claims = JwtUtils.parseJwt(authorization.substring(BEARER_PREFIX.length())); // 去掉 Bearer 前缀并校验 JWT 签名。
             String userId = firstNotBlank(claims.get("userId", String.class), claims.getSubject()); // 优先使用 userId 声明，缺失时用 subject。
             String username = firstNotBlank(claims.get("username", String.class), claims.get("userName", String.class)); // 兼容 username 与 userName 两种声明。
             String tenantId = claims.get("tenantId", String.class); // 读取租户ID声明。

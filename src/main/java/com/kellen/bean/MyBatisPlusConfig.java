@@ -1,8 +1,8 @@
 package com.kellen.bean;
 
 import com.baomidou.mybatisplus.annotation.DbType;
-import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
@@ -24,7 +24,7 @@ import java.util.Locale;
  */
 @Configuration
 @EnableConfigurationProperties(TenantProperties.class)
-public class MybatisPlusConfig {
+public class MyBatisPlusConfig {
 
     /**
      * 租户配置属性。
@@ -36,7 +36,7 @@ public class MybatisPlusConfig {
      *
      * @param tenantProperties 租户配置属性
      */
-    public MybatisPlusConfig(TenantProperties tenantProperties) {
+    public MyBatisPlusConfig(TenantProperties tenantProperties) {
         this.tenantProperties = tenantProperties; // 保存租户配置，供租户插件读取。
     }
 
@@ -48,13 +48,10 @@ public class MybatisPlusConfig {
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor(); // 创建 MyBatis-Plus 统一拦截器容器。
-        // 多租户。
         if (tenantProperties.isEnabled()) {
             interceptor.addInnerInterceptor(new TenantLineInnerInterceptor(tenantLineHandler())); // 开启租户插件后自动为 SQL 拼接租户条件。
         }
-        // 分页。
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL)); // 注册 MySQL 分页插件。
-        // 乐观锁。
         interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor()); // 注册 @Version 乐观锁插件。
         return interceptor; // 返回完整插件链。
     }

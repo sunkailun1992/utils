@@ -21,7 +21,7 @@ import java.util.Map;
  * @author 孙凯伦
  */
 @Configuration
-public class MysqlConfig {
+public class DynamicDataSourceConfig {
 
     /**
      * 主库 JDBC URL。

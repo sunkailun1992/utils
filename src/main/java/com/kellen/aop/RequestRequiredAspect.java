@@ -49,7 +49,7 @@ import java.util.Map;
 @Aspect
 @Order(1)
 @Component
-public class AopAspectJ {
+public class RequestRequiredAspect {
 
     /**
      * 防重复提交处理器。

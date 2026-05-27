@@ -16,7 +16,7 @@ import java.util.Map;
  *
  * @author 孙凯伦
  */
-public class JwtUtil {
+public class JwtUtils {
 
     /**
      * 默认过期时间：30分钟。

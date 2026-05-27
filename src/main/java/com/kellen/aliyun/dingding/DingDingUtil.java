@@ -6,7 +6,7 @@ import com.kellen.aliyun.dingding.markdown.MarkDownRebootModel;
 import com.kellen.aliyun.dingding.text.ContentModel;
 import com.kellen.aliyun.dingding.text.TextRebootModel;
 import com.kellen.utils.JsonUtil;
-import com.kellen.utils.OkhttpUtils;
+import com.kellen.utils.OkHttpUtils;
 import com.kellen.utils.enumeration.HttpType;
 import com.kellen.utils.enumeration.HttpWay;
 import okhttp3.Request;
@@ -91,7 +91,7 @@ public class DingDingUtil {
      * @return
      */
     public static String sendPost(String url, String message) throws Exception {
-        String json = OkhttpUtils.send(new Request.Builder(), HttpWay.POST, url, message, HttpType.JSON).string();
+        String json = OkHttpUtils.send(new Request.Builder(), HttpWay.POST, url, message, HttpType.JSON).string();
         return json;
     }
 
