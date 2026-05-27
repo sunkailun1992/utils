@@ -12,7 +12,7 @@ plugins {
 group = 'com'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.1.0'
+version = '1.1.2'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -74,8 +74,8 @@ ext {
     pdfboxVersion = '2.0.36'
     // Dozer 版本，用于通用对象属性映射能力。
     dozerVersion = '6.5.2'
-    // Seata 版本，用于分布式事务代理和 XID 透传。
-    seataVersion = '2.0.0'
+    // Seata 版本，用于分布式事务代理和 XID 透传，必须与 Spring Cloud Alibaba 当前 Seata 坐标体系保持一致。
+    seataVersion = '2.1.0'
     // Aviator 版本，用于通用表达式和公式计算能力。
     aviatorVersion = '5.4.3'
     // TTL 版本，用于线程池场景下的 ThreadLocal 上下文传递。
@@ -204,12 +204,8 @@ dependencies {
     api "org.apache.pdfbox:pdfbox:${pdfboxVersion}"
     // Dozer：提供对象之间的属性映射能力。
     api "com.github.dozermapper:dozer-core:${dozerVersion}"
-    // Seata Spring Boot：提供分布式事务自动配置能力。
-    api "io.seata:seata-spring-boot-starter:${seataVersion}"
     // Spring Cloud Alibaba Seata：提供 Spring Cloud Alibaba 体系下的 Seata 集成能力。
     api 'com.alibaba.cloud:spring-cloud-starter-alibaba-seata'
-    // Seata All：提供 Seata 全量 API，兼容当前代码中的 RootContext 等调用。
-    api "io.seata:seata-all:${seataVersion}"
     // Aviator：提供表达式公式计算能力。
     api "com.googlecode.aviator:aviator:${aviatorVersion}"
     // TTL：提供线程池场景下的 ThreadLocal 上下文传递能力。
