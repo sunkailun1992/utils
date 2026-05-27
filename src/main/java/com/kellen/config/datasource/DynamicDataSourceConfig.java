@@ -3,7 +3,7 @@ package com.kellen.config.datasource;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 import com.baomidou.dynamic.datasource.provider.DynamicDataSourceProvider;
-import org.apache.seata.rm.datasource.DataSourceProxy;
+import io.seata.rm.datasource.DataSourceProxy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

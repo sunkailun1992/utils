@@ -6,7 +6,7 @@ import com.kellen.utils.context.DynamicSourceTtl;
 import com.kellen.utils.context.TenantContextHolder;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
-import org.apache.seata.core.context.RootContext;
+import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Configuration;

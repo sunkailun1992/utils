@@ -12,7 +12,7 @@ plugins {
 group = 'com'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.1.2'
+version = '1.1.5'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -31,11 +31,11 @@ ext {
     // Java 源码和字节码版本。
     javaReleaseVersion = 17
     // Spring Boot 版本，对齐原 Maven parent 版本。
-    springBootVersion = '3.2.12'
+    springBootVersion = '3.2.4'
     // Spring Cloud 版本，用于 OpenFeign、Cloud 生态组件版本管理。
-    springCloudVersion = '2023.0.6'
+    springCloudVersion = '2023.0.1'
     // Spring Cloud Alibaba 版本，用于 Nacos、Seata Alibaba 适配组件版本管理。
-    springCloudAlibabaVersion = '2023.0.3.4'
+    springCloudAlibabaVersion = '2023.0.1.0'
     // MyBatis-Plus 版本，用于 ORM、分页、租户、乐观锁插件。
     mybatisPlusVersion = '3.5.16'
     // Knife4j 版本，用于 OpenAPI3 接口文档。
