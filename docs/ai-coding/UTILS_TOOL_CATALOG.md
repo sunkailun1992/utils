@@ -6,7 +6,7 @@
 
 核心类：
 
-- `com.kellen.utils.ApiResponse`：统一响应对象。
+- `com.kellen.utils.response.ApiResponse`：统一响应对象。
 - `com.kellen.utils.enumeration.ReturnCode`：统一错误码枚举。
 - `com.kellen.utils.exception.ApiExceptionHandler`：全局异常处理器。
 - `com.kellen.utils.exception.BusinessException`：业务异常。
@@ -34,8 +34,8 @@
 - `com.kellen.security.SecurityAuthenticationFilter`：认证过滤器。
 - `com.kellen.security.SecurityUser`：当前登录用户模型。
 - `com.kellen.security.UserContextHolder`：用户上下文 ThreadLocal。
-- `com.kellen.utils.JwtUtils`：JWT 生成与解析工具。
-- `com.kellen.utils.RsaUtils`：RSA 加解密工具。
+- `com.kellen.utils.auth.JwtUtils`：JWT 生成与解析工具。
+- `com.kellen.utils.auth.RsaUtils`：RSA 加解密工具。
 
 使用原则：
 
@@ -48,12 +48,12 @@
 
 核心类：
 
-- `com.kellen.utils.TenantContextHolder`：租户上下文 ThreadLocal。
+- `com.kellen.utils.context.TenantContextHolder`：租户上下文 ThreadLocal。
 - `com.kellen.bean.TenantProperties`：租户请求头配置。
 - `com.kellen.bean.ReqInterceptor`：Feign 请求上下文透传。
-- `com.kellen.utils.DynamicSourceTtl`：动态数据源上下文。
+- `com.kellen.utils.context.DynamicSourceTtl`：动态数据源上下文。
 - `com.kellen.bean.DynamicDataSourceConfig`：Druid 动态数据源配置。
-- `com.kellen.utils.DataSourceUtil`：数据源工具。
+- `com.kellen.utils.datasource.DataSourceUtil`：数据源工具。
 - `com.kellen.utils.annotations.DynamicDataSource`：动态数据源注解。
 - `com.kellen.bean.MyBatisPlusConfig`：MyBatis-Plus 插件配置。
 - `com.kellen.bean.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器。
@@ -79,7 +79,7 @@
 - `com.kellen.utils.methods.MethodsJudge`：方法条件判断。
 - `com.kellen.utils.methods.MethodsParam`：方法参数模型。
 - `com.kellen.utils.methods.MethodsBean`：方法校验配置模型。
-- `com.kellen.log.*`：请求日志、RPC 日志、Elasticsearch 日志相关实体、Mapper、Service、Controller。
+- `com.kellen.log.*`：请求日志、RPC 日志、Elasticsearch 日志相关实体、Mapper、Service。
 
 使用原则：
 
@@ -115,25 +115,25 @@
 
 核心类：
 
-- `com.kellen.utils.JsonUtil`：JSON 序列化与反序列化工具。
-- `com.kellen.utils.OkHttpUtils`：OkHttp HTTP 调用工具。
-- `com.kellen.utils.RedisUtils`：Redis 操作工具。
-- `com.kellen.utils.WebSocketUtils`：WebSocket 推送工具。
-- `com.kellen.utils.RequestUtil`：请求工具。
-- `com.kellen.utils.IpUtils`：IP 工具。
-- `com.kellen.utils.AddressUtils`：地址解析工具。
-- `com.kellen.utils.MapUtils`：Map 工具。
-- `com.kellen.utils.ObjectUtils`：对象工具。
-- `com.kellen.utils.StringUtils`：字符串工具。
-- `com.kellen.utils.BigDecimalUtils`：金额与高精度数字工具。
-- `com.kellen.utils.FormulaUtils`：通用公式计算工具。
-- `com.kellen.utils.BeanMapper`：对象映射工具。
-- `com.kellen.utils.GeneralConvertor`：通用转换工具。
-- `com.kellen.utils.ReflectionUtils`：反射工具。
-- `com.kellen.utils.Invoker`：反射调用辅助工具。
-- `com.kellen.utils.StreamUtils`：Stream 辅助工具。
-- `com.kellen.utils.FileFormat`：文件格式工具。
-- `com.kellen.utils.PdfUtils`：PDF 工具。
+- `com.kellen.utils.json.JsonUtil`：JSON 序列化与反序列化工具。
+- `com.kellen.utils.http.OkHttpUtils`：OkHttp HTTP 调用工具。
+- `com.kellen.utils.redis.RedisUtils`：Redis 操作工具。
+- `com.kellen.utils.websocket.WebSocketUtils`：WebSocket 推送工具。
+- `com.kellen.utils.http.RequestUtil`：请求工具。
+- `com.kellen.utils.http.IpUtils`：IP 工具。
+- `com.kellen.utils.http.AddressUtils`：地址解析工具。
+- `com.kellen.utils.convert.MapUtils`：Map 工具。
+- `com.kellen.utils.convert.ObjectUtils`：对象工具。
+- `com.kellen.utils.convert.StringUtils`：字符串工具。
+- `com.kellen.utils.math.BigDecimalUtils`：金额与高精度数字工具。
+- `com.kellen.utils.math.FormulaUtils`：通用公式计算工具。
+- `com.kellen.utils.convert.BeanMapper`：对象映射工具。
+- `com.kellen.utils.convert.GeneralConvertor`：通用转换工具。
+- `com.kellen.utils.reflect.ReflectionUtils`：反射工具。
+- `com.kellen.utils.reflect.Invoker`：反射调用辅助工具。
+- `com.kellen.utils.convert.StreamUtils`：Stream 辅助工具。
+- `com.kellen.utils.file.FileFormat`：文件格式工具。
+- `com.kellen.utils.file.PdfUtils`：PDF 工具。
 - `com.kellen.utils.excel.ExcelExportUtil`：Excel 导出工具。
 
 使用原则：
@@ -217,8 +217,8 @@
 
 当前已确认保留的通用类：
 
-- `com.kellen.utils.CreditCodeUtil`：统一社会信用代码工具，可保留为通用校验工具。
-- `com.kellen.utils.FormulaUtils`：只保留表达式执行、BigDecimal 转换、金额计算、费率按天折算等通用能力。
+- `com.kellen.utils.validation.CreditCodeUtil`：统一社会信用代码工具，可保留为通用校验工具。
+- `com.kellen.utils.math.FormulaUtils`：只保留表达式执行、BigDecimal 转换、金额计算、费率按天折算等通用能力。
 
 收敛原则：
 
@@ -226,12 +226,3 @@
 - 如果类是多个项目共享的基础能力，应补齐注释、异常边界、示例和归类。
 - 删除或迁移前必须先用 `rg` 检查 `utils` 与消费者项目引用。
 - 请求日志只保留采集、存储与服务能力，不在公共包内自动暴露查询 Controller。
-
-已删除的业务类：
-
-- `com.kellen.utils.CommissionFormula`：佣金公式属于业务规则，不再放在公共包。
-- `com.kellen.utils.InsuranceFormula`：保险公式属于业务规则，不再放在公共包。
-- `com.kellen.utils.enumeration.UserTypeEnum`：用户类型属于业务身份字典，不再放在公共包。
-- `com.kellen.utils.enumeration.WordCodeEnum`：企业、项目、保险字段字典属于业务模板，不再放在公共包。
-- `com.kellen.utils.enumeration.WordCodeTypeEnum`：业务字典类型不再放在公共包。
-- `com.kellen.log.controller.RequestLogController`：公共包不再自动暴露日志查询接口。

@@ -1,8 +1,8 @@
 package com.kellen.security;
 
 import com.kellen.bean.SecurityAuthProperties;
-import com.kellen.utils.JwtUtils;
-import com.kellen.utils.TenantContextHolder;
+import com.kellen.utils.auth.JwtUtils;
+import com.kellen.utils.context.TenantContextHolder;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

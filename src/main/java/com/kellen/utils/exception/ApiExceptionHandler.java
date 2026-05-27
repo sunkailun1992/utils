@@ -1,6 +1,6 @@
 package com.kellen.utils.exception;
 
-import com.kellen.utils.ApiResponse;
+import com.kellen.utils.response.ApiResponse;
 import com.kellen.utils.enumeration.ReturnCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;

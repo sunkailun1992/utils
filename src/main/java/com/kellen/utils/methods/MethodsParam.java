@@ -1,6 +1,6 @@
 package com.kellen.utils.methods;
 
-import com.kellen.utils.ReflectionUtils;
+import com.kellen.utils.reflect.ReflectionUtils;
 import com.kellen.utils.annotations.Methods;
 
 import java.lang.reflect.Field;

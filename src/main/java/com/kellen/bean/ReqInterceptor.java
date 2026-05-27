@@ -1,6 +1,6 @@
 package com.kellen.bean;
 
-import com.kellen.utils.TenantContextHolder;
+import com.kellen.utils.context.TenantContextHolder;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.web.servlet.HandlerInterceptor;

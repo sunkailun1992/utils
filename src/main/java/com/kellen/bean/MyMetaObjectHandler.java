@@ -1,7 +1,7 @@
 package com.kellen.bean;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
-import com.kellen.utils.TenantContextHolder;
+import com.kellen.utils.context.TenantContextHolder;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;

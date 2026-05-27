@@ -8,7 +8,7 @@
 - Java 版本：`17`
 - Spring Boot：`3.2.4`
 - Servlet / Validation 包名：统一使用 `jakarta.*`
-- 统一响应：只使用 `com.kellen.utils.ApiResponse`
+- 统一响应：只使用 `com.kellen.utils.response.ApiResponse`
 - 统一错误码：只使用 `com.kellen.utils.enumeration.ReturnCode`
 - 全局异常处理：使用 `com.kellen.utils.exception.ApiExceptionHandler`
 - 认证上下文：使用 `SecurityUser` 与 `UserContextHolder`
@@ -43,4 +43,4 @@ cd /Users/sunkailun/Desktop/个人/GitHub/user
 - [AI 编码入口](docs/ai-coding/README.md)
 - [项目编码规范](docs/ai-coding/PROJECT_CODING_SPEC.md)
 - [工具类归类目录](docs/ai-coding/UTILS_TOOL_CATALOG.md)
-
+- [包结构整理建议](docs/ai-coding/PACKAGE_REFACTOR_GUIDE.md)

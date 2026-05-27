@@ -1,8 +1,8 @@
 package com.kellen.bean;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
-import com.kellen.utils.DynamicSourceTtl;
-import com.kellen.utils.TenantContextHolder;
+import com.kellen.utils.context.DynamicSourceTtl;
+import com.kellen.utils.context.TenantContextHolder;
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
 import io.seata.core.context.RootContext;

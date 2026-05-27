@@ -2,7 +2,7 @@ package com.kellen.bean;
 
 import com.kellen.security.SecurityUser; // 使用当前认证用户生成幂等 key。
 import com.kellen.security.UserContextHolder; // 从 Spring Security 用户上下文读取用户信息，替代旧 token。
-import com.kellen.utils.TenantContextHolder; // 使用当前租户生成幂等 key，避免跨租户互相影响。
+import com.kellen.utils.context.TenantContextHolder; // 使用当前租户生成幂等 key，避免跨租户互相影响。
 import com.kellen.utils.annotations.Methods;
 import com.kellen.utils.annotations.PreventRepeat;
 import com.kellen.utils.exception.PreventRepeatException;
