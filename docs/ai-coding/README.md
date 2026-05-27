@@ -14,7 +14,7 @@
 - 使用 `rg` 搜索现有实现，优先复用已有工具类。
 - 检查是否会影响消费者项目，尤其是 `/Users/sunkailun/Desktop/个人/GitHub/user`。
 - 确认没有重新引入旧 `Json` 响应、旧 token 认证、旧多数据源名称或 `javax.*`。
-- 如果修改公共 API、注解、AOP、认证、租户、异常、返回值、MyBatis-Plus 配置，修改后必须执行 `mvn -q -DskipTests install`。
+- 如果修改公共 API、注解、AOP、认证、租户、异常、返回值、MyBatis-Plus 配置，修改后必须执行 `./gradlew clean build -x test` 和 `./gradlew publishToMavenLocal`。
 
 ## 文档维护
 

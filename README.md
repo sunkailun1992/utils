@@ -4,7 +4,7 @@
 
 ## 当前定位
 
-- Maven 坐标：`com:utils:1.0.9`
+- 发布坐标：`com:utils:1.0.9`
 - Java 版本：`17`
 - Spring Boot：`3.2.4`
 - Servlet / Validation 包名：统一使用 `jakarta.*`
@@ -19,7 +19,23 @@
 ## 构建验证
 
 ```bash
-mvn -q -DskipTests install
+./gradlew clean build -x test
+./gradlew publishToMavenLocal
+```
+
+## 远程发布
+
+阿里云 Maven 仓库凭证不要写入仓库文件，放到本机 `~/.gradle/gradle.properties`：
+
+```properties
+aliyunMavenUsername=你的用户名
+aliyunMavenPassword=你的密码
+```
+
+发布到阿里云 Maven 仓库：
+
+```bash
+./gradlew publish
 ```
 
 消费者项目升级 `utils` 后，应同步执行消费者项目编译验证。例如 `user` 项目：

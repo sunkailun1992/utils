@@ -1,0 +1,256 @@
+// 使用 java-library 插件，把当前项目构建为可被其他项目依赖的公共 Java jar。
+plugins {
+    // java-library 提供 api / implementation 依赖隔离能力，适合公共工具包。
+    id 'java-library'
+    // maven-publish 用于把 utils 发布到 Maven Local 或远程 Maven 仓库。
+    id 'maven-publish'
+    // Spring 依赖管理插件用于导入 Spring Boot、Spring Cloud、Spring Cloud Alibaba BOM。
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+// 设置 Maven groupId，必须保持与历史 Maven 坐标一致。
+group = 'com'
+
+// 设置 Maven version，必须保持与消费者项目依赖版本一致。
+version = '1.0.9'
+
+// 设置项目描述，便于发布后的元数据识别。
+description = 'utils'
+
+// 设置阿里云 Maven 制品仓库地址，发布和拉取远程制品时复用。
+def aliyunMavenReleaseUrl = 'https://packages.aliyun.com/695230d97a1ed8d3da00b21e/maven/2633353-release-no0hfp'
+
+// 从 Gradle 属性或环境变量读取阿里云 Maven 用户名，避免把密钥写进仓库。
+def aliyunMavenUsername = providers.gradleProperty('aliyunMavenUsername').orElse(providers.environmentVariable('ALIYUN_MAVEN_USERNAME'))
+
+// 从 Gradle 属性或环境变量读取阿里云 Maven 密码，避免把密钥写进仓库。
+def aliyunMavenPassword = providers.gradleProperty('aliyunMavenPassword').orElse(providers.environmentVariable('ALIYUN_MAVEN_PASSWORD'))
+
+// 定义依赖版本，集中管理避免依赖声明里散落魔法版本。
+ext {
+    // Java 源码和字节码版本。
+    javaReleaseVersion = 17
+    // Spring Boot 版本，对齐原 Maven parent 版本。
+    springBootVersion = '3.2.4'
+    // Spring Cloud 版本，用于 OpenFeign、Cloud 生态组件版本管理。
+    springCloudVersion = '2023.0.1'
+    // Spring Cloud Alibaba 版本，用于 Nacos、Seata Alibaba 适配组件版本管理。
+    springCloudAlibabaVersion = '2023.0.1.0'
+    // MyBatis-Plus 版本，用于 ORM、分页、租户、乐观锁插件。
+    mybatisPlusVersion = '3.5.15'
+    // Knife4j 版本，用于 OpenAPI3 接口文档。
+    knife4jVersion = '4.5.0'
+    // Hutool 版本，用于常用 Java 工具能力。
+    hutoolVersion = '5.8.16'
+    // MyBatis Mate 版本，用于 MyBatis-Plus 企业增强能力。
+    mybatisMateVersion = '1.3.6'
+    // Lombok 版本，用于编译期生成 getter、setter、日志对象等代码。
+    lombokVersion = '1.18.32'
+}
+
+// 配置 Java 编译目标。
+java {
+    // 使用 Java 17 toolchain，保证本地 JDK 环境不一致时仍按 Java 17 编译。
+    toolchain {
+        // 指定 Java 语言版本为 17。
+        languageVersion = JavaLanguageVersion.of(javaReleaseVersion)
+    }
+    // 同时发布源码 jar，方便消费者项目和 IDE 查看源码。
+    withSourcesJar()
+    // 同时发布 JavaDoc jar，方便标准 Maven 元数据完整。
+    withJavadocJar()
+}
+
+// 配置 Java 编译任务。
+tasks.withType(JavaCompile).configureEach {
+    // 指定源码编码为 UTF-8，避免中文注释和枚举名乱码。
+    options.encoding = 'UTF-8'
+    // 指定 release 为 Java 17，控制编译输出兼容 Java 17。
+    options.release = javaReleaseVersion
+}
+
+// 配置 JavaDoc 任务。
+tasks.withType(Javadoc).configureEach {
+    // 指定 JavaDoc 编码为 UTF-8，避免中文 JavaDoc 乱码。
+    options.encoding = 'UTF-8'
+    // 指定 JavaDoc 字符集为 UTF-8，保证浏览器显示正常。
+    options.charSet = 'UTF-8'
+    // 指定 JavaDoc 输出语言为 UTF-8。
+    options.docEncoding = 'UTF-8'
+    // 忽略 JavaDoc 严格检查，避免历史注释格式阻断发布。
+    failOnError = false
+}
+
+// 导入 Maven BOM，替代原 Spring Boot parent 和 dependencyManagement。
+dependencyManagement {
+    // 导入多个 BOM，统一管理 Spring 生态依赖版本。
+    imports {
+        // Spring Boot BOM 管理 starter、Jackson、Tomcat、Mongo、Redis、Elasticsearch 等版本。
+        mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
+        // Spring Cloud BOM 管理 OpenFeign 等 Spring Cloud 组件版本。
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        // Spring Cloud Alibaba BOM 管理 Nacos、Seata Alibaba 组件版本。
+        mavenBom "com.alibaba.cloud:spring-cloud-alibaba-dependencies:${springCloudAlibabaVersion}"
+    }
+}
+
+// 声明项目依赖。
+dependencies {
+    // OpenFeign：提供 RPC/HTTP 声明式客户端和请求拦截器能力。
+    api 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    // Spring AMQP：提供 RabbitMQ 消息队列支持。
+    api 'org.springframework.boot:spring-boot-starter-amqp'
+    // WebSocket：提供 WebSocket 会话和消息推送能力。
+    api 'org.springframework.boot:spring-boot-starter-websocket'
+    // Validation：提供 jakarta.validation 参数校验能力。
+    api 'org.springframework.boot:spring-boot-starter-validation'
+    // Spring Web：提供 Spring MVC、Servlet、HTTP 请求处理能力。
+    api 'org.springframework.boot:spring-boot-starter-web'
+    // Spring Security：提供认证过滤器、安全上下文和权限模型支持。
+    api 'org.springframework.boot:spring-boot-starter-security'
+    // MongoDB：提供请求日志、RPC 日志的 MongoTemplate 支持。
+    api 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    // Elasticsearch：提供 ES 日志索引 Repository 支持。
+    api 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    // Redis：提供 RedisTemplate、缓存配置和 Redis 连接能力。
+    api 'org.springframework.boot:spring-boot-starter-data-redis'
+    // Jedis：提供 Redis Jedis 客户端连接工厂支持。
+    api 'redis.clients:jedis'
+    // MySQL Driver：提供 MySQL JDBC 驱动。
+    api 'com.mysql:mysql-connector-j'
+    // Spring JDBC：提供 DataSource、JdbcTemplate 和事务基础能力。
+    api 'org.springframework.boot:spring-boot-starter-jdbc'
+    // Druid：提供 Spring Boot 3 下的 Druid 数据库连接池。
+    api 'com.alibaba:druid-spring-boot-3-starter:1.2.23'
+    // Dynamic Datasource：提供动态数据源切换能力。
+    api 'com.baomidou:dynamic-datasource-spring-boot3-starter:4.3.1'
+    // MyBatis-Plus Boot3 Starter：提供 MyBatis-Plus 自动配置能力。
+    api "com.baomidou:mybatis-plus-spring-boot3-starter:${mybatisPlusVersion}"
+    // MyBatis-Plus Core：提供 BaseMapper、条件构造器等核心能力。
+    api "com.baomidou:mybatis-plus:${mybatisPlusVersion}"
+    // MyBatis-Plus Generator：提供代码生成器能力。
+    api "com.baomidou:mybatis-plus-generator:${mybatisPlusVersion}"
+    // MyBatis-Plus JSQLParser：提供租户插件、分页插件等 SQL 解析能力。
+    api "com.baomidou:mybatis-plus-jsqlparser:${mybatisPlusVersion}"
+    // MyBatis Mate：提供 MyBatis-Plus 企业增强能力。
+    api "com.baomidou:mybatis-mate-starter:${mybatisMateVersion}"
+    // Aliyun OSS：提供阿里云对象存储上传、下载、签名能力。
+    api 'com.aliyun.oss:aliyun-sdk-oss:3.17.0'
+    // Aliyun Core：提供阿里云短信、STS、函数工作流等 SDK 基础客户端。
+    api 'com.aliyun:aliyun-java-sdk-core:4.6.0'
+    // Protobuf：提供阿里云日志 appender 依赖的 Protobuf 序列化能力。
+    api 'com.google.protobuf:protobuf-java:2.5.0'
+    // Aliyun Logback Appender：提供阿里云 SLS 日志接入能力。
+    api 'com.aliyun.openservices:aliyun-log-logback-appender:0.1.18'
+    // Hutool：提供常用集合、转换、加密、Spring、Excel 等工具能力。
+    api "cn.hutool:hutool-all:${hutoolVersion}"
+    // Redisson：提供 Redis 分布式锁和 RedissonClient 自动配置能力。
+    api 'org.redisson:redisson-spring-boot-starter:3.27.2'
+    // Knife4j：提供 Jakarta / OpenAPI3 接口文档增强能力。
+    api "com.github.xiaoymin:knife4j-openapi3-jakarta-spring-boot-starter:${knife4jVersion}"
+    // JJWT：提供 JWT 生成和解析能力。
+    api 'io.jsonwebtoken:jjwt:0.9.1'
+    // OkHttp：提供 HTTP 客户端请求能力。
+    api 'com.squareup.okhttp3:okhttp:4.12.0'
+    // Guava：提供 Google 通用集合和工具能力。
+    api 'com.google.guava:guava:33.1.0-jre'
+    // Apache Commons Collections：提供集合增强工具能力。
+    api 'org.apache.commons:commons-collections4:4.1'
+    // Apache POI：提供 Office 文档和 Excel 处理能力。
+    api 'org.apache.poi:poi-ooxml:4.1.2'
+    // 微信支付 SDK：提供微信支付相关签名和请求能力。
+    api 'com.github.wxpay:wxpay-sdk:0.0.3'
+    // ZXing：提供二维码生成和解析能力。
+    api 'com.google.zxing:core:3.3.0'
+    // XXL Job：提供定时任务执行器集成能力。
+    api 'com.xuxueli:xxl-job-core:2.4.0'
+    // iText 5：提供旧版 PDF 生成和处理能力。
+    api 'com.itextpdf:itextpdf:5.5.13'
+    // iText Asian：提供旧版 iText 中文字体支持。
+    api 'com.itextpdf:itext-asian:5.2.0'
+    // iText 7 IO：提供新版 iText PDF 底层 IO 能力。
+    api 'com.itextpdf:io:7.1.8'
+    // iText 7 Kernel：提供新版 iText PDF 核心处理能力。
+    api 'com.itextpdf:kernel:7.1.8'
+    // PDFBox：提供 PDF 渲染、读取和页面处理能力。
+    api 'org.apache.pdfbox:pdfbox:2.0.20'
+    // OpenPDF / Lowagie iText：提供历史 PDF 兼容能力。
+    api 'com.lowagie:itext:2.1.7'
+    // Dozer：提供对象之间的属性映射能力。
+    api 'com.github.dozermapper:dozer-core:6.5.0'
+    // FreeMarker：提供模板渲染能力。
+    api 'org.freemarker:freemarker:2.3.32'
+    // Seata Spring Boot：提供分布式事务自动配置能力。
+    api 'io.seata:seata-spring-boot-starter:2.0.0'
+    // Spring Cloud Alibaba Seata：提供 Spring Cloud Alibaba 体系下的 Seata 集成能力。
+    api 'com.alibaba.cloud:spring-cloud-starter-alibaba-seata'
+    // Seata All：提供 Seata 全量 API，兼容当前代码中的 RootContext 等调用。
+    api 'io.seata:seata-all:2.0.0'
+    // Json-lib：提供历史 net.sf.json JSON 兼容能力。
+    api 'net.sf.json-lib:json-lib:2.4:jdk15'
+    // Aviator：提供表达式公式计算能力。
+    api 'com.googlecode.aviator:aviator:5.0.1'
+    // TTL：提供线程池场景下的 ThreadLocal 上下文传递能力。
+    api 'com.alibaba:transmittable-thread-local:2.12.1'
+    // P6Spy：提供 SQL 分析和打印能力。
+    api 'p6spy:p6spy:3.9.1'
+    // Javax Mail：提供历史邮件发送能力，当前代码仍依赖 javax.mail 包。
+    api 'javax.mail:mail:1.4'
+    // 个推 SDK：提供个推消息推送能力。
+    api 'com.getui.push:restful-sdk:1.0.0.4'
+    // Aliyun FNF：提供阿里云函数工作流 API。
+    api 'com.aliyun:aliyun-java-sdk-fnf:1.8.0'
+    // Orika：提供 BeanMapper 使用的对象映射能力。
+    api 'ma.glasnost.orika:orika-core:1.5.4'
+    // Nacos Discovery：提供服务注册发现和优雅停机端点依赖的 Nacos 注册对象。
+    api 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery'
+    // Lombok 编译期注解：源码中使用 @Getter、@Data、@Slf4j 等注解。
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    // Lombok 注解处理器：编译时生成 Lombok 代码。
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    // Lombok 测试编译期注解：预留测试代码使用 Lombok。
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    // Lombok 测试注解处理器：预留测试编译时生成 Lombok 代码。
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    // Spring Boot Test：提供 JUnit、AssertJ、Mockito、Spring Test 等测试能力。
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+// 配置测试任务。
+tasks.named('test') {
+    // 使用 JUnit Platform，兼容 JUnit 5 测试。
+    useJUnitPlatform()
+}
+
+// 配置 Maven 发布。
+publishing {
+    // 定义发布产物。
+    publications {
+        // 定义名为 mavenJava 的 Maven 发布。
+        mavenJava(MavenPublication) {
+            // 从 Java 组件发布 jar、sourcesJar、javadocJar。
+            from components.java
+            // 显式设置 artifactId，保持历史 Maven 坐标 com:utils:1.0.9。
+            artifactId = 'utils'
+        }
+    }
+    // 定义发布仓库。
+    repositories {
+        // 发布到本机 Maven Local，供 user 项目继续使用 com:utils:1.0.9。
+        mavenLocal()
+        // 发布到阿里云 Maven Release 仓库，供其他机器和项目拉取 utils 制品。
+        maven {
+            // 设置远程发布仓库名称，执行 publish 时会生成 publishMavenJavaPublicationToAliyunReleaseRepository 任务。
+            name = 'aliyunRelease'
+            // 设置阿里云 Maven Release 仓库地址。
+            url = uri(aliyunMavenReleaseUrl)
+            // 设置远程仓库访问凭证。
+            credentials {
+                // 从 ~/.gradle/gradle.properties 或 ALIYUN_MAVEN_USERNAME 读取用户名。
+                username = aliyunMavenUsername.orNull
+                // 从 ~/.gradle/gradle.properties 或 ALIYUN_MAVEN_PASSWORD 读取密码。
+                password = aliyunMavenPassword.orNull
+            }
+        }
+    }
+}

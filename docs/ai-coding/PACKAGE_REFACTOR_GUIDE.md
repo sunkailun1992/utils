@@ -88,7 +88,8 @@ com.kellen.aliyun              阿里云、钉钉、短信、OSS、直播、工�
 修改包结构后必须执行：
 
 ```bash
-mvn -q -DskipTests install
+./gradlew clean build -x test
+./gradlew publishToMavenLocal
 ```
 
 如果消费者项目依赖被移动的类，还必须同步执行消费者项目编译，例如：

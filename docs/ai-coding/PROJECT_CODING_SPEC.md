@@ -77,7 +77,8 @@
 修改 `utils` 后至少执行：
 
 ```bash
-mvn -q -DskipTests install
+./gradlew clean build -x test
+./gradlew publishToMavenLocal
 ```
 
 如果修改公共 API、认证、异常、响应、租户、动态数据源或 MyBatis-Plus 配置，还需要编译消费者项目：
@@ -86,4 +87,3 @@ mvn -q -DskipTests install
 cd /Users/sunkailun/Desktop/个人/GitHub/user
 ./gradlew clean compileJava -x test
 ```
-
