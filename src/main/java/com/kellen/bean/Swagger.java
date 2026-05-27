@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * OpenAPI文档配置。
  *
- * @author sunkailun
+ * @author 孙凯伦
  */
 @Configuration
 public class Swagger {

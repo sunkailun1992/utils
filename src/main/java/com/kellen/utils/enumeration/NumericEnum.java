@@ -5,7 +5,7 @@ import lombok.Getter;
 
 /**
  * 数字枚举类
- * @author ranyang
+ * @author 孙凯伦
  * @Date 2021/04/06 14:25
  */
 @Getter

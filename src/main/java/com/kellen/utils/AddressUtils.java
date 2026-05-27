@@ -11,7 +11,7 @@ import java.util.Map;
 
 /**
  *
- * @author: 孙凯伦
+ * @author 孙凯伦
  *
  * @email: 376253703@qq.com
  * @description: 根据IP地址获取详细的地域信息
@@ -52,7 +52,7 @@ public class AddressUtils {
      *
      * @param theString
      * @return
-     * @author fanhui 2007-3-15
+     * @author 孙凯伦
      */
     public static String decodeUnicode(String theString) {
         char aChar;

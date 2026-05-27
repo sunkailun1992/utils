@@ -14,7 +14,7 @@ import static com.kellen.utils.enumeration.WordCodeTypeEnum.WORD_ENTERPRISE;
 import static com.kellen.utils.enumeration.WordCodeTypeEnum.WORD_PROJECT;
 
 /**
- * @author: ranyang
+ * @author 孙凯伦
  * @Date: 2021/3/15 10:41
  * @descript: 字段编码属性枚举
  */

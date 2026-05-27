@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * ip工具类
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2020/12/27  下午4:32
  * @email 376253703@qq.com
  * 
@@ -31,7 +31,7 @@ public class IpUtils {
 
     /**
      * 获得服务器ip
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2020/7/27  12:03 下午
      * @email       376253703@qq.com
      * 
@@ -44,7 +44,7 @@ public class IpUtils {
 
     /**
      * 本地地址判断
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2018/8/18  下午1:04
      * @email       376253703@qq.com
      * 

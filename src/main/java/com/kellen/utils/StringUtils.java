@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * 字符串处理类
- * @author      sunkailun
+ * @author 孙凯伦
  * @DateTime    2020/12/27  下午4:35
  * @email       376253703@qq.com
  * 
@@ -44,7 +44,7 @@ public class StringUtils {
 
     /**
      * 手机号隐藏
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2019/7/30  9:04 AM
      * @email       376253703@qq.com
      * 

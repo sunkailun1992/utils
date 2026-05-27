@@ -1,7 +1,7 @@
 package com.kellen.utils.exception;
 
 /**
- * @author: ranyang
+ * @author 孙凯伦
  * @Date: 2021/3/15 15:30
  * @descript: 业务异常
  */

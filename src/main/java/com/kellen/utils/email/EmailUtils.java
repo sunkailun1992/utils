@@ -9,7 +9,7 @@ import java.io.File;
 import java.util.regex.Pattern;
 
 /**
- * @author: 孙凯伦
+ * @author 孙凯伦
  * 
  * @email: 376253703@qq.com
  * @description: 邮件工具类

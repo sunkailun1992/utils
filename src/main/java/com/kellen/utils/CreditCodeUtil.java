@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
  * 第五部分：校验码1位 (数字或大写英文字母)
  * </pre>
  *
- * @author looly
+ * @author 孙凯伦
  * @since 5.2.4
  */
 public class CreditCodeUtil {

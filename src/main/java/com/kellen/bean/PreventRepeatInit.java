@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * Created with IntelliJ IDEA.
  * 请求接口幂等
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2020/12/10  下午5:28
  * @email 376253703@qq.com
  * @explain
@@ -58,7 +58,7 @@ public class PreventRepeatInit {
      * @param joinPoint: aop拦截类
      *                   验证码
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2020/12/10  下午7:20
      * @email 376253703@qq.com
      */
@@ -88,7 +88,7 @@ public class PreventRepeatInit {
      * @param joinPoint: aop拦截类
      *                   验证码
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2020/12/10  下午7:21
      * @email 376253703@qq.com
      */
@@ -113,7 +113,7 @@ public class PreventRepeatInit {
      *
      * @param joinPoint: aop拦截类
      * @return java.lang.String
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2026/5/26  下午
      * @email 376253703@qq.com
      */

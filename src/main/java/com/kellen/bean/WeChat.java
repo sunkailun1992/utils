@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @author: 孙凯伦
+ * @author 孙凯伦
  * 
  * @email: 376253703@qq.com
  * @name:

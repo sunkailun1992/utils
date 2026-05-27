@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Created with IntelliJ IDEA.
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/7/20  上午11:29
  * @email 376253703@qq.com
  *
@@ -60,7 +60,7 @@ public class ConfigClientController {
      *
      * @param :
      * @return org.springframework.data.redis.core.RedisTemplate<java.lang.String, java.lang.Object>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/23  下午12:36
      * @email 376253703@qq.com
      *
@@ -78,7 +78,7 @@ public class ConfigClientController {
      *
      * @param :
      * @return org.springframework.data.redis.connection.RedisConnectionFactory
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/23  下午12:36
      * @email 376253703@qq.com
      *

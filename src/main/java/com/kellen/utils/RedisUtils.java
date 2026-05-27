@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * <p>当前认证授权体系以 Spring Security 上下文、JWT Bearer 和用户上下文为准，
  * 本工具类只保留通用缓存读写能力，不再提供历史 token 请求头或 Redis token 用户读取能力。</p>
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2020/12/27  下午4:37
  * @email 376253703@qq.com
  */

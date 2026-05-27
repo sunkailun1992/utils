@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 长度枚举类
- * @author: sunx
+ * @author 孙凯伦
  * @Date: 2021/04/06 14:25
  * @descript:
  */

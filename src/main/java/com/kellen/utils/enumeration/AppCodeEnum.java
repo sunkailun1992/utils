@@ -10,7 +10,7 @@ import java.util.Optional;
 
 /**
  * 系统编码枚举类
- * @author : ranyang
+ * @author 孙凯伦
  * @date : 2021/04/06 14:25
  */
 @Getter
@@ -62,7 +62,7 @@ public enum AppCodeEnum {
      *
      * @param code: 平台编码
      * @return AppCodeEnum
-     * @author sunx
+     * @author 孙凯伦
      * @since 2021/3/19  4:35 下午
      */
     public static AppCodeEnum getAppCodeEnum(String code) {

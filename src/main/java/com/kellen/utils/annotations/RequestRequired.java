@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * Created with IntelliJ IDEA.
  * 请求校验
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2019/5/6  11:30 AM
  * @email 376253703@qq.com
  * 

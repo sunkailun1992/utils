@@ -8,7 +8,7 @@ import java.util.TreeMap;
 /**
  * Map工具类
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2020/12/29  上午11:14
  * @email 376253703@qq.com
  * 
@@ -24,7 +24,7 @@ public class MapUtils {
      * Map转TreeMap
      * @param map
      * @return com.kellen.utils.ApiResponse
-     * @author sunx
+     * @author 孙凯伦
      * @since 2021-02-09
      */
     public static TreeMap<String, Object> getTreeMap (Map<String, Object> map){

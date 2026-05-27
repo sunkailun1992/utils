@@ -2,7 +2,7 @@ package com.kellen.utils.exception;
 
 /**
  * 发送短信异常
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2020/12/31  上午9:35
  * @email 376253703@qq.com
  * 

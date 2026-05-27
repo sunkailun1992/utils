@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 统一接口响应对象
  *
  * @param <T>: 业务响应数据类型
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2026/5/26 下午
  * @email 376253703@qq.com
  */
@@ -62,7 +62,7 @@ public class ApiResponse<T> {
      * 无参构造器
      *
      * @return
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2026/5/26 下午
      * @email 376253703@qq.com
      */
@@ -74,7 +74,7 @@ public class ApiResponse<T> {
      * 成功空响应
      *
      * @return com.kellen.utils.ApiResponse<java.lang.Void>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2026/5/26 下午
      * @email 376253703@qq.com
      */
@@ -87,7 +87,7 @@ public class ApiResponse<T> {
      *
      * @param data: 返回给前端的业务数据
      * @return com.kellen.utils.ApiResponse<T>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2026/5/26 下午
      * @email 376253703@qq.com
      */
@@ -102,7 +102,7 @@ public class ApiResponse<T> {
      *
      * @param returnCode: 失败业务返回码
      * @return com.kellen.utils.ApiResponse<java.lang.Void>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2026/5/26 下午
      * @email 376253703@qq.com
      */
@@ -116,7 +116,7 @@ public class ApiResponse<T> {
      * @param returnCode: 失败业务返回码
      * @param error:      返回给前端的稳定错误提示
      * @return com.kellen.utils.ApiResponse<java.lang.Void>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2026/5/26 下午
      * @email 376253703@qq.com
      */
@@ -133,7 +133,7 @@ public class ApiResponse<T> {
      * @param data:       业务响应数据
      * @param error:      失败时的稳定错误提示
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2026/5/26 下午
      * @email 376253703@qq.com
      */
@@ -153,7 +153,7 @@ public class ApiResponse<T> {
      * @param returnCode: 业务返回码
      * @param error:      自定义错误提示
      * @return java.lang.String
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2026/5/26 下午
      * @email 376253703@qq.com
      */

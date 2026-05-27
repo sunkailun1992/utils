@@ -6,7 +6,7 @@ import java.lang.annotation.*;
  * 自定义注解获取方法名称和作用
  *
  * @ClassName: Verify
- * @author: 孙凯伦
+ * @author 孙凯伦
  * @date: 2016年10月10日 上午10:25:56
  * @Description: TODO
  * @email: 376253703@qq.com

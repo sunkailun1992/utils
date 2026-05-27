@@ -5,7 +5,7 @@ import com.kellen.log.entity.ElasticSearchRequestLog;
 /**
  * Created with IntelliJ IDEA.
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/7/16  上午11:09
  * @email 376253703@qq.com
  * 
@@ -17,7 +17,7 @@ public interface ElasticSearchRequestLogService {
      *
      * @param elasticSearchRequestLog:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:12
      * @email 376253703@qq.com
      * 

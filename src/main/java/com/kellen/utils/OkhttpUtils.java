@@ -20,7 +20,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * okhttp工具类
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/5/21  上午11:07
  * @email 376253703@qq.com
  * 
@@ -43,7 +43,7 @@ public final class OkhttpUtils {
      *
      * @param :
      * @return okhttp3.OkHttpClient
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/21  上午11:10
      * @email 376253703@qq.com
      * 
@@ -109,7 +109,7 @@ public final class OkhttpUtils {
      *
      * @param params:
      * @return okhttp3.RequestBody
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/21  上午11:09
      * @email 376253703@qq.com
      * 
@@ -133,7 +133,7 @@ public final class OkhttpUtils {
      *
      * @param json:
      * @return okhttp3.RequestBody
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/21  上午11:09
      * @email 376253703@qq.com
      * 
@@ -148,7 +148,7 @@ public final class OkhttpUtils {
      *
      * @param params:
      * @return okhttp3.RequestBody
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/21  上午11:09
      * @email 376253703@qq.com
      * 
@@ -165,7 +165,7 @@ public final class OkhttpUtils {
      * @param method:
      * @param body:
      * @return okhttp3.Request
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/21  上午11:18
      * @email 376253703@qq.com
      * 
@@ -181,7 +181,7 @@ public final class OkhttpUtils {
      *
      * @param request:
      * @return okhttp3.Response
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/21  上午11:20
      * @email 376253703@qq.com
      * 

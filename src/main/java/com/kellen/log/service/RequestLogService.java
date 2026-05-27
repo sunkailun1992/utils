@@ -9,7 +9,7 @@ import java.util.Date;
 /**
  * Created with IntelliJ IDEA.
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/7/16  上午11:09
  * @email 376253703@qq.com
  * 
@@ -21,7 +21,7 @@ public interface RequestLogService {
      *
      * @param requestLog:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:12
      * @email 376253703@qq.com
      * 
@@ -33,7 +33,7 @@ public interface RequestLogService {
      *
      * @param id:
      * @return com.entity.mongodb.log.Log
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:12
      * @email 376253703@qq.com
      * 
@@ -46,7 +46,7 @@ public interface RequestLogService {
      * @param createDateStart:
      * @param createDateEnd:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:12
      * @email 376253703@qq.com
      * 
@@ -58,7 +58,7 @@ public interface RequestLogService {
      *
      * @param requestLogQuery:
      * @return java.util.List<com.entity.mongodb.log.Log>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:16
      * @email 376253703@qq.com
      * 
@@ -67,7 +67,7 @@ public interface RequestLogService {
 
     /**
      * 操作日志, 查询分页
-     * @author: 孙凯伦
+     * @author 孙凯伦
      * 
      * @email: 376253703@qq.com
      * @name: pageEnhance

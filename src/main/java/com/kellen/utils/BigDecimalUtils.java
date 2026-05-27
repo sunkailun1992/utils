@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 /**
  * 数字精度工具类
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2020/12/27  下午4:40
  * @email 376253703@qq.com
  * 

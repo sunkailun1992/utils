@@ -13,7 +13,7 @@ import java.util.Date;
 /**
  * Created with IntelliJ IDEA.
  * 操作日志
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/7/16  上午11:09
  * @email 376253703@qq.com
  * 
@@ -58,7 +58,7 @@ public class RpcLogServiceImpl implements RpcLogService {
      *
      * @param rpcLog:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:15
      * @email 376253703@qq.com
      * 
@@ -75,7 +75,7 @@ public class RpcLogServiceImpl implements RpcLogService {
      *
      * @param id:
      * @return com.entity.mongodb.log.Log
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:15
      * @email 376253703@qq.com
      * 
@@ -91,7 +91,7 @@ public class RpcLogServiceImpl implements RpcLogService {
      * @param createDateStart:
      * @param createDateEnd:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:16
      * @email 376253703@qq.com
      * 

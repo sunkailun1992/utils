@@ -5,7 +5,7 @@ import lombok.Getter;
 
 /**
  * 通用常量
- * @author ranyang
+ * @author 孙凯伦
  * @date 2021/04/06 14:25
  */
 @Getter

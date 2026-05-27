@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 /**
  *
- * @author: 孙凯伦
+ * @author 孙凯伦
  * 
  * @email: 376253703@qq.com
  * @description: 邮箱发送账户实体类

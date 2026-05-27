@@ -41,7 +41,7 @@ import java.util.Map;
 /**
  * Created with IntelliJ IDEA
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2019/5/6  10:36 AM
  * @email 376253703@qq.com
  * @explain
@@ -69,7 +69,7 @@ public class AopAspectJ {
      *
      * @param :
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2019/5/6  5:07 PM
      * @email 376253703@qq.com
      */
@@ -83,7 +83,7 @@ public class AopAspectJ {
      *
      * @param point:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2019/5/6  4:29 PM
      * @email 376253703@qq.com
      */
@@ -107,7 +107,7 @@ public class AopAspectJ {
      *
      * @param :
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2019/5/6  4:13 PM
      * @email 376253703@qq.com
      */
@@ -124,7 +124,7 @@ public class AopAspectJ {
      *
      * @param proceedingJoinPoint:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2019/5/6  5:02 PM
      * @email 376253703@qq.com
      */
@@ -152,7 +152,7 @@ public class AopAspectJ {
      *
      * @param :
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2019/5/6  4:13 PM
      * @email 376253703@qq.com
      */
@@ -177,7 +177,7 @@ public class AopAspectJ {
      *
      * @param httpServletRequest:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  下午3:04
      * @email 376253703@qq.com
      */
@@ -232,7 +232,7 @@ public class AopAspectJ {
      * @param map:                 请求参数
      * @param o:                   返回结果
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  下午3:04
      * @email 376253703@qq.com
      */
@@ -262,7 +262,7 @@ public class AopAspectJ {
      *
      * @param :
      * @return jakarta.servlet.http.HttpServletRequest
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2019/5/6  10:36 AM
      * @email 376253703@qq.com
      */
@@ -322,7 +322,7 @@ public class AopAspectJ {
      *
      * @param userId: Spring Security上下文中的用户ID
      * @return java.lang.Long
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2026/5/26  下午
      * @email 376253703@qq.com
      */

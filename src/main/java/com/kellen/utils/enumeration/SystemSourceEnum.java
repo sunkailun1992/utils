@@ -11,7 +11,7 @@ import java.util.Optional;
 
 /**
  * 系统来源枚举类
- * @author: ranyang
+ * @author 孙凯伦
  * @Date: 2021/04/06 14:25
  * @descript:
  */
@@ -112,7 +112,7 @@ public enum SystemSourceEnum {
      *
      * @param code: 系统来源编码
      * @return SystemSourceEnum
-     * @author sunx
+     * @author 孙凯伦
      * @since 2021/3/19  4:35 下午
      */
     public static SystemSourceEnum getSystemSourceEnum(String code) {

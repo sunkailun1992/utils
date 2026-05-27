@@ -18,7 +18,7 @@ import java.util.Objects;
  * Created with IntelliJ IDEA.
  * 操作日志
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/7/16  上午11:09
  * @email 376253703@qq.com
  * 
@@ -35,7 +35,7 @@ public class RequestLogServiceImpl implements RequestLogService {
      *
      * @param requestLog:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:15
      * @email 376253703@qq.com
      * 
@@ -52,7 +52,7 @@ public class RequestLogServiceImpl implements RequestLogService {
      *
      * @param id:
      * @return com.entity.mongodb.log.Log
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:15
      * @email 376253703@qq.com
      * 
@@ -68,7 +68,7 @@ public class RequestLogServiceImpl implements RequestLogService {
      * @param createDateStart:
      * @param createDateEnd:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:16
      * @email 376253703@qq.com
      * 
@@ -84,7 +84,7 @@ public class RequestLogServiceImpl implements RequestLogService {
      *
      * @param requestLogQuery:
      * @return java.util.List<com.entity.mongodb.log.Log>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/7/16  上午11:16
      * @email 376253703@qq.com
      * 
@@ -100,7 +100,7 @@ public class RequestLogServiceImpl implements RequestLogService {
 
     /**
      * @description: 操作日志 分页查询
-     * 　* @author wangyifei
+     * 　* @author 孙凯伦
      * 　* @date 2021/5/17
      */
     @Override

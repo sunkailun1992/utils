@@ -5,7 +5,7 @@ import lombok.Getter;
 /**
  * 客户模块异常处理
  *
- * @author ljh
+ * @author 孙凯伦
  * @date 2022/4/1 2:06 下午
  */
 public class CustomerException extends RuntimeException {

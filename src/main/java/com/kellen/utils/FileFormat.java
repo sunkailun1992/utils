@@ -7,7 +7,7 @@ import java.util.Set;
 
 /**
  * 文件判断工具类
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2019/1/30  5:55 PM
  * @email 376253703@qq.com
  * 
@@ -23,7 +23,7 @@ public class FileFormat {
 
     /**
      * 图片判断
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2019/1/31  10:16 AM
      * @email       376253703@qq.com
      * 
@@ -35,7 +35,7 @@ public class FileFormat {
     }
     /**
      * 文档判断
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2019/1/31  10:16 AM
      * @email       376253703@qq.com
      * 
@@ -48,7 +48,7 @@ public class FileFormat {
 
     /**
      * 视频判断
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2019/1/31  10:16 AM
      * @email       376253703@qq.com
      * 

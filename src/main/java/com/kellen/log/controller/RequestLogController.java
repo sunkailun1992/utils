@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * @author wangyifei
+ * @author 孙凯伦
  * @Description
  * @date 2021/5/17 16:34
  */
@@ -34,7 +34,7 @@ public class RequestLogController {
      *
      * @param requestLogQuery
      * @return com.kellen.utils.ApiResponse
-     * @author 王一飞
+     * @author 孙凯伦
      * @since 2021/3/12  17:27
      */
     @Methods(methodsName = "全局请求日志查询", methods = "select")

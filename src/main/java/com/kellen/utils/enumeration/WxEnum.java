@@ -3,7 +3,7 @@ package com.kellen.utils.enumeration;
 /**
  * Created with IntelliJ IDEA.
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2019/4/9  10:25 AM
  * @email 376253703@qq.com
  * 

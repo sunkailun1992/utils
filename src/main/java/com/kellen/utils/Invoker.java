@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 
 /**
  *
- * @author: 孙凯伦
+ * @author 孙凯伦
  * 
  * @email: 376253703@qq.com
  * @description: 动态代理

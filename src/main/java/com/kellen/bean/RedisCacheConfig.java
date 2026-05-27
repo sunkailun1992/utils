@@ -18,7 +18,7 @@ import java.util.Map;
 
 /**
  *
- * @author: 孙凯伦
+ * @author 孙凯伦
  * 
  * @email: 376253703@qq.com
  * @description: Redis缓存配置

@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Created with IntelliJ IDEA.
  * 操作日志
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/4/23  下午3:07
  * @email 376253703@qq.com
  * 
@@ -35,7 +35,7 @@ public class RpcLogMapper {
      *
      * @param rpcLog:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:22
      * @email 376253703@qq.com
      * 
@@ -49,7 +49,7 @@ public class RpcLogMapper {
      *
      * @param id:
      * @return com.entity.mongodb.user.OperationLog
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:23
      * @email 376253703@qq.com
      * 
@@ -63,7 +63,7 @@ public class RpcLogMapper {
      *
      * @param :
      * @return java.util.List<com.entity.mongodb.user.OperationLog>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:25
      * @email 376253703@qq.com
      * 
@@ -76,7 +76,7 @@ public class RpcLogMapper {
      * 操作日志,日期区间删除
      *
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:25
      * @email 376253703@qq.com
      * 
@@ -92,7 +92,7 @@ public class RpcLogMapper {
      * @param rpcLog:
      * @param pageable:
      * @return java.util.List<com.entity.mongodb.user.OperationLog>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:25
      * @email 376253703@qq.com
      * 
@@ -131,7 +131,7 @@ public class RpcLogMapper {
      * @param rpcLog:
      * @param pageable:
      * @return java.util.List<com.entity.mongodb.user.OperationLog>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:25
      * @email 376253703@qq.com
      * 
@@ -165,7 +165,7 @@ public class RpcLogMapper {
      *
      * @param rpcLog:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:25
      * @email 376253703@qq.com
      * 

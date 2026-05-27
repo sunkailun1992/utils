@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @Author: sunx
+ * @Author 孙凯伦
  * @Date 2021/8/6 10:38
  * @Classname DynamicDataSource
  * @Description 获取数据源标识

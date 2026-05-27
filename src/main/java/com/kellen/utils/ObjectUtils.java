@@ -2,7 +2,7 @@ package com.kellen.utils;
 
 /**
  * Object的工具类
- * @author      sunkailun
+ * @author 孙凯伦
  * @DateTime    2020/12/27  下午4:38
  * @email       376253703@qq.com
  * 
@@ -11,7 +11,7 @@ public class ObjectUtils {
 
     /**
      * 判断是否基础类型
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2020/7/22  9:52 上午
      * @email       376253703@qq.com
      * 

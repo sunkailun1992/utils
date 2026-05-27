@@ -18,7 +18,7 @@ import java.util.TreeMap;
 /**
  * Created with IntelliJ IDEA.
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/5/9  下午1:53
  * @email 376253703@qq.com
  * 
@@ -74,7 +74,7 @@ public class RsaUtils {
      *
      * @param param:
      * @return java.util.TreeMap
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/9  下午2:36
      * @email 376253703@qq.com
      * 
@@ -92,7 +92,7 @@ public class RsaUtils {
      *
      * @param map:
      * @return java.lang.Stringdata
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/9  下午2:36
      * @email 376253703@qq.com
      * 
@@ -113,7 +113,7 @@ public class RsaUtils {
      *
      * @param map: 参数
      * @return java.lang.String
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/9  下午2:01
      * @email 376253703@qq.com
      * 
@@ -138,7 +138,7 @@ public class RsaUtils {
      *
      * @param json: 参数
      * @return java.lang.String
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/9  下午2:01
      * @email 376253703@qq.com
      * 
@@ -162,7 +162,7 @@ public class RsaUtils {
      *
      * @param param: 参数
      * @return java.lang.String
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/9  下午2:01
      * @email 376253703@qq.com
      * 
@@ -183,7 +183,7 @@ public class RsaUtils {
      * @param map:      参数
      * @param signData: 签名
      * @return boolean
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/9  下午1:59
      * @email 376253703@qq.com
      * 
@@ -210,7 +210,7 @@ public class RsaUtils {
      * @param json:    参数
      * @param signData: 签名
      * @return boolean
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/9  下午1:59
      * @email 376253703@qq.com
      * 

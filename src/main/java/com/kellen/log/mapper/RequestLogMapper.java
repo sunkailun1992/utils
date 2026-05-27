@@ -22,7 +22,7 @@ import java.util.Objects;
  * Created with IntelliJ IDEA.
  * 操作日志
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/4/23  下午3:07
  * @email 376253703@qq.com
  * 
@@ -41,7 +41,7 @@ public class RequestLogMapper {
      *
      * @param requestLog:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:22
      * @email 376253703@qq.com
      * 
@@ -55,7 +55,7 @@ public class RequestLogMapper {
      *
      * @param id:
      * @return com.entity.mongodb.user.OperationLog
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:23
      * @email 376253703@qq.com
      * 
@@ -69,7 +69,7 @@ public class RequestLogMapper {
      *
      * @param :
      * @return java.util.List<com.entity.mongodb.user.OperationLog>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:25
      * @email 376253703@qq.com
      * 
@@ -82,7 +82,7 @@ public class RequestLogMapper {
      * 操作日志,日期区间删除
      *
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:25
      * @email 376253703@qq.com
      * 
@@ -99,7 +99,7 @@ public class RequestLogMapper {
      * @param requestLog:
      * @param pageable:
      * @return java.util.List<com.entity.mongodb.user.OperationLog>
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:25
      * @email 376253703@qq.com
      * 
@@ -140,7 +140,7 @@ public class RequestLogMapper {
      *
      * @param requestLog:
      * @return void
-     * @author sunkailun
+     * @author 孙凯伦
      * @DateTime 2018/5/23  上午10:25
      * @email 376253703@qq.com
      * 
@@ -152,7 +152,7 @@ public class RequestLogMapper {
 
     /**
      * @description: 操作日志 分页查询
-     * 　* @author wangyifei
+     * 　* @author 孙凯伦
      * 　* @date 2021/5/17
      */
     public Page pageEnhance(RequestLogQuery requestLogQuery, int current, int size) {

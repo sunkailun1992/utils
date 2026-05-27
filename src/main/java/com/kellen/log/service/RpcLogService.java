@@ -7,7 +7,7 @@ import java.util.Date;
 /**
  * Created with IntelliJ IDEA.
  *
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2018/7/16  上午11:09
  * @email 376253703@qq.com
  * 
@@ -17,7 +17,7 @@ public interface RpcLogService {
 
     /**
      * 日志记录
-     * @author: 孙凯伦
+     * @author 孙凯伦
      * 
      * @email: 376253703@qq.com
      * @name: rpcLog
@@ -33,7 +33,7 @@ public interface RpcLogService {
 
     /**
      * 操作日志，插入
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2018/7/16  上午11:12
      * @email       376253703@qq.com
      * 
@@ -44,7 +44,7 @@ public interface RpcLogService {
 
     /**
      * 操作日志，单条查询
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2018/7/16  上午11:12
      * @email       376253703@qq.com
      * 
@@ -55,7 +55,7 @@ public interface RpcLogService {
 
     /**
      * 时间删除
-     * @author      sunkailun
+     * @author 孙凯伦
      * @DateTime    2018/7/16  上午11:12
      * @email       376253703@qq.com
      * 

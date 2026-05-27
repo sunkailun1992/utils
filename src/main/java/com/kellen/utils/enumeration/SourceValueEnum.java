@@ -11,7 +11,7 @@ import java.util.Optional;
 /**
  * Created with IntelliJ IDEA.
  *
- * @author sunx
+ * @author 孙凯伦
  * @date 2018/4/12  下午5:14
  */
 @Getter
@@ -63,7 +63,7 @@ public enum SourceValueEnum {
      *
      * @param code: 来源值编码
      * @return SourceValueEnum
-     * @author sunx
+     * @author 孙凯伦
      * @since 2021/3/19  4:35 下午
      */
     public static SourceValueEnum getAppCodeEnum(String code) {

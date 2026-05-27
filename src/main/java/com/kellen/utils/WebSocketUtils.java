@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 长链接工具类
- * @author      sunkailun
+ * @author 孙凯伦
  * @DateTime    2020/12/27  下午4:34
  * @email       376253703@qq.com
  * 

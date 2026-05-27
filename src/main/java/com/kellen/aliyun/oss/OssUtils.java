@@ -35,7 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * @author: 孙凯伦
+ * @author 孙凯伦
  * @email: 376253703@qq.com
  * @description: 阿里云文件oss
  * @date: 2022/1/18 10:26 AM

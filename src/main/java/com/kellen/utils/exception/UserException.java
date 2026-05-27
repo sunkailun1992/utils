@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * Created with IntelliJ IDEA.
  * 用户登录异常
- * @author sunkailun
+ * @author 孙凯伦
  * @DateTime 2020/12/10  下午9:08
  * @email 376253703@qq.com
  * 
