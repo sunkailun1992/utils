@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * 多租户配置属性。
+ *
+ * @author 孙凯伦
+ */
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "tenant")

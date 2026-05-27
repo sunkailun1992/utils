@@ -5,17 +5,12 @@ import java.lang.annotation.*;
 /**
  * 自定义注解获取方法名称和作用
  *
- * @ClassName: Verify
  * @author 孙凯伦
- * @date: 2016年10月10日 上午10:25:56
- * @Description: TODO
- * @email: 376253703@qq.com
- * @version: V1.0
  */
 @Inherited
-@Retention(RetentionPolicy.RUNTIME) // 注解会在class字节码文件中存在，在运行时可以通过反射获取到
-@Target({ElementType.METHOD})//定义注解的作用目标**作用范围字段、枚举的常量/方法
-@Documented//说明该注解将被包含在javadoc中
+@Retention(RetentionPolicy.RUNTIME) // 注解保留到运行期，AOP 日志逻辑可通过反射读取。
+@Target({ElementType.METHOD}) // 注解只允许标记方法。
+@Documented // 注解会出现在生成的 JavaDoc 中。
 public @interface Methods {
     /**
      * 方法名称

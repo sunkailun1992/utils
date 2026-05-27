@@ -260,8 +260,4 @@ public class CommissionFormula {
         map.put("individualMoney", individualMoney);
     }
 
-    public static void main(String[] args) {
-        Map<String, BigDecimal> map = individual(new BigDecimal(100), new BigDecimal(0.4), true, new BigDecimal(0.06), 3, new BigDecimal(0.05));
-        System.out.printf(JsonUtil.json(map));
-    }
 }

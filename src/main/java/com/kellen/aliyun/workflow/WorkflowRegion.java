@@ -1,13 +1,9 @@
 package com.kellen.aliyun.workflow;
 
 /**
- * TODO 工作流区域id
+ * 阿里云函数工作流区域枚举。
  *
  * @author 孙凯伦
- * @className WorkflowRegion
- * @email 376253703@qq.com
- * 
- * @time 2022/2/23 10:06 AM
  */
 
 public enum WorkflowRegion {

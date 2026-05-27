@@ -39,12 +39,11 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA
+ * 请求通用切面。
+ *
+ * <p>统一处理 SQL 参数校验、动态数据源切换、防重复提交、请求日志和慢请求钉钉提醒。</p>
  *
  * @author 孙凯伦
- * @DateTime 2019/5/6  10:36 AM
- * @email 376253703@qq.com
- * @explain
  */
 @Slf4j
 @Aspect
@@ -52,26 +51,32 @@ import java.util.Map;
 @Component
 public class AopAspectJ {
 
+    /**
+     * 防重复提交处理器。
+     */
     @Autowired
     private PreventRepeatInit preventRepeatInit;
 
+    /**
+     * Mongo 请求日志服务。
+     */
     @Autowired
     private RequestLogService requestLogService;
 
+    /**
+     * Elasticsearch 请求日志服务。
+     */
     @Autowired
     private ElasticSearchRequestLogService elasticSearchRequestLogService;
 
+    /**
+     * Spring 应用上下文。
+     */
     @Autowired
     private ConfigurableApplicationContext applicationContext;
 
     /**
-     * 对所有LoginRequired的注解类实现切点
-     *
-     * @param :
-     * @return void
-     * @author 孙凯伦
-     * @DateTime 2019/5/6  5:07 PM
-     * @email 376253703@qq.com
+     * 匹配标记了 RequestRequired 的 Controller 或服务类。
      */
     @Pointcut("within(@com.kellen.utils.annotations.RequestRequired *)")
     public void pointcut() {
@@ -79,71 +84,51 @@ public class AopAspectJ {
     }
 
     /**
-     * 前置增强
+     * 方法执行前处理请求上下文。
      *
-     * @param point:
-     * @return void
-     * @author 孙凯伦
-     * @DateTime 2019/5/6  4:29 PM
-     * @email 376253703@qq.com
+     * @param point 切点
+     * @throws Exception 前置处理异常
      */
     @Before("pointcut()")
     public void before(JoinPoint point) throws Exception {
-        //请求头
-        HttpServletRequest request = getHttpServletRequest();
-        //校验
-        verify(request);
-        //数据源
-        String dataSource = getDataSource(request);
-        //接口幂等
+        HttpServletRequest request = getHttpServletRequest(); // 获取当前请求对象。
+        verify(request); // 校验排序字段等 SQL 拼接参数。
+        String dataSource = getDataSource(request); // 从请求头解析动态数据源。
         preventRepeatInit.init(point); // 保留防重复提交能力，但内部不再依赖旧 token。
-        //配置使用数据源
-        DynamicSourceTtl.push(dataSource);
+        DynamicSourceTtl.push(dataSource); // 写入动态数据源上下文。
     }
 
 
     /**
-     * 后置增强
+     * 方法正常完成后清理上下文。
      *
-     * @param :
-     * @return void
-     * @author 孙凯伦
-     * @DateTime 2019/5/6  4:13 PM
-     * @email 376253703@qq.com
+     * @param joinPoint 切点
+     * @throws Exception 后置处理异常
      */
     @After("pointcut()")
     public void after(JoinPoint joinPoint) throws Exception {
-        //后置删除幂等缓存
         preventRepeatInit.delete(joinPoint); // 方法正常结束后释放本次 @PreventRepeat 生成的幂等锁。
-        //移除数据源变量，防止堆积
-        DynamicSourceTtl.clear();
+        DynamicSourceTtl.clear(); // 清理数据源上下文，避免线程复用串数据源。
     }
 
     /**
-     * 环绕增强
+     * 环绕处理请求日志。
      *
-     * @param proceedingJoinPoint:
-     * @return void
-     * @author 孙凯伦
-     * @DateTime 2019/5/6  5:02 PM
-     * @email 376253703@qq.com
+     * @param proceedingJoinPoint 环绕切点
+     * @return 业务方法返回值
+     * @throws Throwable 业务方法或切面异常
      */
     @Around("pointcut()")
     public Object around(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-        HttpServletRequest request = getHttpServletRequest();
-        //开始执行时间
-        long start = System.currentTimeMillis();
-        //执行前
-        String performBefore = MethodsJudge.performBefore(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName(), RequestUtil.getParameterMap(request));
-        Object o = proceedingJoinPoint.proceed();
-        //结束执行时间
-        long end = System.currentTimeMillis();
-        //执行后
-        String performAfter = MethodsJudge.performAfter(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName(), RequestUtil.getParameterMap(request));
-        log.debug("耗时:" + (end - start));
-        //插入日志
+        HttpServletRequest request = getHttpServletRequest(); // 获取当前请求对象。
+        long start = System.currentTimeMillis(); // 记录开始时间。
+        String performBefore = MethodsJudge.performBefore(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName(), RequestUtil.getParameterMap(request)); // 执行 Methods 前置扩展点。
+        Object o = proceedingJoinPoint.proceed(); // 执行业务方法。
+        long end = System.currentTimeMillis(); // 记录结束时间。
+        String performAfter = MethodsJudge.performAfter(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName(), RequestUtil.getParameterMap(request)); // 执行 Methods 后置扩展点。
+        log.debug("耗时:{}", end - start); // 输出接口耗时调试日志。
         setLog(proceedingJoinPoint, request, (end - start), RequestUtil.getParameterMap(request), o, performBefore, performAfter); // 日志落库不再要求旧 token 存在。
-        return o;
+        return o; // 返回业务方法结果。
     }
 
 
@@ -204,22 +189,13 @@ public class AopAspectJ {
             requestLog.setDescription(MethodsJudge.description(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName(), map)); // 记录接口业务描述。
             requestLog.setInterfaceName(MethodsJudge.getInterfaceName(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName())); // 记录接口展示名称。
         } catch (Exception e) {
-            e.printStackTrace(); // 保持历史行为，描述解析失败不阻断业务响应。
+            log.warn("请求日志描述解析失败，uri: {}", httpServletRequest.getRequestURI(), e); // 描述解析失败不阻断业务响应。
         }
-        /**
-         * mongodb新增
-         */
         requestLogService.insert(requestLog); // 写入 Mongo 请求日志。
-        /**
-         * elasticsearch新增
-         */
         ElasticSearchRequestLog elasticSearchRequestLog = GeneralConvertor.convertor(requestLog, ElasticSearchRequestLog.class); // 将 Mongo 日志实体转换为 ES 日志实体。
         elasticSearchRequestLog.setId(IdUtil.simpleUUID()); // 为 ES 日志生成独立 ID。
         elasticSearchRequestLog.setCreateDateTime(LocalDateTime.now()); // 设置 ES 日志创建时间。
         elasticSearchRequestLogService.insert(elasticSearchRequestLog); // 写入 ES 请求日志。
-        /**
-         * 判断超时发送钉钉
-         */
         dingDing(proceedingJoinPoint, httpServletRequest, time, map, o); // 保留慢请求钉钉提醒。
     }
 
@@ -251,7 +227,7 @@ public class AopAspectJ {
                         , Arrays.asList(""));
                 DingDingUtil.sendReboot(json);
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("慢请求钉钉提醒发送失败，uri: {}", httpServletRequest.getRequestURI(), e); // 钉钉发送失败不影响业务响应。
             }
         }
     }
@@ -274,45 +250,36 @@ public class AopAspectJ {
 
 
     /**
-     * @param request
-     * @auther: 孙凯伦
-     * @email: 376253703@qq.com
-     * @name: dataSource
-     * @description: TODO  数据源获取
-     * @return: java.lang.String
-     * @date: 2021/6/29 1:42 下午
+     * 从请求头读取动态数据源。
+     *
+     * @param request 当前HTTP请求
+     * @return 数据源名称
      */
     private String getDataSource(HttpServletRequest request) throws Exception {
-        //取出用户
-        String dataSource = "master";
-        String requestDataSource = request.getHeader("dataSource");
-        //判断如果有授权就直接取，否则就从集合中取出
+        String dataSource = "master"; // 默认使用主数据源。
+        String requestDataSource = request.getHeader("dataSource"); // 从请求头读取数据源标识。
         if (StringUtils.isNotBlank(requestDataSource)) {
-            log.debug("aop获取到的dataSource {}", requestDataSource);
-            dataSource = requestDataSource;
+            log.debug("aop获取到的dataSource {}", requestDataSource); // 输出数据源调试日志。
+            dataSource = requestDataSource; // 使用请求头指定的数据源。
         }
-        return dataSource;
+        return dataSource; // 返回最终数据源。
     }
 
 
     /**
-     * TODO 参数校验
+     * 校验可能参与 SQL 拼接的请求参数。
      *
-     * @param request
-     * @return void
-     * @author 孙凯伦
-     * @methodName verify
-     * @time 2023/10/12 09:44
+     * @param request 当前HTTP请求
      */
     private static void verify(HttpServletRequest request) {
-        String collationFields = request.getParameter("collationFields");
+        String collationFields = request.getParameter("collationFields"); // 读取前端传入的排序字段。
         if (StringUtils.isNotBlank(collationFields)) {
             if (SqlInjectionUtils.check(collationFields)) {
-                throw new BusinessException("存在sql注入拦截");
+                throw new BusinessException("存在sql注入拦截"); // MyBatis-Plus SQL 注入检测命中时直接阻断。
             }
-            boolean hasComma = StrUtil.containsAny(collationFields, "*", "(", ")", ";");
+            boolean hasComma = StrUtil.containsAny(collationFields, "*", "(", ")", ";"); // 禁止排序字段携带函数、通配符和分号。
             if (hasComma) {
-                throw new BusinessException("存在sql注入拦截");
+                throw new BusinessException("存在sql注入拦截"); // 命中危险字符时直接阻断。
             }
         }
     }

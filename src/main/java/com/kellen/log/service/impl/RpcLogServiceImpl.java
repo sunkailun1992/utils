@@ -11,46 +11,44 @@ import org.springframework.stereotype.Service;
 import java.util.Date;
 
 /**
- * Created with IntelliJ IDEA.
- * 操作日志
+ * RPC 调用日志服务实现。
+ *
  * @author 孙凯伦
- * @DateTime 2018/7/16  上午11:09
- * @email 376253703@qq.com
- * 
- * @explain
  */
 @Service
 public class RpcLogServiceImpl implements RpcLogService {
 
+    /**
+     * RPC 日志 Mapper。
+     */
     @Autowired
     private RpcLogMapper rpcLogMapper;
 
+    /**
+     * Spring 应用上下文。
+     */
     @Autowired
     private ConfigurableApplicationContext applicationContext;
 
     /**
+     * 记录 RPC 熔断或调用异常日志。
      *
-     * @auther: 孙凯伦
-     * 
-     * @email: 376253703@qq.com
-     * @name: rpcLog
-     * @description: TODO  rpc熔断记录
-     * @param api
-     * @return: void
-     * @date: 2021/6/11 5:52 下午
-     *
+     * @param receiveServer 接收服务名称
+     * @param api           RPC 接口地址
+     * @param parameter     请求参数
+     * @param error         错误信息
      */
     @Async
     @Override
     public void rpcLog(String receiveServer,String api, Object parameter, String error) {
-        RpcLog rpcLog = new RpcLog();
-        rpcLog.setSendServer(applicationContext.getEnvironment().getProperty("spring.application.name"));
-        rpcLog.setReceiveServer(receiveServer);
-        rpcLog.setApi(api);
-        rpcLog.setParameter(parameter);
-        rpcLog.setError(error);
-        rpcLog.setCreateDateTime(new Date());
-        insert(rpcLog);
+        RpcLog rpcLog = new RpcLog(); // 创建 RPC 日志实体。
+        rpcLog.setSendServer(applicationContext.getEnvironment().getProperty("spring.application.name")); // 记录当前发送服务名称。
+        rpcLog.setReceiveServer(receiveServer); // 记录接收服务名称。
+        rpcLog.setApi(api); // 记录 RPC 接口地址。
+        rpcLog.setParameter(parameter); // 记录请求参数。
+        rpcLog.setError(error); // 记录错误信息。
+        rpcLog.setCreateDateTime(new Date()); // 记录日志创建时间。
+        insert(rpcLog); // 异步写入 RPC 日志。
     }
 
     /**

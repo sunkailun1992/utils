@@ -5,13 +5,9 @@ import lombok.Data;
 import java.util.Map;
 
 /**
- * TODO 方法类
+ * Methods 注解扩展执行参数。
  *
  * @author 孙凯伦
- * @className MethodsBean
- * @email 376253703@qq.com
- * 
- * @time 2022/5/7 16:36
  */
 @Data
 public class MethodsBean {

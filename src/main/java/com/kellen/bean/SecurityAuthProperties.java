@@ -8,6 +8,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * 统一认证配置属性。
+ *
+ * @author 孙凯伦
+ */
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "security.auth")
@@ -28,10 +33,29 @@ public class SecurityAuthProperties {
      */
     private boolean jwtEnabled = true;
 
+    /**
+     * 网关透传用户ID请求头。
+     */
     private String userIdHeader = "X-User-Id";
+
+    /**
+     * 网关透传用户名请求头。
+     */
     private String usernameHeader = "X-Username";
+
+    /**
+     * 网关透传租户ID请求头。
+     */
     private String tenantIdHeader = "X-Tenant-Id";
+
+    /**
+     * 网关透传权限码请求头。
+     */
     private String authoritiesHeader = "X-Permissions";
+
+    /**
+     * 网关透传角色码请求头。
+     */
     private String rolesHeader = "X-Roles";
 
     /**
