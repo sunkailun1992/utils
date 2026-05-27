@@ -106,6 +106,10 @@ dependencies {
     api 'org.springframework.boot:spring-boot-starter-validation'
     // Spring Web：提供 Spring MVC、Servlet、HTTP 请求处理能力。
     api 'org.springframework.boot:spring-boot-starter-web'
+    // Spring Actuator：提供自定义管理端点和 WebEndpointHandlerMapping 支持。
+    api 'org.springframework.boot:spring-boot-starter-actuator'
+    // Spring AOP：提供 AspectJ 切面、请求日志、参数校验和幂等拦截能力。
+    api 'org.springframework.boot:spring-boot-starter-aop'
     // Spring Security：提供认证过滤器、安全上下文和权限模型支持。
     api 'org.springframework.boot:spring-boot-starter-security'
     // MongoDB：提供请求日志、RPC 日志的 MongoTemplate 支持。
@@ -128,8 +132,6 @@ dependencies {
     api "com.baomidou:mybatis-plus-spring-boot3-starter:${mybatisPlusVersion}"
     // MyBatis-Plus Core：提供 BaseMapper、条件构造器等核心能力。
     api "com.baomidou:mybatis-plus:${mybatisPlusVersion}"
-    // MyBatis-Plus Generator：提供代码生成器能力。
-    api "com.baomidou:mybatis-plus-generator:${mybatisPlusVersion}"
     // MyBatis-Plus JSQLParser：提供租户插件、分页插件等 SQL 解析能力。
     api "com.baomidou:mybatis-plus-jsqlparser:${mybatisPlusVersion}"
     // MyBatis Mate：提供 MyBatis-Plus 企业增强能力。
@@ -138,10 +140,6 @@ dependencies {
     api 'com.aliyun.oss:aliyun-sdk-oss:3.17.0'
     // Aliyun Core：提供阿里云短信、STS、函数工作流等 SDK 基础客户端。
     api 'com.aliyun:aliyun-java-sdk-core:4.6.0'
-    // Protobuf：提供阿里云日志 appender 依赖的 Protobuf 序列化能力。
-    api 'com.google.protobuf:protobuf-java:2.5.0'
-    // Aliyun Logback Appender：提供阿里云 SLS 日志接入能力。
-    api 'com.aliyun.openservices:aliyun-log-logback-appender:0.1.18'
     // Hutool：提供常用集合、转换、加密、Spring、Excel 等工具能力。
     api "cn.hutool:hutool-all:${hutoolVersion}"
     // Redisson：提供 Redis 分布式锁和 RedissonClient 自动配置能力。
@@ -158,46 +156,26 @@ dependencies {
     api 'org.apache.commons:commons-collections4:4.1'
     // Apache POI：提供 Office 文档和 Excel 处理能力。
     api 'org.apache.poi:poi-ooxml:4.1.2'
-    // 微信支付 SDK：提供微信支付相关签名和请求能力。
-    api 'com.github.wxpay:wxpay-sdk:0.0.3'
-    // ZXing：提供二维码生成和解析能力。
-    api 'com.google.zxing:core:3.3.0'
-    // XXL Job：提供定时任务执行器集成能力。
-    api 'com.xuxueli:xxl-job-core:2.4.0'
     // iText 5：提供旧版 PDF 生成和处理能力。
     api 'com.itextpdf:itextpdf:5.5.13'
     // iText Asian：提供旧版 iText 中文字体支持。
     api 'com.itextpdf:itext-asian:5.2.0'
-    // iText 7 IO：提供新版 iText PDF 底层 IO 能力。
-    api 'com.itextpdf:io:7.1.8'
-    // iText 7 Kernel：提供新版 iText PDF 核心处理能力。
-    api 'com.itextpdf:kernel:7.1.8'
     // PDFBox：提供 PDF 渲染、读取和页面处理能力。
     api 'org.apache.pdfbox:pdfbox:2.0.20'
-    // OpenPDF / Lowagie iText：提供历史 PDF 兼容能力。
-    api 'com.lowagie:itext:2.1.7'
     // Dozer：提供对象之间的属性映射能力。
     api 'com.github.dozermapper:dozer-core:6.5.0'
-    // FreeMarker：提供模板渲染能力。
-    api 'org.freemarker:freemarker:2.3.32'
     // Seata Spring Boot：提供分布式事务自动配置能力。
     api 'io.seata:seata-spring-boot-starter:2.0.0'
     // Spring Cloud Alibaba Seata：提供 Spring Cloud Alibaba 体系下的 Seata 集成能力。
     api 'com.alibaba.cloud:spring-cloud-starter-alibaba-seata'
     // Seata All：提供 Seata 全量 API，兼容当前代码中的 RootContext 等调用。
     api 'io.seata:seata-all:2.0.0'
-    // Json-lib：提供历史 net.sf.json JSON 兼容能力。
-    api 'net.sf.json-lib:json-lib:2.4:jdk15'
     // Aviator：提供表达式公式计算能力。
     api 'com.googlecode.aviator:aviator:5.0.1'
     // TTL：提供线程池场景下的 ThreadLocal 上下文传递能力。
     api 'com.alibaba:transmittable-thread-local:2.12.1'
-    // P6Spy：提供 SQL 分析和打印能力。
-    api 'p6spy:p6spy:3.9.1'
     // Javax Mail：提供历史邮件发送能力，当前代码仍依赖 javax.mail 包。
     api 'javax.mail:mail:1.4'
-    // 个推 SDK：提供个推消息推送能力。
-    api 'com.getui.push:restful-sdk:1.0.0.4'
     // Aliyun FNF：提供阿里云函数工作流 API。
     api 'com.aliyun:aliyun-java-sdk-fnf:1.8.0'
     // Orika：提供 BeanMapper 使用的对象映射能力。
