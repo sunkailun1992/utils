@@ -126,6 +126,7 @@
 - `com.kellen.utils.ObjectUtils`：对象工具。
 - `com.kellen.utils.StringUtils`：字符串工具。
 - `com.kellen.utils.BigDecimalUtils`：金额与高精度数字工具。
+- `com.kellen.utils.FormulaUtils`：通用公式计算工具。
 - `com.kellen.utils.BeanMapper`：对象映射工具。
 - `com.kellen.utils.GeneralConvertor`：通用转换工具。
 - `com.kellen.utils.ReflectionUtils`：反射工具。
@@ -202,9 +203,6 @@
 - `com.kellen.utils.enumeration.SmsEnum`：短信枚举。
 - `com.kellen.utils.enumeration.SourceValueEnum`：来源值枚举。
 - `com.kellen.utils.enumeration.SystemSourceEnum`：系统来源枚举。
-- `com.kellen.utils.enumeration.UserTypeEnum`：用户类型枚举。
-- `com.kellen.utils.enumeration.WordCodeEnum`：字典编码枚举。
-- `com.kellen.utils.enumeration.WordCodeTypeEnum`：字典编码类型枚举。
 - `com.kellen.utils.enumeration.AppCodeEnum`：应用编码枚举。
 - `com.kellen.utils.verify.Phone`：手机号校验注解。
 - `com.kellen.utils.verify.check.PhoneValidator`：手机号校验器。
@@ -217,18 +215,23 @@
 
 ## 十、历史业务工具与待收敛区域
 
-当前需要谨慎评估的类：
+当前已确认保留的通用类：
 
-- `com.kellen.utils.CommissionFormula`：佣金公式，可能偏业务。
-- `com.kellen.utils.InsuranceFormula`：保险公式，可能偏业务。
 - `com.kellen.utils.CreditCodeUtil`：统一社会信用代码工具，可保留为通用校验工具。
-- `com.kellen.utils.enumeration.UserTypeEnum`：用户类型枚举，需确认是否仍为通用枚举。
-- `com.kellen.utils.enumeration.WordCodeEnum` 与 `WordCodeTypeEnum`：字典枚举，需确认是否业务项目专属。
-- `com.kellen.log.controller.RequestLogController`：公共包内包含 Controller，需确认消费者项目是否需要自动暴露。
+- `com.kellen.utils.FormulaUtils`：只保留表达式执行、BigDecimal 转换、金额计算、费率按天折算等通用能力。
 
 收敛原则：
 
 - 如果类只服务单个业务项目，应迁回业务项目。
 - 如果类是多个项目共享的基础能力，应补齐注释、异常边界、示例和归类。
 - 删除或迁移前必须先用 `rg` 检查 `utils` 与消费者项目引用。
+- 请求日志只保留采集、存储与服务能力，不在公共包内自动暴露查询 Controller。
 
+已删除的业务类：
+
+- `com.kellen.utils.CommissionFormula`：佣金公式属于业务规则，不再放在公共包。
+- `com.kellen.utils.InsuranceFormula`：保险公式属于业务规则，不再放在公共包。
+- `com.kellen.utils.enumeration.UserTypeEnum`：用户类型属于业务身份字典，不再放在公共包。
+- `com.kellen.utils.enumeration.WordCodeEnum`：企业、项目、保险字段字典属于业务模板，不再放在公共包。
+- `com.kellen.utils.enumeration.WordCodeTypeEnum`：业务字典类型不再放在公共包。
+- `com.kellen.log.controller.RequestLogController`：公共包不再自动暴露日志查询接口。
