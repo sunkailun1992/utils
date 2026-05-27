@@ -182,18 +182,6 @@ public class ApiExceptionHandler {
     }
 
     /**
-     * 客户模块异常处理。
-     *
-     * @param e       客户模块异常
-     * @param request 当前HTTP请求
-     * @return 统一失败响应
-     */
-    @ExceptionHandler(value = CustomerException.class)
-    public ApiResponse<Void> customerException(CustomerException e, HttpServletRequest request) {
-        return fail(request, "CustomerException", e, ReturnCode.用户端错误); // 客户模块异常归类为用户端错误。
-    }
-
-    /**
      * 从绑定结果中提取错误提示。
      *
      * @param bindingResult Spring 参数绑定结果

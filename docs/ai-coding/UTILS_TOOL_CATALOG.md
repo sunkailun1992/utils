@@ -10,7 +10,6 @@
 - `com.kellen.utils.enumeration.ReturnCode`：统一错误码枚举。
 - `com.kellen.utils.exception.ApiExceptionHandler`：全局异常处理器。
 - `com.kellen.utils.exception.BusinessException`：业务异常。
-- `com.kellen.utils.exception.CustomerException`：自定义异常。
 - `com.kellen.utils.exception.ParameterNullException`：参数为空异常。
 - `com.kellen.utils.exception.PreventRepeatException`：防重复提交异常。
 - `com.kellen.utils.exception.RpcException`：RPC 调用异常。
@@ -183,7 +182,6 @@
 - `com.kellen.utils.email.EmailAccount`：邮件账号模型。
 - `com.kellen.utils.email.EmailUtils`：邮件发送工具。
 - `com.kellen.config.wechat.WeChat`：微信配置。
-- `com.kellen.utils.enumeration.WxEnum`：微信相关枚举。
 
 使用原则：
 
@@ -195,15 +193,11 @@
 
 核心类：
 
-- `com.kellen.utils.constants.UniversalConstant`：通用常量。
 - `com.kellen.utils.enumeration.HttpType`：HTTP 类型枚举。
 - `com.kellen.utils.enumeration.HttpWay`：HTTP 方式枚举。
 - `com.kellen.utils.enumeration.NumericEnum`：数字枚举。
 - `com.kellen.utils.enumeration.LenEnum`：长度枚举。
 - `com.kellen.utils.enumeration.SmsEnum`：短信枚举。
-- `com.kellen.utils.enumeration.SourceValueEnum`：来源值枚举。
-- `com.kellen.utils.enumeration.SystemSourceEnum`：系统来源枚举。
-- `com.kellen.utils.enumeration.AppCodeEnum`：应用编码枚举。
 - `com.kellen.utils.validation.CreditCodeUtil`：统一社会信用代码校验工具。
 - `com.kellen.utils.verify.Phone`：手机号校验注解。
 - `com.kellen.utils.verify.check.PhoneValidator`：手机号校验器。
