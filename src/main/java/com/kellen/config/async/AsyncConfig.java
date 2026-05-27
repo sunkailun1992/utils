@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.async;
 
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;

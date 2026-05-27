@@ -29,6 +29,25 @@ com.kellen.utils.annotations   AOP 与通用能力注解
 com.kellen.utils.methods       Methods 注解配套模型与判断逻辑
 com.kellen.utils.constants     通用常量
 com.kellen.utils.email         邮件工具
+com.kellen.config.actuator     Actuator 端点与映射配置
+com.kellen.config.async        异步线程配置
+com.kellen.config.datasource   动态数据源配置
+com.kellen.config.elasticsearch Elasticsearch 配置
+com.kellen.config.feign        OpenFeign 配置
+com.kellen.config.file         文件上传配置
+com.kellen.config.mybatis      MyBatis-Plus 配置
+com.kellen.config.redis        Redis 缓存配置
+com.kellen.config.sensitive    敏感字段配置
+com.kellen.config.swagger      OpenAPI / Knife4j 配置
+com.kellen.config.web          Web MVC 拦截器配置
+com.kellen.config.wechat       微信配置属性
+com.kellen.entity              公共实体基类
+com.kellen.idempotent          防重复提交组件
+com.kellen.security            安全过滤器、认证用户与用户上下文
+com.kellen.security.config     安全认证与租户配置属性
+com.kellen.aop                 通用请求切面
+com.kellen.log                 请求日志、RPC 日志、ES 日志采集存储
+com.kellen.aliyun              阿里云、钉钉、短信、OSS、直播、工作流封装
 ```
 
 ## 新增类放置规则
@@ -49,12 +68,18 @@ com.kellen.utils.email         邮件工具
 - 文件、PDF 放到 `file`，Excel 放到 `excel`。
 - 通用校验算法放到 `validation`，Bean Validation 注解放到 `verify`。
 - 分布式锁放到 `redisson`。
+- Spring Boot 自动配置按职责放到 `com.kellen.config.*` 子包。
+- 通用实体基类放到 `com.kellen.entity`。
+- 防重复提交运行组件放到 `com.kellen.idempotent`。
+- 认证过滤器和用户上下文放到 `com.kellen.security`，安全配置属性放到 `com.kellen.security.config`。
+- 第三方平台封装放到平台命名空间，例如 `com.kellen.aliyun.*`。
 
 ## 禁止事项
 
 - 不再向 `com.kellen.utils` 根包新增工具类。
 - 不新增业务专属公式、业务用户类型、业务字段字典到公共包。
 - 不新增含糊包名，例如 `common`、`base`、`misc`。
+- 不再新增或恢复 `com.kellen.bean` 包。
 - 不用通配导入 `import com.kellen.utils.*`。
 - 修改包名后必须同步更新消费者项目 import。
 
@@ -72,4 +97,3 @@ mvn -q -DskipTests install
 cd /Users/sunkailun/Desktop/个人/GitHub/user
 ./gradlew clean compileJava -x test
 ```
-

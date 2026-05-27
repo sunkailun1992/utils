@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.redis;
 
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Value;

@@ -7,7 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import com.kellen.aliyun.dingding.DingDingUtil;
-import com.kellen.bean.PreventRepeatInit;
+import com.kellen.idempotent.PreventRepeatInit;
 import com.kellen.log.entity.ElasticSearchRequestLog;
 import com.kellen.log.entity.RequestLog;
 import com.kellen.log.service.ElasticSearchRequestLogService;

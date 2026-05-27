@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.actuator;
 
 import com.alibaba.cloud.nacos.registry.NacosAutoServiceRegistration;
 import lombok.extern.slf4j.Slf4j;

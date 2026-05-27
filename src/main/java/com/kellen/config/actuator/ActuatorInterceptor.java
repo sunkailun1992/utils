@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.actuator;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.HandlerInterceptor;

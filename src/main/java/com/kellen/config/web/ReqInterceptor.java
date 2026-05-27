@@ -1,5 +1,6 @@
-package com.kellen.bean;
+package com.kellen.config.web;
 
+import com.kellen.security.config.TenantProperties;
 import com.kellen.utils.context.TenantContextHolder;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;

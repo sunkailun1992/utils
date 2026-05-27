@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.sensitive;
 
 import mybatis.mate.databind.ISensitiveStrategy;
 import mybatis.mate.strategy.SensitiveStrategy;

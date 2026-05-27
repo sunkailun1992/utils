@@ -29,8 +29,8 @@
 
 核心类：
 
-- `com.kellen.bean.SecurityAuthConfig`：安全认证配置入口。
-- `com.kellen.bean.SecurityAuthProperties`：认证白名单与请求头配置。
+- `com.kellen.security.config.SecurityAuthConfig`：安全认证配置入口。
+- `com.kellen.security.config.SecurityAuthProperties`：认证白名单与请求头配置。
 - `com.kellen.security.SecurityAuthenticationFilter`：认证过滤器。
 - `com.kellen.security.SecurityUser`：当前登录用户模型。
 - `com.kellen.security.UserContextHolder`：用户上下文 ThreadLocal。
@@ -49,15 +49,15 @@
 核心类：
 
 - `com.kellen.utils.context.TenantContextHolder`：租户上下文 ThreadLocal。
-- `com.kellen.bean.TenantProperties`：租户请求头配置。
-- `com.kellen.bean.ReqInterceptor`：Feign 请求上下文透传。
+- `com.kellen.security.config.TenantProperties`：租户请求头配置。
+- `com.kellen.config.web.ReqInterceptor`：Feign 请求上下文透传。
 - `com.kellen.utils.context.DynamicSourceTtl`：动态数据源上下文。
-- `com.kellen.bean.DynamicDataSourceConfig`：Druid 动态数据源配置。
+- `com.kellen.config.datasource.DynamicDataSourceConfig`：Druid 动态数据源配置。
 - `com.kellen.utils.datasource.DataSourceUtil`：数据源工具。
 - `com.kellen.utils.annotations.DynamicDataSource`：动态数据源注解。
-- `com.kellen.bean.MyBatisPlusConfig`：MyBatis-Plus 插件配置。
-- `com.kellen.bean.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器。
-- `com.kellen.bean.EntityBase`：通用实体基类。
+- `com.kellen.config.mybatis.MyBatisPlusConfig`：MyBatis-Plus 插件配置。
+- `com.kellen.config.mybatis.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器。
+- `com.kellen.entity.EntityBase`：通用实体基类。
 
 当前边界：
 
@@ -71,7 +71,7 @@
 核心类：
 
 - `com.kellen.aop.RequestRequiredAspect`：请求切面。
-- `com.kellen.bean.PreventRepeatInit`：防重复提交初始化与清理。
+- `com.kellen.idempotent.PreventRepeatInit`：防重复提交初始化与清理。
 - `com.kellen.utils.annotations.PreventRepeat`：防重复提交注解。
 - `com.kellen.utils.annotations.RequestRequired`：请求校验注解。
 - `com.kellen.utils.annotations.Methods`：方法组合校验注解。
@@ -91,19 +91,19 @@
 
 核心类：
 
-- `com.kellen.bean.AsyncConfig`：异步线程配置。
-- `com.kellen.bean.FeignConfiguration`：OpenFeign 配置。
-- `com.kellen.bean.FeignOkHttpConfig`：Feign OkHttp 配置。
-- `com.kellen.bean.RedisCacheConfig`：Redis 缓存配置。
-- `com.kellen.bean.ElasticsearchConfig`：Elasticsearch 配置。
-- `com.kellen.bean.MultipartConfig`：文件上传配置。
-- `com.kellen.bean.Swagger`：Knife4j / OpenAPI 配置。
-- `com.kellen.bean.ActuatorInterceptor`：Actuator 拦截器。
-- `com.kellen.bean.ServiceShutDownEndpoint`：服务停机端点。
-- `com.kellen.bean.CustomWebMvcEndpointHandlerMapping`：Web MVC Endpoint 映射适配。
-- `com.kellen.bean.ConfigClientController`：配置客户端控制器。
-- `com.kellen.bean.SensitiveStrategyConfig`：敏感字段处理配置。
-- `com.kellen.bean.WeChat`：微信配置属性。
+- `com.kellen.config.async.AsyncConfig`：异步线程配置。
+- `com.kellen.config.feign.FeignConfiguration`：OpenFeign 配置。
+- `com.kellen.config.feign.FeignOkHttpConfig`：Feign OkHttp 配置。
+- `com.kellen.config.redis.RedisCacheConfig`：Redis 缓存配置。
+- `com.kellen.config.elasticsearch.ElasticsearchConfig`：Elasticsearch 配置。
+- `com.kellen.config.file.MultipartConfig`：文件上传配置。
+- `com.kellen.config.swagger.Swagger`：Knife4j / OpenAPI 配置。
+- `com.kellen.config.actuator.ActuatorInterceptor`：Actuator 拦截器。
+- `com.kellen.config.actuator.ServiceShutDownEndpoint`：服务停机端点。
+- `com.kellen.config.actuator.CustomWebMvcEndpointHandlerMapping`：Web MVC Endpoint 映射适配。
+- `com.kellen.config.actuator.ConfigClientController`：配置客户端控制器。
+- `com.kellen.config.sensitive.SensitiveStrategyConfig`：敏感字段处理配置。
+- `com.kellen.config.wechat.WeChat`：微信配置属性。
 
 使用原则：
 
@@ -182,7 +182,7 @@
 
 - `com.kellen.utils.email.EmailAccount`：邮件账号模型。
 - `com.kellen.utils.email.EmailUtils`：邮件发送工具。
-- `com.kellen.bean.WeChat`：微信配置。
+- `com.kellen.config.wechat.WeChat`：微信配置。
 - `com.kellen.utils.enumeration.WxEnum`：微信相关枚举。
 
 使用原则：

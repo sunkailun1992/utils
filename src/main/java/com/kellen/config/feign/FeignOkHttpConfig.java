@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.feign;
 
 import feign.Feign;
 import okhttp3.ConnectionPool;

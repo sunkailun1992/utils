@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.datasource;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;

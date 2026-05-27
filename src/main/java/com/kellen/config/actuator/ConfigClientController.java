@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.actuator;
 
 import com.kellen.utils.redisson.LockUtil;
 import com.kellen.utils.redisson.RedissonLocker;

@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.elasticsearch;
 
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;

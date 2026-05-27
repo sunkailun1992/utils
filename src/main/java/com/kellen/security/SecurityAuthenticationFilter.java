@@ -1,6 +1,6 @@
 package com.kellen.security;
 
-import com.kellen.bean.SecurityAuthProperties;
+import com.kellen.security.config.SecurityAuthProperties;
 import com.kellen.utils.auth.JwtUtils;
 import com.kellen.utils.context.TenantContextHolder;
 import io.jsonwebtoken.Claims;

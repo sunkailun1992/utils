@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.security.config;
 
 import lombok.Getter;
 import lombok.Setter;

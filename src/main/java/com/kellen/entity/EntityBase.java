@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;

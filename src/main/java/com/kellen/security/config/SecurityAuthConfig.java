@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.security.config;
 
 import com.kellen.security.SecurityAuthenticationFilter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

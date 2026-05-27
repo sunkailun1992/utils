@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.idempotent;
 
 import com.kellen.security.SecurityUser; // 使用当前认证用户生成幂等 key。
 import com.kellen.security.UserContextHolder; // 从 Spring Security 用户上下文读取用户信息，替代旧 token。

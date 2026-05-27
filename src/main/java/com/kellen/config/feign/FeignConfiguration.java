@@ -1,6 +1,7 @@
-package com.kellen.bean;
+package com.kellen.config.feign;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.kellen.security.config.TenantProperties;
 import com.kellen.utils.context.DynamicSourceTtl;
 import com.kellen.utils.context.TenantContextHolder;
 import feign.RequestInterceptor;

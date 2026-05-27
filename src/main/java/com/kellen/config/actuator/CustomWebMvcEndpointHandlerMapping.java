@@ -1,4 +1,4 @@
-package com.kellen.bean;
+package com.kellen.config.actuator;
 
 import org.springframework.boot.actuate.endpoint.web.EndpointLinksResolver;
 import org.springframework.boot.actuate.endpoint.web.EndpointMapping;

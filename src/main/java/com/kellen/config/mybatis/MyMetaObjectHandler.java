@@ -1,6 +1,7 @@
-package com.kellen.bean;
+package com.kellen.config.mybatis;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.kellen.security.config.TenantProperties;
 import com.kellen.utils.context.TenantContextHolder;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.commons.lang3.StringUtils;
