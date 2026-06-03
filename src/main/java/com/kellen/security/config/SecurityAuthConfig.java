@@ -11,6 +11,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 /**
  * Spring Security 自动配置。
  *
@@ -23,6 +25,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 @EnableConfigurationProperties(SecurityAuthProperties.class)
 public class SecurityAuthConfig {
+
+    /**
+     * 认证服务固定公开入口，避免登录和租户选择依赖每个业务服务重复配置。
+     */
+    private static final List<String> BUILT_IN_PERMIT_URLS = List.of(
+            "/auth/tenants",
+            "/auth/sessions"
+    );
 
     /**
      * 认证配置属性。
@@ -65,6 +75,7 @@ public class SecurityAuthConfig {
                 registry.anyRequest().permitAll(); // 认证总开关关闭时放行所有请求，兼容未接入认证的服务。
                 return;
             }
+            BUILT_IN_PERMIT_URLS.forEach(url -> registry.requestMatchers(url).permitAll()); // 放行认证服务固定公开入口。
             securityAuthProperties.getPermitUrls().forEach(url -> registry.requestMatchers(url).permitAll()); // 放行配置中的公开接口。
             registry.anyRequest().authenticated(); // 其余接口必须存在认证用户。
         });
