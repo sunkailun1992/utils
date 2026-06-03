@@ -4,8 +4,6 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.bson.types.ObjectId;
-import org.springframework.data.annotation.Id;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
@@ -23,11 +21,6 @@ import java.time.LocalDateTime;
 @Data
 @Schema(description = "日志实体类")
 public class RequestLog implements Serializable {
-    @Id
-    @Schema(name = "_id", description = "序列")
-    @SuppressWarnings("all")
-    private ObjectId _id;
-
     @Schema(name = "userId", description = "用户id")
     private Long userId;
 

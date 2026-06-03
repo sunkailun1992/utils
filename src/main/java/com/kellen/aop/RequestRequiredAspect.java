@@ -11,7 +11,6 @@ import com.kellen.idempotent.PreventRepeatInit;
 import com.kellen.log.entity.ElasticSearchRequestLog;
 import com.kellen.log.entity.RequestLog;
 import com.kellen.log.service.ElasticSearchRequestLogService;
-import com.kellen.log.service.RequestLogService;
 import com.kellen.security.SecurityUser; // 使用 Spring Security 解析后的当前用户作为日志用户来源。
 import com.kellen.security.UserContextHolder; // 从统一用户上下文读取用户信息，替代历史 token Redis 用户读取。
 import com.kellen.utils.context.DynamicSourceTtl;
@@ -60,12 +59,6 @@ public class RequestRequiredAspect {
      */
     @Autowired
     private PreventRepeatInit preventRepeatInit;
-
-    /**
-     * Mongo 请求日志服务。
-     */
-    @Autowired
-    private RequestLogService requestLogService;
 
     /**
      * Elasticsearch 请求日志服务。
@@ -195,8 +188,7 @@ public class RequestRequiredAspect {
         } catch (Exception e) {
             log.warn("请求日志描述解析失败，uri: {}", httpServletRequest.getRequestURI(), e); // 描述解析失败不阻断业务响应。
         }
-        requestLogService.insert(requestLog); // 写入 Mongo 请求日志。
-        ElasticSearchRequestLog elasticSearchRequestLog = GeneralConvertor.convertor(requestLog, ElasticSearchRequestLog.class); // 将 Mongo 日志实体转换为 ES 日志实体。
+        ElasticSearchRequestLog elasticSearchRequestLog = GeneralConvertor.convertor(requestLog, ElasticSearchRequestLog.class); // 将临时日志对象转换为 ES 日志实体。
         elasticSearchRequestLog.setId(IdUtil.simpleUUID()); // 为 ES 日志生成独立 ID。
         elasticSearchRequestLog.setCreateDateTime(LocalDateTime.now()); // 设置 ES 日志创建时间。
         elasticSearchRequestLogService.insert(elasticSearchRequestLog); // 写入 ES 请求日志。

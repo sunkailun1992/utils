@@ -12,7 +12,7 @@ plugins {
 group = 'com'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.1.6'
+version = '1.1.7'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -125,7 +125,7 @@ tasks.withType(Javadoc).configureEach {
 dependencyManagement {
     // 导入多个 BOM，统一管理 Spring 生态依赖版本。
     imports {
-        // Spring Boot BOM 管理 starter、Jackson、Tomcat、Mongo、Redis、Elasticsearch 等版本。
+        // Spring Boot BOM 管理 starter、Jackson、Tomcat、Redis、Elasticsearch 等版本。
         mavenBom "org.springframework.boot:spring-boot-dependencies:${springBootVersion}"
         // Spring Cloud BOM 管理 OpenFeign 等 Spring Cloud 组件版本。
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
@@ -152,8 +152,6 @@ dependencies {
     api 'org.springframework.boot:spring-boot-starter-aop'
     // Spring Security：提供认证过滤器、安全上下文和权限模型支持。
     api 'org.springframework.boot:spring-boot-starter-security'
-    // MongoDB：提供请求日志、RPC 日志的 MongoTemplate 支持。
-    api 'org.springframework.boot:spring-boot-starter-data-mongodb'
     // Elasticsearch：提供 ES 日志索引 Repository 支持。
     api 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
     // Redis：提供 RedisTemplate、缓存配置和 Redis 连接能力。
