@@ -12,7 +12,7 @@ plugins {
 group = 'com'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.1.7'
+version = '1.1.8'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -86,6 +86,8 @@ ext {
     aliyunFnfVersion = '1.9.0'
     // Orika 版本，用于 BeanMapper 对象映射能力。
     orikaVersion = '1.5.4'
+    // XXL-JOB 版本，与当前 XXL-JOB Admin 2.4.0 保持一致。
+    xxlJobVersion = '2.4.0'
 }
 
 // 配置 Java 编译目标。
@@ -214,6 +216,8 @@ dependencies {
     api "com.aliyun:aliyun-java-sdk-fnf:${aliyunFnfVersion}"
     // Orika：提供 BeanMapper 使用的对象映射能力。
     api "ma.glasnost.orika:orika-core:${orikaVersion}"
+    // XXL-JOB Core：提供分布式任务执行器注册、心跳和 JobHandler 调度能力。
+    api "com.xuxueli:xxl-job-core:${xxlJobVersion}"
     // Nacos Discovery：提供服务注册发现和优雅停机端点依赖的 Nacos 注册对象。
     api 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery'
     // Lombok 编译期注解：源码中使用 @Getter、@Data、@Slf4j 等注解。
