@@ -102,7 +102,6 @@
 - `com.kellen.config.actuator.CustomWebMvcEndpointHandlerMapping`：Web MVC Endpoint 映射适配。
 - `com.kellen.config.actuator.ConfigClientController`：配置客户端控制器。
 - `com.kellen.config.sensitive.SensitiveStrategyConfig`：敏感字段处理配置。
-- `com.kellen.config.wechat.WeChat`：微信配置属性。
 
 使用原则：
 
@@ -181,7 +180,6 @@
 
 - `com.kellen.utils.email.EmailAccount`：邮件账号模型。
 - `com.kellen.utils.email.EmailUtils`：邮件发送工具。
-- `com.kellen.config.wechat.WeChat`：微信配置。
 
 使用原则：
 
