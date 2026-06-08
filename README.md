@@ -56,14 +56,14 @@ aliyunMavenPassword=你的密码
 消费者项目升级 `utils` 后，应同步执行消费者项目编译验证。例如 `user` 项目：
 
 ```bash
-cd /Users/sunkailun/Desktop/个人/GitHub/user
+cd ../user
 ./gradlew clean compileJava -x test
 ```
 
 如果调整了 gateway 会关心的公共约定，还需要验证 gateway：
 
 ```bash
-cd /Users/sunkailun/Desktop/个人/GitHub/gateway
+cd ../gateway
 ./gradlew clean test bootJar --no-daemon
 ```
 

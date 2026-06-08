@@ -91,6 +91,22 @@
 - 业务枚举、业务公式、业务专属常量应优先留在业务项目，不继续扩大公共包污染面。
 - 新增第三方 SDK 封装时，应把配置对象、调用工具、异常处理和日志边界拆清楚。
 
+## 路径与本机环境规范
+
+- README、AI 规范、YAML、properties、SQL、脚本、测试、示例和 Java 代码中不得写入个人电脑绝对路径、下载目录、IDE 路径、JDK 安装路径或本机仓库完整路径。
+- 需要描述同级仓库时，使用 `../user`、`../message`、`../gateway` 这类相对路径，不使用开发者机器上的完整目录。
+- 需要描述可变安装目录、日志目录、上传目录、导出目录、临时目录或 JDK 路径时，使用环境变量、消费者项目配置、`~` 用户目录、`${user.home}`、`${java.io.tmpdir}` 或 `<PLACEHOLDER>` 占位符。
+- 公共工具类不得保留本地调试用绝对路径；需要演示文件能力时，使用单元测试临时目录或文档占位符。
+- 提交前必须使用 `rg` 搜索本机用户名、用户目录、仓库根目录和系统盘路径关键字，检查是否残留本机路径。
+
+## 公共 examples 同步规范
+
+- `docs/ai-coding/examples` 是业务微服务 Java 分层示例模板的公共源头。
+- `user`、`message` 等业务微服务可以保留 `docs/ai-coding/examples` 本地副本，方便 AI 在单项目上下文中直接阅读。
+- 公共 `Example*` 模板只允许先在 `utils` 修改，再同步到业务微服务副本，禁止业务微服务单独长期分叉公共模板。
+- 业务项目确实需要专属示例时，必须另建 `docs/ai-coding/project-examples` 或 `docs/ai-coding/business-examples`，不要污染公共 `Example*` 模板。
+- 同步公共 examples 后，必须检查业务项目 `docs/ai-coding/README.md` 和 `PROJECT_CODING_SPEC.md` 是否仍说明本地 examples 是同步副本。
+
 ## 验证要求
 
 修改 `utils` 后至少执行：
@@ -103,6 +119,6 @@
 如果修改公共 API、认证、异常、响应、租户、动态数据源或 MyBatis-Plus 配置，还需要编译消费者项目：
 
 ```bash
-cd /Users/sunkailun/Desktop/个人/GitHub/user
+cd ../user
 ./gradlew clean compileJava -x test
 ```

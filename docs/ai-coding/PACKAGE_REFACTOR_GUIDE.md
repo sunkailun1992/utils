@@ -95,6 +95,6 @@ com.kellen.aliyun              阿里云、钉钉、短信、OSS、直播、工�
 如果消费者项目依赖被移动的类，还必须同步执行消费者项目编译，例如：
 
 ```bash
-cd /Users/sunkailun/Desktop/个人/GitHub/user
+cd ../user
 ./gradlew clean compileJava -x test
 ```

@@ -80,18 +80,6 @@ public class PdfUtils {
         pdfStamper.close();
     }
 
-    public static void main(String[] args) throws Exception {
-//        byte[] bytes=FileUtil.readBytes("C:\\Users\\Administrator\\Desktop\\测试.pdf");
-//        Map<String, String> map = new HashMap<>();
-//        map.put("name","zhangsan");
-//        map.put("age", "20");
-//        String address="C:\\Users\\Administrator\\Desktop\\test2.pdf";
-//        generate(bytes,address,map,null);
-        png("/Users/sunkailun/Downloads/", "/Users/sunkailun/Downloads/192847040_0brokerQR.pdf", "192847040_0brokerQR");
-//        pdf2Pic("/Users/sunkailun/Downloads/", "/Users/sunkailun/Downloads/22f3bB1E6af.pdf", "22f3bBE6af");
-    }
-
-
     /**
      * @param template 模版的二进制刘
      * @param address  输出的文件地址
