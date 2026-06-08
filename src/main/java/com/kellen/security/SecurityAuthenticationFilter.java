@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -47,6 +48,18 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
      */
     public SecurityAuthenticationFilter(SecurityAuthProperties securityAuthProperties) {
         this.securityAuthProperties = securityAuthProperties; // 保存配置，后续按开关决定是否解析 JWT 或请求头。
+    }
+
+    /**
+     * 判断当前请求是否为公开白名单。
+     *
+     * @param request 当前HTTP请求
+     * @return true 表示跳过认证上下文解析
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return securityAuthProperties.getPermitUrls().stream()
+                .anyMatch(url -> AntPathRequestMatcher.antMatcher(url).matches(request)); // 在过滤器入口直接跳过公开接口，保证登录和文档等白名单不被认证逻辑影响。
     }
 
     /**

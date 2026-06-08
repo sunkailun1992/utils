@@ -17,7 +17,7 @@ public class MybatisPlusSecurityProperties {
     /**
      * 是否启用非法 SQL 拦截插件。
      */
-    private boolean illegalSqlEnabled = true; // 默认启用 IllegalSQLInnerInterceptor，用于提前拦截高风险 SQL。
+    private boolean illegalSqlEnabled = false; // 默认关闭 IllegalSQLInnerInterceptor，避免逻辑删除等正常查询因索引规则被误拦截。
 
     /**
      * 是否启用防全表更新删除插件。

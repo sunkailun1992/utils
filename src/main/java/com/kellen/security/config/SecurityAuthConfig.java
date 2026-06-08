@@ -1,6 +1,8 @@
 package com.kellen.security.config;
 
 import com.kellen.security.SecurityAuthenticationFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +12,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Spring Security 自动配置。
@@ -23,6 +29,24 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 @EnableConfigurationProperties(SecurityAuthProperties.class)
 public class SecurityAuthConfig {
+
+    /**
+     * 日志对象。
+     */
+    private static final Logger log = LoggerFactory.getLogger(SecurityAuthConfig.class);
+
+    /**
+     * 框架内置公开接口。
+     */
+    private static final List<String> BUILTIN_PERMIT_URLS = List.of(
+            "/actuator/**",
+            "/doc.html",
+            "/webjars/**",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/auth/tenants",
+            "/auth/sessions"
+    );
 
     /**
      * 认证配置属性。
@@ -65,9 +89,26 @@ public class SecurityAuthConfig {
                 registry.anyRequest().permitAll(); // 认证总开关关闭时放行所有请求，兼容未接入认证的服务。
                 return;
             }
-            securityAuthProperties.getPermitUrls().forEach(url -> registry.requestMatchers(url).permitAll()); // 放行配置中的公开接口。
+            List<String> permitUrls = resolvePermitUrls(); // 合并框架内置公开接口和外部配置公开接口，避免配置覆盖导致登录被拦截。
+            log.info("Security auth enabled, permit urls: {}", permitUrls); // 启动时输出白名单，方便定位 Nacos 或本地配置是否真正生效。
+            permitUrls.forEach(url -> registry.requestMatchers(AntPathRequestMatcher.antMatcher(url)).permitAll()); // 使用 AntPathRequestMatcher 稳定匹配 Nacos 白名单路径，避免 MVC matcher 对公开接口放行失效。
             registry.anyRequest().authenticated(); // 其余接口必须存在认证用户。
         });
         return http.build(); // 构建并返回安全过滤器链。
+    }
+
+    /**
+     * 解析最终公开接口。
+     *
+     * @return 去重后的公开接口集合
+     */
+    private List<String> resolvePermitUrls() {
+        List<String> permitUrls = new ArrayList<>(BUILTIN_PERMIT_URLS); // 先放入框架内置公开接口，保证登录、租户选择和文档接口稳定放行。
+        securityAuthProperties.getPermitUrls().forEach(url -> {
+            if (!permitUrls.contains(url)) {
+                permitUrls.add(url); // 外部配置中的额外公开接口按顺序追加，保留服务自定义放行能力。
+            }
+        });
+        return permitUrls; // 返回最终用于 Spring Security 匹配的白名单。
     }
 }

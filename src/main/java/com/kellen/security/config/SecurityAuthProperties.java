@@ -81,6 +81,8 @@ public class SecurityAuthProperties {
             "/doc.html",
             "/webjars/**",
             "/swagger-ui/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/auth/tenants",
+            "/auth/sessions"
     ));
 }
