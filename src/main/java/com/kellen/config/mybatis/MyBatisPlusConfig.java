@@ -3,7 +3,9 @@ package com.kellen.config.mybatis;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
+import com.baomidou.mybatisplus.extension.plugins.inner.BlockAttackInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.DataPermissionInterceptor;
+import com.baomidou.mybatisplus.extension.plugins.inner.IllegalSQLInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
@@ -27,7 +29,7 @@ import java.util.Locale;
  * @author 孙凯伦
  */
 @Configuration
-@EnableConfigurationProperties({TenantProperties.class, DataPermissionProperties.class})
+@EnableConfigurationProperties({TenantProperties.class, DataPermissionProperties.class, MybatisPlusSecurityProperties.class})
 public class MyBatisPlusConfig {
 
     /**
@@ -41,14 +43,21 @@ public class MyBatisPlusConfig {
     private final DataPermissionProperties dataPermissionProperties;
 
     /**
+     * MyBatis-Plus SQL 安全配置属性。
+     */
+    private final MybatisPlusSecurityProperties securityProperties;
+
+    /**
      * 构造 MyBatis-Plus 配置。
      *
      * @param tenantProperties          租户配置属性
      * @param dataPermissionProperties 数据权限配置属性
+     * @param securityProperties        MyBatis-Plus SQL 安全配置属性
      */
-    public MyBatisPlusConfig(TenantProperties tenantProperties, DataPermissionProperties dataPermissionProperties) {
+    public MyBatisPlusConfig(TenantProperties tenantProperties, DataPermissionProperties dataPermissionProperties, MybatisPlusSecurityProperties securityProperties) {
         this.tenantProperties = tenantProperties; // 保存租户配置，供租户插件读取。
         this.dataPermissionProperties = dataPermissionProperties; // 保存数据权限配置，供数据权限插件读取。
+        this.securityProperties = securityProperties; // 保存 SQL 安全配置，供安全插件开关读取。
     }
 
     /**
@@ -64,6 +73,12 @@ public class MyBatisPlusConfig {
         }
         if (dataPermissionProperties.isEnabled()) {
             interceptor.addInnerInterceptor(new DataPermissionInterceptor(new DataPermissionSqlHandler(dataPermissionProperties))); // 开启数据权限插件后自动为 SQL 拼接部门或本人条件。
+        }
+        if (securityProperties.isIllegalSqlEnabled()) {
+            interceptor.addInnerInterceptor(new IllegalSQLInnerInterceptor()); // 注册非法 SQL 拦截插件，提前阻断高风险 SQL。
+        }
+        if (securityProperties.isBlockAttackEnabled()) {
+            interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor()); // 注册防全表更新删除插件，避免无条件 update/delete 破坏数据。
         }
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL)); // 注册 MySQL 分页插件。
         interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor()); // 注册 @Version 乐观锁插件。

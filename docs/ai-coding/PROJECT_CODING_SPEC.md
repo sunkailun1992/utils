@@ -4,9 +4,11 @@
 
 - 项目面向 Spring Boot 3 / Java 17，新增代码必须使用 `jakarta.*`，不得引入 `javax.*`。
 - 公共类、配置类、注解、枚举、异常类必须保留稳定包名，修改前先检查消费者项目是否直接依赖。
-- 新增 Java 代码必须补齐类注释、字段注释、方法 JavaDoc、关键逻辑注释。
+- AI 新增或修改 Java 代码时，每一行新增或修改内容都必须补充注释，说明该行用途、业务含义或安全边界。
+- 新增 Java 代码必须补齐类注释、字段注释、方法 JavaDoc、关键逻辑逐行注释。
 - 关键逻辑包括认证、租户、权限、Redis、动态数据源、乐观锁、SQL 参数校验、事务、异常处理、返回值组装。
 - 注释解释业务意图和边界，不写“给变量赋值”这类无效注释。
+- 局部改造历史代码时，只要求本次新增或修改行、所在方法和直接相关字段补齐注释，不借机大面积重写无关历史代码。
 
 ## 命名规范
 
@@ -37,8 +39,16 @@
 - 当前认证来源是 JWT 或网关透传身份头，最终写入 `SecurityUser`。
 - 业务代码读取当前用户必须通过 `UserContextHolder.get()`。
 - 请求结束后必须清理 `UserContextHolder`，避免线程复用导致身份串号。
+- 退出登录、密码变更、用户禁用、刷新 token 失败等认证状态变化必须清理或失效 token、登录态缓存和线程上下文。
 - 不得恢复旧 `token` 请求头认证。
 - 不得通过 Redis token 用户对象作为授权来源。
+
+## 安全规则
+
+- 安全细则独立维护在 `SECURITY_CODING_SPEC.md`。
+- 新增或修改认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS 跨站脚本、SQL 注入、文件上传校验相关代码时，必须先阅读安全规范。
+- 公共工具类不得提供绕过接口鉴权、租户隔离、数据归属校验、参数绑定、文件路径校验或上传校验的便捷方法。
+- 公共异常、日志、响应、导出、通知和审计能力必须默认执行敏感信息保护，不得输出密码、token、密钥、验证码、完整身份证、完整手机号、完整邮箱、内部地址和堆栈。
 
 ## 租户与动态数据源
 
@@ -56,6 +66,15 @@
 - 乐观锁由 `MyBatisPlusConfig` 注册 `OptimisticLockerInnerInterceptor`。
 - 更新接口需要提交查询时拿到的当前 `version`。
 - 更新建议使用 `updateById(entity)`，避免只按 id 的 `UpdateWrapper` 绕过乐观锁。
+- SQL 安全由 `MyBatisPlusConfig` 默认注册 `IllegalSQLInnerInterceptor` 和 `BlockAttackInnerInterceptor`，消费者项目不得无说明关闭。
+- 如确需关闭非法 SQL 或防全表更新删除插件，必须在业务配置、变更说明和测试用例中说明原因、影响范围和替代防护。
+- 动态排序字段、动态 select 字段、动态表名、导出字段和搜索字段必须先做后端白名单，不得直接使用前端传入值。
+- `SqlInjectionUtils.check(...)` 和 Wrapper 的 `checkSqlInjection()` 只能作为补充校验，不能替代字段白名单和参数绑定。
+- MyBatis-Plus `SqlInjector` 是自定义通用 Mapper 方法的扩展点，不是 SQL 注入防护能力。
+- 新增 `SqlInjector`、`AbstractMethod` 或自定义批量 SQL 方法时，SQL 片段只能来自实体元数据、后端常量或白名单，不得来自请求参数。
+- 优先使用 `LambdaQueryWrapper`、`LambdaUpdateWrapper`、`#{}` 参数绑定和 Mapper 方法参数，避免手写字符串列名和 XML `${}`。
+- `DataPermissionInterceptor` 用于数据范围控制，不能替代接口鉴权、租户隔离和业务归属校验。
+- `TenantLineInnerInterceptor` 只处理 SQL 租户条件，租户上下文仍必须来自可信认证或网关上下文，不能信任前端普通参数。
 
 ## AOP 与幂等
 

@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.1.5`
+- 发布坐标：`com:utils:1.1.9`
 - Java 版本：`17`
 - Spring Boot：`3.2.4`
 - Servlet / Validation 包名：统一使用 `jakarta.*`
@@ -21,7 +21,7 @@
 ## 仓库边界
 
 - `utils`：公共工具、公共配置、公共注解、公共异常、公共上下文和可被多个服务复用的第三方封装。
-- `user`：用户、认证、租户、权限、账号等业务实现，依赖 `com:utils:1.1.5`。
+- `user`：用户、认证、租户、权限、账号等业务实现，依赖 `com:utils:1.1.9`。
 - `gateway`：只做路由、跨域、限流、Actuator 访问保护和 OpenAPI 聚合；不保留 `com.kellen.utils` 本地副本。
 
 维护原则：
@@ -75,7 +75,8 @@ cd /Users/sunkailun/Desktop/个人/GitHub/gateway
 - 不再新增 `bank`、`hz`、`hx`、`jghx` 等动态数据源常量或配置。
 - 不在 `gateway`、`user` 等消费者项目内复制 `utils` 工具类源码。
 - 不把网关路由、Nacos 配置、SLS/Logback 本地配置放进本仓库。
-- 新增 Java 类必须补齐类注释、字段注释、方法 JavaDoc、关键逻辑注释。
+- AI 新增或修改 Java 代码时，每一行新增或修改内容都要补充注释，说明该行的用途、业务含义或安全边界。
+- 新增 Java 类必须补齐类注释、字段注释、方法 JavaDoc、关键逻辑逐行注释。
 - 新增公共类型必须遵守 PascalCase 命名，文件名必须与 public 类型名一致。
 
 ## AI 阅读入口
@@ -84,8 +85,9 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 
 1. [AI 编码入口](docs/ai-coding/README.md)：确认修改前检查项、验证命令和文档维护要求。
 2. [项目编码规范](docs/ai-coding/PROJECT_CODING_SPEC.md)：确认响应、异常、认证、租户、动态数据源、乐观锁和注释规则。
-3. [工具类归类目录](docs/ai-coding/UTILS_TOOL_CATALOG.md)：确认现有能力应该复用哪个包和哪个类。
-4. [包结构整理建议](docs/ai-coding/PACKAGE_REFACTOR_GUIDE.md)：新增或迁移工具类前确认目标包。
+3. [安全编码规范](docs/ai-coding/SECURITY_CODING_SPEC.md)：修改认证、权限、SQL、文件、脱敏、上传下载、日志和第三方 SDK 前必须阅读。
+4. [工具类归类目录](docs/ai-coding/UTILS_TOOL_CATALOG.md)：确认现有能力应该复用哪个包和哪个类。
+5. [包结构整理建议](docs/ai-coding/PACKAGE_REFACTOR_GUIDE.md)：新增或迁移工具类前确认目标包。
 
 ## AI 修改流程
 

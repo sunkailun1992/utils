@@ -55,6 +55,7 @@
 - `com.kellen.utils.datasource.DataSourceUtil`：数据源工具。
 - `com.kellen.utils.annotations.DynamicDataSource`：动态数据源注解。
 - `com.kellen.config.mybatis.MyBatisPlusConfig`：MyBatis-Plus 插件配置。
+- `com.kellen.config.mybatis.MybatisPlusSecurityProperties`：MyBatis-Plus SQL 安全插件开关配置。
 - `com.kellen.config.mybatis.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器。
 - `com.kellen.entity.EntityBase`：通用实体基类。
 
@@ -62,6 +63,9 @@
 
 - 只保留 `master` 与 `gray` 两个数据源。
 - `version` 只作为 MyBatis-Plus 乐观锁字段。
+- `MyBatisPlusConfig` 默认注册租户、数据权限、非法 SQL、防全表更新删除、分页和乐观锁插件。
+- `IllegalSQLInnerInterceptor` 与 `BlockAttackInnerInterceptor` 属于默认安全边界，关闭前必须补充原因、替代防护和测试。
+- MyBatis-Plus `SqlInjector` 只允许作为 Mapper 通用方法扩展点，不作为 SQL 注入防护能力。
 - 需要租户隔离的调用必须显式维护 `TenantContextHolder` 生命周期。
 - Feign 透传只透传可信上下文，不把业务参数当作租户隔离依据。
 
