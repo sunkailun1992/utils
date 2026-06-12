@@ -83,11 +83,13 @@ cd ../gateway
 
 AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行为：
 
-1. [AI 编码入口](docs/ai-coding/README.md)：确认修改前检查项、验证命令和文档维护要求。
-2. [项目编码规范](docs/ai-coding/PROJECT_CODING_SPEC.md)：确认响应、异常、认证、租户、动态数据源、乐观锁和注释规则。
-3. [安全编码规范](docs/ai-coding/SECURITY_CODING_SPEC.md)：修改认证、权限、SQL、文件、脱敏、上传下载、日志和第三方 SDK 前必须阅读。
-4. [工具类归类目录](docs/ai-coding/UTILS_TOOL_CATALOG.md)：确认现有能力应该复用哪个包和哪个类。
-5. [包结构整理建议](docs/ai-coding/PACKAGE_REFACTOR_GUIDE.md)：新增或迁移工具类前确认目标包。
+1. [AI 根入口](AGENTS.md)：确认公共包职责、阅读顺序、工程门禁和消费者验证要求。
+2. [AI 编码入口](docs/ai-coding/README.md)：确认修改前检查项、验证命令和文档维护要求。
+3. [AI 编码指导规范](docs/ai-coding/AI_CODING_GUIDE.md)：确认公共包 AI 修改流程、工程门禁和消费者验证要求。
+4. [项目编码规范](docs/ai-coding/PROJECT_CODING_SPEC.md)：确认响应、异常、认证、租户、动态数据源、乐观锁和注释规则。
+5. [安全编码规范](docs/ai-coding/SECURITY_CODING_SPEC.md)：修改认证、权限、SQL、文件、脱敏、上传下载、日志和第三方 SDK 前必须阅读。
+6. [工具类归类目录](docs/ai-coding/UTILS_TOOL_CATALOG.md)：确认现有能力应该复用哪个包和哪个类。
+7. [包结构整理建议](docs/ai-coding/PACKAGE_REFACTOR_GUIDE.md)：新增或迁移工具类前确认目标包。
 
 ## AI 修改流程
 
