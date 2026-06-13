@@ -18,7 +18,7 @@ AI 修改本项目时，必须先判断能力归属：
 1. 阅读入口
    - 先读根目录 `AGENTS.md` 和 `README.md`。
    - 再读 `docs/ai-coding/README.md`。
-   - 按任务阅读 `PROJECT_CODING_SPEC.md`、`AI_ENGINEERING_GUARDRAILS.md`、`SECURITY_CODING_SPEC.md`、`UTILS_TOOL_CATALOG.md`。
+   - 按任务阅读 `AI_DESIGN_PATTERN_GUIDE.md`、`PROJECT_CODING_SPEC.md`、`AI_ENGINEERING_GUARDRAILS.md`、`SECURITY_CODING_SPEC.md`、`UTILS_TOOL_CATALOG.md`。
 
 2. 调用点确认
    - 使用 `rg` 搜索本仓库已有实现。
@@ -31,6 +31,7 @@ AI 修改本项目时，必须先判断能力归属：
 
 4. 工程实现
    - 按 `PROJECT_CODING_SPEC.md` 的包结构、命名、注释和安全规则实现。
+   - 新增公共配置、SDK 适配、拦截器、策略、工具类或自动配置前，必须按 `AI_DESIGN_PATTERN_GUIDE.md` 判断模式和公共 API 兼容性。
    - AI 新增或修改 Java、Gradle、Shell、Markdown 或 properties 内容时，必须遵守 `AI_COMMENT_STYLE_GUIDE.md`。
    - 优先让代码自解释，能用类型名、方法名、泛型、常量和小方法表达的意图，不用注释补救。
    - 注释应说明公共职责、消费者影响、安全边界和误用风险，禁止机械逐行、行尾堆叠和注释掉的死代码。
@@ -53,6 +54,7 @@ AI 修改本项目时，必须先判断能力归属：
 | --- | --- |
 | `README.md` | 当前公共包定位、版本、构建发布和消费者验证 |
 | `docs/ai-coding/README.md` | AI 阅读顺序、修改前检查和文档维护 |
+| `AI_DESIGN_PATTERN_GUIDE.md` | 公共包设计模式、公共 API 兼容性、自动配置、拦截器和工具类抽象规则 |
 | `PROJECT_CODING_SPEC.md` | 响应、异常、认证、租户、动态数据源、乐观锁、MyBatis-Plus、AOP、工具类和注释规范 |
 | `AI_AUTOMATION_WORKFLOW.md` | 需求说明、验收标准、开发手册、测试说明和交付说明模板 |
 | `AI_ENGINEERING_GUARDRAILS.md` | 风险分级、Definition of Done、测试门禁、安全门禁和交付模板 |
