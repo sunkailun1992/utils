@@ -21,7 +21,7 @@
 - 使用 `rg` 搜索现有实现，优先复用已有工具类。
 - 检查是否会影响消费者项目，尤其是同级 `../user` 项目。
 - 确认没有重新引入旧 `Json` 响应、旧 token 认证、旧多数据源名称或 `javax.*`。
-- AI 新增或修改 Java 代码时，每一行新增或修改内容都必须补充注释，说明该行用途、业务含义或安全边界。
+- AI 新增或修改 Java 代码时，必须补充说明公共职责、消费者影响和安全边界的有效注释，禁止机械逐行或行尾堆叠注释。
 - 涉及接口鉴权、数据脱敏、水平越权、文件遍历、退出清理 token、XSS 跨站脚本、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，必须同步检查 `SECURITY_CODING_SPEC.md`。
 - 涉及 MyBatis-Plus Wrapper、Mapper XML、排序字段、动态列名、动态表名、导出字段、查询增强时，必须先设计后端白名单，再考虑 `SqlInjectionUtils` 或 `checkSqlInjection()` 补充校验。
 - 不得把 MyBatis-Plus `SqlInjector` 写成防 SQL 注入能力；它是自定义通用 Mapper 方法的扩展点，新增前必须证明标准 `BaseMapper`、Service 或 XML 无法满足需求。
@@ -29,7 +29,11 @@
 - 新增或修改功能前必须按 `AI_AUTOMATION_WORKFLOW.md` 先整理需求说明、验收标准和开发手册；小改动可以简化输出，但检查项不能跳过。
 - 新增或修改功能后必须按 `AI_ENGINEERING_GUARDRAILS.md` 做风险分级、Definition of Done、测试证据、安全检查、风险和回滚说明。
 - 新增或修改 README、AI 规范、配置、脚本、测试、示例和代码时，禁止写入个人电脑绝对路径、本机下载目录、本机 JDK 路径或本机仓库完整路径；需要表达目录关系时使用相对路径、环境变量或 `<PLACEHOLDER>` 占位符。
+- 只要本次任务修改生产代码、配置、构建脚本或公共示例，就必须提升一次 `build.gradle` 的 `version`；同一批未提交改动只提升一次版本号，后续补代码、补测试、补文档不得重复提升。
+- 纯 README、AI 规范、注释或说明文档改动不强制提升制品版本；如果同时改了代码或构建配置，则仍按代码改动规则提升一次。
 - 如果修改公共 API、注解、AOP、认证、租户、异常、返回值、MyBatis-Plus 配置，修改后必须执行 `./gradlew clean build -x test` 和 `./gradlew publishToMavenLocal`。
+- 如果从 `main` 分支开始提交并推送 Git 仓库，必须同时执行 `./gradlew publish`，把同版本制品推送到远程私有 Maven 仓库。
+- 非 `main` 分支或未提交状态默认只做 `./gradlew publishToMavenLocal` 本地验证，不推送远程私有 Maven 制品。
 
 ## 文档维护
 

@@ -6,9 +6,9 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.1.9`
+- 发布坐标：`com:utils:1.2.0`
 - Java 版本：`17`
-- Spring Boot：`3.2.4`
+- Spring Boot：`3.2.12`
 - Servlet / Validation 包名：统一使用 `jakarta.*`
 - 统一响应：只使用 `com.kellen.utils.response.ApiResponse`
 - 统一错误码：只使用 `com.kellen.utils.enumeration.ReturnCode`
@@ -21,7 +21,7 @@
 ## 仓库边界
 
 - `utils`：公共工具、公共配置、公共注解、公共异常、公共上下文和可被多个服务复用的第三方封装。
-- `user`：用户、认证、租户、权限、账号等业务实现，依赖 `com:utils:1.1.9`。
+- `user`：用户、认证、租户、权限、账号等业务实现，依赖 `com:utils` 制品，具体版本以消费者项目 `build.gradle` 为准。
 - `gateway`：只做路由、跨域、限流、Actuator 访问保护和 OpenAPI 聚合；不保留 `com.kellen.utils` 本地副本。
 
 维护原则：
@@ -53,6 +53,14 @@ aliyunMavenPassword=你的密码
 ./gradlew publish
 ```
 
+版本与发布规则：
+
+- 只要本次任务修改生产代码、配置、构建脚本或公共示例，就必须提升一次 `build.gradle` 中的 `version`。
+- 同一批未提交改动只提升一次版本号；提交前继续补代码、补测试、补文档或修编译错误时，不得再次提升版本号。
+- 纯 README、AI 规范、注释或说明文档改动不强制提升制品版本；如果同一任务同时改了代码或构建配置，则仍按代码改动规则提升一次。
+- 非 `main` 分支或未提交状态默认只执行 `./gradlew publishToMavenLocal` 做消费者本地验证，不推送远程私有 Maven 制品。
+- 从 `main` 分支开始提交并推送 Git 仓库时，必须同步执行 `./gradlew publish`，把同版本 jar、sourcesJar、javadocJar 和 Maven 元数据推送到远程私有 Maven 仓库。
+
 消费者项目升级 `utils` 后，应同步执行消费者项目编译验证。例如 `user` 项目：
 
 ```bash
@@ -75,8 +83,8 @@ cd ../gateway
 - 不再新增 `bank`、`hz`、`hx`、`jghx` 等动态数据源常量或配置。
 - 不在 `gateway`、`user` 等消费者项目内复制 `utils` 工具类源码。
 - 不把网关路由、Nacos 配置、SLS/Logback 本地配置放进本仓库。
-- AI 新增或修改 Java 代码时，每一行新增或修改内容都要补充注释，说明该行的用途、业务含义或安全边界。
-- 新增 Java 类必须补齐类注释、字段注释、方法 JavaDoc、关键逻辑逐行注释。
+- AI 新增或修改 Java 代码时，必须补充说明公共职责、消费者影响和安全边界的有效注释，禁止机械逐行或行尾堆叠注释。
+- 新增 Java 类必须补齐类注释、字段注释、方法 JavaDoc，并在关键逻辑块前说明为什么这样实现。
 - 新增公共类型必须遵守 PascalCase 命名，文件名必须与 public 类型名一致。
 
 ## AI 阅读入口
@@ -97,4 +105,4 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 2. 判断能力归属：多项目通用留在 `utils`，业务专用迁回业务项目，网关专用留在 `gateway`。
 3. 修改公共 API 时同步更新本 README 和 `docs/ai-coding/*` 对应文档。
 4. 执行 `./gradlew clean build -x test`，需要消费者验证时再执行对应消费者项目编译。
-5. 发布前执行 `./gradlew publishToMavenLocal`，远程发布只通过 `./gradlew publish`，凭证放本机 Gradle 配置或环境变量。
+5. 发布前执行 `./gradlew publishToMavenLocal`；从 `main` 分支提交并推送 Git 仓库时必须同步执行 `./gradlew publish`，凭证放本机 Gradle 配置或环境变量。

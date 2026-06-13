@@ -246,13 +246,13 @@ publishing {
         mavenJava(MavenPublication) {
             // 从 Java 组件发布 jar、sourcesJar、javadocJar。
             from components.java
-            // 显式设置 artifactId，保持历史 Maven 坐标 com:utils:1.0.9。
+            // 显式设置 artifactId，保持 Maven 坐标 com:utils:<version> 中的 artifactId 稳定。
             artifactId = 'utils'
         }
     }
     // 定义发布仓库。
     repositories {
-        // 发布到本机 Maven Local，供 user 项目继续使用 com:utils:1.0.9。
+        // 发布到本机 Maven Local，供消费者项目使用当前 com:utils:<version> 做本地验证。
         mavenLocal()
         // 发布到阿里云 Maven Release 仓库，供其他机器和项目拉取 utils 制品。
         maven {

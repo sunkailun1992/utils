@@ -35,6 +35,10 @@
 - AI 完成改动后，必须按 `AI_ENGINEERING_GUARDRAILS.md` 做风险分级、Definition of Done、测试证据、安全检查、风险和回滚说明。
 - 公共 API、认证上下文、租户上下文、数据权限、SQL 插件、异常处理和统一响应相关改动默认高风险起步。
 - AI 不得为了兼容单个消费者而破坏公共包职责或恢复旧 `Json` 响应、旧 token 认证、旧数据源常量、`javax.*` 包名。
+- 只要本次任务修改了生产代码、配置、构建脚本或公共示例，就必须提升一次 `build.gradle` 中的 `version`；如果同一批改动尚未提交，版本号只提升一次，后续继续补代码、补测试、补文档不得重复提升。
+- 文档、注释、README、AI 规范等纯文档改动不强制提升制品版本；如果文档改动伴随代码或构建改动，则按代码改动规则提升一次版本。
+- 从 `main` 分支开始执行提交并推送 Git 仓库时，必须同时执行远程私有 Maven 仓库发布，保证 Git 代码和远程 `com:utils:<version>` 制品一致。
+- 非 `main` 分支或未提交状态默认只允许 `publishToMavenLocal` 做消费者本地验证，不得把试验性 jar 推送到远程私有仓库。
 
 ## 多智能体协作规则
 
@@ -49,6 +53,7 @@
 ```bash
 ./gradlew clean build -x test
 ./gradlew publishToMavenLocal
+bash scripts/check-secrets.sh
 ```
 
 如果修改公共 API、认证、异常、响应、租户、动态数据源或 MyBatis-Plus 配置，还需要编译消费者项目，例如：
@@ -58,9 +63,16 @@ cd ../user
 ./gradlew clean compileJava -x test
 ```
 
+main 分支提交并推送远程 Git 仓库时，还必须发布远程私有 Maven 制品：
+
+```bash
+./gradlew publish
+```
+
 ## 禁止事项
 
 - 禁止提交 Maven 仓库凭证、真实密钥、本机 Gradle 配置、本机绝对路径或发布账号。
+- 禁止 AI 自主修改已有密钥、第三方 SDK 凭证、Maven 仓库凭证或生产配置值；发现疑似密钥只能告警，由项目负责人决定是否替换。
 - 禁止把业务服务专属枚举、业务公式、业务常量放进公共包。
 - 禁止把 MyBatis-Plus `SqlInjector` 描述或实现成 SQL 注入防护能力。
 - 禁止默认关闭 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 等安全拦截而不说明替代防护。
