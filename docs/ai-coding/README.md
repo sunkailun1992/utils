@@ -5,18 +5,19 @@
 ## 阅读顺序
 
 1. 先读 [AI 编码指导规范](AI_CODING_GUIDE.md)，确认执行步骤和禁止事项。
-2. 再读 [注释规范](AI_COMMENT_STYLE_GUIDE.md)，确认自解释优先、禁止注释掉死代码和排版要求。
-3. 再读 [设计模式规范](AI_DESIGN_PATTERN_GUIDE.md)，确认公共包模式、公共 API 兼容性和禁止巨型工具类规则。
-4. 再读 [项目编码规范](PROJECT_CODING_SPEC.md)，确认响应、异常、认证、租户、动态数据源、乐观锁和注释规则。
-5. 再读 [AI 自动化开发流程](AI_AUTOMATION_WORKFLOW.md)，按需求说明、验收标准、开发手册、测试说明和交付说明组织自动化开发。
-6. 再读 [AI 工程门禁规范](AI_ENGINEERING_GUARDRAILS.md)，确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
-7. 涉及认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，读 [安全编码规范](SECURITY_CODING_SPEC.md)。
-8. 涉及 MyBatis-Plus 动态字段、排序、数据权限、租户、乐观锁、SQL 插件或 Mapper 扩展时，必须确认 `SqlInjector` 只用于扩展 SQL 方法，不能作为 SQL 注入防护方案。
-9. MyBatis-Plus SQL 安全优先使用后端字段白名单、参数绑定、LambdaWrapper、`SqlInjectionUtils.check(...)` 或 `checkSqlInjection()` 补充校验，以及 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 默认拦截。
-10. 涉及业务微服务标准分层、RESTful Controller、ServiceQuery、ServiceResults、BO、Query、VO、Mapper 示例时，读 [公共示例模板](examples/README.md) 和 `examples/Example*`。
-11. 再读 [工具类归类目录](UTILS_TOOL_CATALOG.md)，确认目标能力应该放在哪个包、复用哪个类、哪些历史工具需要谨慎使用。
-12. 如果涉及工具类新增或包名调整，阅读 [包结构分类说明](PACKAGE_REFACTOR_GUIDE.md)，确认目标子包。
-13. 最后阅读目标 Java 类及其上下游调用点，避免只根据类名猜测行为。
+2. 再读 [目录管理规范](AI_DIRECTORY_STRUCTURE_GUIDE.md)，确认 Java Library、公共包、测试、文档和消费者边界。
+3. 再读 [注释规范](AI_COMMENT_STYLE_GUIDE.md)，确认自解释优先、禁止注释掉死代码和排版要求。
+4. 再读 [设计模式规范](AI_DESIGN_PATTERN_GUIDE.md)，确认公共包模式、公共 API 兼容性和禁止巨型工具类规则。
+5. 再读 [项目编码规范](PROJECT_CODING_SPEC.md)，确认响应、异常、认证、租户、动态数据源、乐观锁和注释规则。
+6. 再读 [AI 自动化开发流程](AI_AUTOMATION_WORKFLOW.md)，按需求说明、验收标准、开发手册、测试说明和交付说明组织自动化开发。
+7. 再读 [AI 工程门禁规范](AI_ENGINEERING_GUARDRAILS.md)，确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
+8. 涉及认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，读 [安全编码规范](SECURITY_CODING_SPEC.md)。
+9. 涉及 MyBatis-Plus 动态字段、排序、数据权限、租户、乐观锁、SQL 插件或 Mapper 扩展时，必须确认 `SqlInjector` 只用于扩展 SQL 方法，不能作为 SQL 注入防护方案。
+10. MyBatis-Plus SQL 安全优先使用后端字段白名单、参数绑定、LambdaWrapper、`SqlInjectionUtils.check(...)` 或 `checkSqlInjection()` 补充校验，以及 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 默认拦截。
+11. 涉及业务微服务标准分层、RESTful Controller、ServiceQuery、ServiceResults、BO、Query、VO、Mapper 示例时，读 [公共示例模板](examples/README.md) 和 `examples/Example*`。
+12. 再读 [工具类归类目录](UTILS_TOOL_CATALOG.md)，确认目标能力应该放在哪个包、复用哪个类、哪些历史工具需要谨慎使用。
+13. 如果涉及工具类新增或包名调整，阅读 [包结构分类说明](PACKAGE_REFACTOR_GUIDE.md)，确认目标子包。
+14. 最后阅读目标 Java 类及其上下游调用点，避免只根据类名猜测行为。
 
 ## 修改前检查
 

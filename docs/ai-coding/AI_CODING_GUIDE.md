@@ -18,7 +18,7 @@ AI 修改本项目时，必须先判断能力归属：
 1. 阅读入口
    - 先读根目录 `AGENTS.md` 和 `README.md`。
    - 再读 `docs/ai-coding/README.md`。
-   - 按任务阅读 `AI_DESIGN_PATTERN_GUIDE.md`、`PROJECT_CODING_SPEC.md`、`AI_ENGINEERING_GUARDRAILS.md`、`SECURITY_CODING_SPEC.md`、`UTILS_TOOL_CATALOG.md`。
+   - 按任务阅读 `AI_DIRECTORY_STRUCTURE_GUIDE.md`、`AI_DESIGN_PATTERN_GUIDE.md`、`PROJECT_CODING_SPEC.md`、`AI_ENGINEERING_GUARDRAILS.md`、`SECURITY_CODING_SPEC.md`、`UTILS_TOOL_CATALOG.md`。
 
 2. 调用点确认
    - 使用 `rg` 搜索本仓库已有实现。
@@ -54,6 +54,7 @@ AI 修改本项目时，必须先判断能力归属：
 | --- | --- |
 | `README.md` | 当前公共包定位、版本、构建发布和消费者验证 |
 | `docs/ai-coding/README.md` | AI 阅读顺序、修改前检查和文档维护 |
+| `AI_DIRECTORY_STRUCTURE_GUIDE.md` | Java Library 目录、公共包、测试、文档和消费者边界 |
 | `AI_DESIGN_PATTERN_GUIDE.md` | 公共包设计模式、公共 API 兼容性、自动配置、拦截器和工具类抽象规则 |
 | `PROJECT_CODING_SPEC.md` | 响应、异常、认证、租户、动态数据源、乐观锁、MyBatis-Plus、AOP、工具类和注释规范 |
 | `AI_AUTOMATION_WORKFLOW.md` | 需求说明、验收标准、开发手册、测试说明和交付说明模板 |

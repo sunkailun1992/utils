@@ -17,25 +17,26 @@
 1. `README.md`：确认公共包定位、版本、构建发布和消费者验证要求。
 2. `docs/ai-coding/README.md`：确认 AI 编码入口、修改前检查和文档维护要求。
 3. `docs/ai-coding/AI_CODING_GUIDE.md`：确认当前项目的 AI 执行步骤。
-4. `docs/ai-coding/AI_COMMENT_STYLE_GUIDE.md`：确认注释规范、自解释优先、禁止注释掉死代码和排版要求。
-5. `docs/ai-coding/AI_DESIGN_PATTERN_GUIDE.md`：确认公共包设计模式、公共 API 兼容性和禁止巨型工具类规则。
-6. `docs/ai-coding/PROJECT_CODING_SPEC.md`：确认公共响应、异常、认证、租户、动态数据源、乐观锁、注释和 examples 规则。
-7. `docs/ai-coding/AI_ENGINEERING_GUARDRAILS.md`：确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
-8. `docs/ai-coding/SECURITY_CODING_SPEC.md`：涉及认证、权限、SQL、文件、脱敏、日志、第三方 SDK 或安全扩展点时必须阅读。
-9. `docs/ai-coding/UTILS_TOOL_CATALOG.md`：新增或迁移工具类前确认目标包和现有能力。
+4. `docs/ai-coding/AI_DIRECTORY_STRUCTURE_GUIDE.md`：确认 Java Library、公共包、测试、文档和消费者边界。
+5. `docs/ai-coding/AI_COMMENT_STYLE_GUIDE.md`：确认注释规范、自解释优先、禁止注释掉死代码和排版要求。
+6. `docs/ai-coding/AI_DESIGN_PATTERN_GUIDE.md`：确认公共包设计模式、公共 API 兼容性和禁止巨型工具类规则。
+7. `docs/ai-coding/PROJECT_CODING_SPEC.md`：确认公共响应、异常、认证、租户、动态数据源、乐观锁、注释和 examples 规则。
+8. `docs/ai-coding/AI_ENGINEERING_GUARDRAILS.md`：确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
+9. `docs/ai-coding/SECURITY_CODING_SPEC.md`：涉及认证、权限、SQL、文件、脱敏、日志、第三方 SDK 或安全扩展点时必须阅读。
+10. `docs/ai-coding/UTILS_TOOL_CATALOG.md`：新增或迁移工具类前确认目标包和现有能力。
 
 ## 项目边界
 
 - 多项目通用能力才放入 `utils`；单个业务服务专用逻辑必须留在业务项目。
 - 公共工具、公共配置、公共注解、公共异常、公共上下文和第三方通用封装在本仓库维护。
-- 新增公共配置、SDK 适配、拦截器、策略、工具类或自动配置时，必须优先沿用 `AI_DESIGN_PATTERN_GUIDE.md` 中的 Auto Configuration、Strategy、Adapter、Interceptor、Template、Factory 等公共包适用模式。
+- 新增公共配置、SDK 适配、拦截器、策略、工具类或自动配置时，必须优先沿用 `docs/ai-coding/AI_DESIGN_PATTERN_GUIDE.md` 中的 Auto Configuration、Strategy、Adapter、Interceptor、Template、Factory 等公共包适用模式。
 - 不在 `user`、`message`、`gateway` 等消费者项目复制 `utils` 源码。
 - 修改公共 API、注解、AOP、认证、租户、异常、返回值或 MyBatis-Plus 配置时，必须评估消费者项目编译影响。
 
 ## AI 工程门禁
 
 - AI 新增或修改功能前，必须按 `AI_AUTOMATION_WORKFLOW.md` 整理需求说明、验收标准和开发手册。
-- AI 完成改动后，必须按 `AI_ENGINEERING_GUARDRAILS.md` 做风险分级、Definition of Done、测试证据、安全检查、风险和回滚说明。
+- AI 完成改动后，必须按 `docs/ai-coding/AI_ENGINEERING_GUARDRAILS.md` 做风险分级、Definition of Done、测试证据、安全检查、风险和回滚说明。
 - 公共 API、认证上下文、租户上下文、数据权限、SQL 插件、异常处理和统一响应相关改动默认高风险起步。
 - AI 不得为了兼容单个消费者而破坏公共包职责或恢复旧 `Json` 响应、旧 token 认证、旧数据源常量、`javax.*` 包名。
 - 只要本次任务修改了生产代码、配置、构建脚本或公共示例，就必须提升一次 `build.gradle` 中的 `version`；如果同一批改动尚未提交，版本号只提升一次，后续继续补代码、补测试、补文档不得重复提升。
