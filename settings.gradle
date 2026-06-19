@@ -21,9 +21,11 @@ dependencyResolutionManagement {
     repositories {
         // 优先读取本地 Maven 仓库，支持 publishToMavenLocal 后被本机项目消费。
         mavenLocal()
-        // 使用阿里云公共仓库，加快国内网络下的依赖下载。
+        // CI 优先使用 Maven Central，避免镜像仓库短时 5xx 直接阻断公共依赖解析。
+        mavenCentral()
+        // 使用阿里云公共仓库作为国内网络兜底镜像。
         maven { url 'https://maven.aliyun.com/repository/public' }
-        // 使用阿里云 central 代理，补充部分 Maven Central 依赖。
+        // 使用阿里云 central 代理作为补充兜底。
         maven { url 'https://maven.aliyun.com/repository/central' }
         // 使用阿里云 Maven Release 仓库，拉取公司内部发布的制品。
         maven {
@@ -37,8 +39,6 @@ dependencyResolutionManagement {
                 password = providers.gradleProperty('aliyunMavenPassword').orElse(providers.environmentVariable('ALIYUN_MAVEN_PASSWORD')).orNull
             }
         }
-        // 使用 Maven Central，作为标准开源依赖来源。
-        mavenCentral()
     }
 }
 
