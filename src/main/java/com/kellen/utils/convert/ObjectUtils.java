@@ -1,62 +1,47 @@
 package com.kellen.utils.convert;
 
+import java.util.Set;
+
 /**
- * Object的工具类
+ * 对象类型工具类。
+ *
  * @author 孙凯伦
- * @DateTime    2020/12/27  下午4:38
- * @email       376253703@qq.com
- * 
  */
-public class ObjectUtils {
+public final class ObjectUtils {
 
     /**
-     * 判断是否基础类型
-     * @author 孙凯伦
-     * @DateTime    2020/7/22  9:52 上午
-     * @email       376253703@qq.com
-     * 
-     * @param className:
-     * @return      boolean
+     * 视为叶子节点的基础类型集合：八种基本类型及其包装类、String，以及反射场景下不应继续递归的 Servlet RequestFacade。
+     */
+    private static final Set<String> BASE_TYPE_NAMES = Set.of(
+            String.class.getName(),
+            Integer.class.getName(), int.class.getName(),
+            Byte.class.getName(), byte.class.getName(),
+            Long.class.getName(), long.class.getName(),
+            Double.class.getName(), double.class.getName(),
+            Float.class.getName(), float.class.getName(),
+            Character.class.getName(), char.class.getName(),
+            Short.class.getName(), short.class.getName(),
+            Boolean.class.getName(), boolean.class.getName(),
+            "org.apache.catalina.connector.RequestFacade"
+    );
+
+    private ObjectUtils() {
+    }
+
+    /**
+     * 判断给定类型是否为基础（叶子）类型。
+     *
+     * <p>语义修正：历史实现对基础类型返回 {@code false}（与方法名相反），现修正为基础类型返回 {@code true}、
+     * 复杂对象返回 {@code false}，便于反射递归场景按字面语义判断是否继续展开字段。</p>
+     *
+     * @param className 待判断类型
+     * @return 基础或既定叶子类型返回 true，复杂对象返回 false
      */
     public static boolean isBaseType(Class className) {
-        if (className.equals(String.class)) {
-            return false;
-        } else if (className.equals(Integer.class)) {
-            return false;
-        } else if (className.equals(int.class)) {
-            return false;
-        } else if (className.equals(Byte.class)) {
-            return false;
-        } else if (className.equals(byte.class)) {
-            return false;
-        } else if (className.equals(Long.class)) {
-            return false;
-        } else if (className.equals(long.class)) {
-            return false;
-        } else if (className.equals(Double.class)) {
-            return false;
-        } else if (className.equals(double.class)) {
-            return false;
-        } else if (className.equals(Float.class)) {
-            return false;
-        } else if (className.equals(float.class)) {
-            return false;
-        } else if (className.equals(char.class)) {
-            return false;
-        } else if (className.equals(Character.class)) {
-            return false;
-        } else if (className.equals(Short.class)) {
-            return false;
-        } else if (className.equals(short.class)) {
-            return false;
-        } else if (className.equals(Boolean.class)) {
-            return false;
-        } else if (className.equals(boolean.class)) {
-            return false;
-        } else if ("org.apache.catalina.connector.RequestFacade".equals(className.getName())) {
+        if (className == null) {
             return false;
         }
-        return true;
+        return BASE_TYPE_NAMES.contains(className.getName());
     }
 
 }

@@ -78,6 +78,7 @@
 - [ ] 逻辑删除字段处理正确。
 - [ ] 乐观锁 version 处理正确。
 - [ ] DDL 脚本按 ddl_history 规则新增或修改。
+- [ ] 接入 MyBatis-Plus DDL 和 Seata AT 的业务库包含 `ddl_history` 和 `undo_log`。
 
 ## 权限
 - [ ] Controller 权限码正确。

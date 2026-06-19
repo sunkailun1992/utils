@@ -23,12 +23,12 @@ public class AliyunKey {
      */
     public static String accessKeySecret;
 
-    @Value("${aliyun.accessKey}")
+    @Value("${aliyun.access-key-id:${aliyun.accessKey:}}")
     public void setAccessKeyId(String accessKeyId) {
         AliyunKey.accessKeyId = accessKeyId;
     }
 
-    @Value("${aliyun.secretKey}")
+    @Value("${aliyun.access-key-secret:${aliyun.secretKey:}}")
     public void setAccessKeySecret(String accessKeySecret) {
         AliyunKey.accessKeySecret = accessKeySecret;
     }

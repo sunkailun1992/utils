@@ -5,7 +5,7 @@
 ## 项目定位
 
 - 项目名称：`utils`
-- 项目类型：Spring Boot 3 / Java 17 公共基础能力包
+- 项目类型：Spring Boot 4 / Java 17 公共基础能力包
 - 发布坐标：`com:utils`
 - 主要消费者：同级 `../user`、`../message`，以及需要统一响应、认证上下文、多租户、MyBatis-Plus、Redis、HTTP、文件、Excel、PDF、第三方 SDK 的服务
 - 核心风险：公共 API 破坏消费者、旧认证/旧响应回流、公共工具污染业务语义、认证和租户上下文串号、SQL 安全误用

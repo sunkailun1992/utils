@@ -6,15 +6,11 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Map工具类
+ * Map 工具类。
  *
  * @author 孙凯伦
- * @DateTime 2020/12/29  上午11:14
- * @email 376253703@qq.com
- * 
- * @explain
  */
-public class MapUtils {
+public final class MapUtils {
 
     private MapUtils(){
 

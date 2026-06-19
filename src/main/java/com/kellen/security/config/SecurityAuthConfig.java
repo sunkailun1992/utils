@@ -12,7 +12,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,6 @@ public class SecurityAuthConfig {
      */
     private static final List<String> BUILTIN_PERMIT_URLS = List.of(
             "/actuator/**",
-            "/doc.html",
             "/webjars/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
@@ -91,7 +90,7 @@ public class SecurityAuthConfig {
             }
             List<String> permitUrls = resolvePermitUrls(); // 合并框架内置公开接口和外部配置公开接口，避免配置覆盖导致登录被拦截。
             log.info("Security auth enabled, permit urls: {}", permitUrls); // 启动时输出白名单，方便定位 Nacos 或本地配置是否真正生效。
-            permitUrls.forEach(url -> registry.requestMatchers(AntPathRequestMatcher.antMatcher(url)).permitAll()); // 使用 AntPathRequestMatcher 稳定匹配 Nacos 白名单路径，避免 MVC matcher 对公开接口放行失效。
+            permitUrls.forEach(url -> registry.requestMatchers(PathPatternRequestMatcher.pathPattern(url)).permitAll()); // 使用 Security 7 PathPattern matcher 匹配 Nacos 白名单路径。
             registry.anyRequest().authenticated(); // 其余接口必须存在认证用户。
         });
         return http.build(); // 构建并返回安全过滤器链。

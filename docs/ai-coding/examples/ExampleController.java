@@ -32,7 +32,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/examples")
-@Tag(name = "示例业务", description = "演示标准 Controller 分层、权限控制和 Knife4j 文档注解")
+@Tag(name = "示例业务", description = "演示标准 Controller 分层、权限控制和 OpenAPI 文档注解")
 public class ExampleController {
 
     /**
@@ -58,7 +58,7 @@ public class ExampleController {
      */
     @GetMapping(params = {"current", "size"})
     @PreAuthorize("hasAuthority('example:select')")
-    @Operation(summary = "分页查询示例", description = "按查询条件分页返回示例业务数据，GET 查询使用 URL 参数并通过 ParameterObject 展开 Knife4j 参数")
+    @Operation(summary = "分页查询示例", description = "按查询条件分页返回示例业务数据，GET 查询使用 URL 参数并通过 ParameterObject 展开 OpenAPI 参数")
     public ApiResponse<Page<ExampleVO>> select(@ParameterObject @Validated(ExampleQuery.Select.class) ExampleQuery exampleQuery) {
         // 创建分页对象。
         Page<ExampleEntity> page = new Page<>(exampleQuery.getCurrent(), exampleQuery.getSize());
@@ -74,7 +74,7 @@ public class ExampleController {
      */
     @GetMapping("/options")
     @PreAuthorize("hasAuthority('example:select-list')")
-    @Operation(summary = "查询示例列表", description = "按查询条件返回示例业务列表数据，GET 查询使用 URL 参数并通过 ParameterObject 展开 Knife4j 参数")
+    @Operation(summary = "查询示例列表", description = "按查询条件返回示例业务列表数据，GET 查询使用 URL 参数并通过 ParameterObject 展开 OpenAPI 参数")
     public ApiResponse<List<ExampleVO>> list(@ParameterObject @Validated(ExampleQuery.SelectList.class) ExampleQuery exampleQuery) {
         // 返回统一 ApiResponse 结果。
         return ApiResponse.success(exampleService.listEnhance(exampleQuery));

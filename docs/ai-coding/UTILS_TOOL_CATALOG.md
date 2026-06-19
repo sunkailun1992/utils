@@ -100,7 +100,7 @@
 - `com.kellen.config.redis.RedisCacheConfig`：Redis 缓存配置。
 - `com.kellen.config.elasticsearch.ElasticsearchConfig`：Elasticsearch 配置。
 - `com.kellen.config.file.MultipartConfig`：文件上传配置。
-- `com.kellen.config.swagger.Swagger`：Knife4j / OpenAPI 配置。
+- `com.kellen.config.swagger.Swagger`：OpenAPI 配置。
 - `com.kellen.config.actuator.ActuatorInterceptor`：Actuator 拦截器。
 - `com.kellen.config.actuator.ServiceShutDownEndpoint`：服务停机端点。
 - `com.kellen.config.actuator.CustomWebMvcEndpointHandlerMapping`：Web MVC Endpoint 映射适配。

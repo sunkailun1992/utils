@@ -1,14 +1,19 @@
 # utils
 
-`utils` 是面向 Spring Boot 3 / Java 17 的公共基础能力包，是 `user` 等业务服务复用通用能力的唯一来源。业务项目和网关项目不要复制本仓库里的工具类源码；需要公共能力时，先在本仓库维护并发布 Maven 制品，再让消费者项目升级依赖。
+`utils` 是面向 Spring Boot 4 / Java 17 的公共基础能力包，是 `user`、`message` 等业务服务复用通用能力的唯一来源。业务项目和网关项目不要复制本仓库里的工具类源码；需要公共能力时，先在本仓库维护并发布 Maven 制品，再让消费者项目升级依赖。
 
 当前提供统一响应、错误码、认证上下文、多租户、MyBatis-Plus 基础配置、AOP 通用能力、请求日志、Redis/Redisson、HTTP、JSON、文件、Excel、PDF、阿里云、钉钉、微信等通用工具。
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.2.0`
+- 发布坐标：`com:utils:1.2.2`
 - Java 版本：`17`
-- Spring Boot：`3.2.12`
+- Spring Boot：`4.0.4`
+- Spring Cloud：`2025.1.1`
+- Spring Cloud Alibaba：`2025.1.0.0`
+- Nacos Client：`3.2.2`
+- Seata Server：`2.7.0`
+- Seata Client：`2.6.0`
 - Servlet / Validation 包名：统一使用 `jakarta.*`
 - 统一响应：只使用 `com.kellen.utils.response.ApiResponse`
 - 统一错误码：只使用 `com.kellen.utils.enumeration.ReturnCode`

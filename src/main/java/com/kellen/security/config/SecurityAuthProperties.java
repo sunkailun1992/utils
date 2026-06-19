@@ -78,7 +78,6 @@ public class SecurityAuthProperties {
      */
     private List<String> permitUrls = new ArrayList<>(Arrays.asList(
             "/actuator/**",
-            "/doc.html",
             "/webjars/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",

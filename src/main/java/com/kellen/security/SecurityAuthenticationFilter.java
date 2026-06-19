@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -59,7 +59,7 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         return securityAuthProperties.getPermitUrls().stream()
-                .anyMatch(url -> AntPathRequestMatcher.antMatcher(url).matches(request)); // 在过滤器入口直接跳过公开接口，保证登录和文档等白名单不被认证逻辑影响。
+                .anyMatch(url -> PathPatternRequestMatcher.pathPattern(url).matches(request)); // 在过滤器入口直接跳过公开接口，保证登录和文档等白名单不被认证逻辑影响。
     }
 
     /**

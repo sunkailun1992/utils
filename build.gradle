@@ -12,7 +12,7 @@ plugins {
 group = 'com'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.2.0'
+version = '1.3.0'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -30,16 +30,18 @@ def aliyunMavenPassword = providers.gradleProperty('aliyunMavenPassword').orElse
 ext {
     // Java 源码和字节码版本。
     javaReleaseVersion = 17
-    // Spring Boot 版本，对齐原 Maven parent 版本。
-    springBootVersion = '3.2.4'
+    // Spring Boot 版本，对齐当前微服务统一 Boot 4 运行时。
+    springBootVersion = '4.0.4'
     // Spring Cloud 版本，用于 OpenFeign、Cloud 生态组件版本管理。
-    springCloudVersion = '2023.0.1'
+    springCloudVersion = '2025.1.1'
     // Spring Cloud Alibaba 版本，用于 Nacos、Seata Alibaba 适配组件版本管理。
-    springCloudAlibabaVersion = '2023.0.1.0'
+    springCloudAlibabaVersion = '2025.1.0.0'
+    // Nacos Client 版本，显式对齐当前 Nacos 3.2.2 服务端。
+    nacosClientVersion = '3.2.2'
     // MyBatis-Plus 版本，用于 ORM、分页、租户、乐观锁插件。
     mybatisPlusVersion = '3.5.16'
-    // Knife4j 版本，用于 OpenAPI3 接口文档。
-    knife4jVersion = '4.5.0'
+    // Springdoc OpenAPI 版本，用于保留标准 /v3/api-docs 能力。
+    springdocVersion = '3.0.3'
     // Hutool 版本，用于常用 Java 工具能力。
     hutoolVersion = '5.8.46'
     // MyBatis Mate 版本，用于 MyBatis-Plus 企业增强能力。
@@ -54,28 +56,28 @@ ext {
     aliyunOssVersion = '3.18.5'
     // 阿里云 Java Core SDK 版本，用于短信、STS、函数工作流等基础客户端能力。
     aliyunCoreVersion = '4.7.8'
-    // Redisson 版本，保持在 3.x 兼容线内，避免直接跨到 4.x。
-    redissonVersion = '3.52.0'
+    // Redisson 版本，4.x 适配 Spring Boot 4 自动配置包名。
+    redissonVersion = '4.6.1'
     // JJWT 版本，当前代码使用 0.9.x API，暂不跨到 0.12+ 新 API。
     jjwtVersion = '0.9.1'
-    // OkHttp 版本，保持 4.x 稳定 API，避免直接跨到 5.x。
-    okhttpVersion = '4.12.0'
+    // OkHttp 版本，5.x 稳定线；RequestBody.create 参数顺序调整为 (content, MediaType)。
+    okhttpVersion = '5.0.0'
     // Guava 版本，用于集合辅助和不可变集合能力。
     guavaVersion = '33.6.0-jre'
     // Apache Commons Collections 版本，用于集合工具能力。
     commonsCollectionsVersion = '4.5.0'
     // Apache POI 版本，用于 Hutool Excel 运行时和 Office 文档处理。
     poiVersion = '5.5.1'
-    // iText 5 版本，当前 PdfUtils 使用 com.itextpdf.text 旧 API。
-    itextVersion = '5.5.13.5'
-    // iText Asian 版本，用于 iText 5 中文字体支持。
-    itextAsianVersion = '5.2.0'
-    // PDFBox 版本，保持 2.x API，当前代码仍使用 PDDocument.load。
-    pdfboxVersion = '2.0.36'
+    // iText 7 版本，PdfUtils 改用 kernel/io/layout/forms 新 API。
+    itextVersion = '7.2.5'
+    // iText font-asian 版本，替代 iText 5 的 itext-asian，提供 STSong-Light 等 CJK 字体 CMap。
+    fontAsianVersion = '7.2.5'
+    // PDFBox 版本，3.x 线；加载入口由 PDDocument.load 改为 Loader.loadPDF。
+    pdfboxVersion = '3.0.5'
     // Dozer 版本，用于通用对象属性映射能力。
     dozerVersion = '6.5.2'
-    // Seata 版本，用于分布式事务代理和 XID 透传，必须与 Spring Cloud Alibaba 当前 Seata 坐标体系保持一致。
-    seataVersion = '2.1.0'
+    // Seata 客户端版本，用于分布式事务代理和 XID 透传；当前已发布 starter 最新为 2.6.0，可注册到 Seata Server 2.7.0。
+    seataVersion = '2.6.0'
     // Aviator 版本，用于通用表达式和公式计算能力。
     aviatorVersion = '5.4.3'
     // TTL 版本，用于线程池场景下的 ThreadLocal 上下文传递。
@@ -123,6 +125,11 @@ tasks.withType(Javadoc).configureEach {
     failOnError = false
 }
 
+// 禁用 Gradle Module Metadata，避免消费者优先读取缺少 Spring BOM 版本映射的 .module 文件。
+tasks.withType(GenerateModuleMetadata).configureEach {
+    enabled = false
+}
+
 // 导入 Maven BOM，替代原 Spring Boot parent 和 dependencyManagement。
 dependencyManagement {
     // 导入多个 BOM，统一管理 Spring 生态依赖版本。
@@ -133,6 +140,20 @@ dependencyManagement {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
         // Spring Cloud Alibaba BOM 管理 Nacos、Seata Alibaba 组件版本。
         mavenBom "com.alibaba.cloud:spring-cloud-alibaba-dependencies:${springCloudAlibabaVersion}"
+    }
+}
+
+configurations.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'com.alibaba.nacos'
+                && (details.requested.name == 'nacos-client' || details.requested.name.startsWith('nacos-'))) {
+            details.useVersion nacosClientVersion
+            details.because 'Nacos client must match the 3.2.2 server line used by the shared microservice environment.'
+        }
+        if (details.requested.group == 'org.apache.seata') {
+            details.useVersion seataVersion
+            details.because 'Seata client modules must stay on the latest published Apache Seata 2.x client line.'
+        }
     }
 }
 
@@ -150,8 +171,8 @@ dependencies {
     api 'org.springframework.boot:spring-boot-starter-web'
     // Spring Actuator：提供自定义管理端点和 WebEndpointHandlerMapping 支持。
     api 'org.springframework.boot:spring-boot-starter-actuator'
-    // Spring AOP：提供 AspectJ 切面、请求日志、参数校验和幂等拦截能力。
-    api 'org.springframework.boot:spring-boot-starter-aop'
+    // Spring AspectJ：提供切面、请求日志、参数校验和幂等拦截能力。
+    api 'org.springframework.boot:spring-boot-starter-aspectj'
     // Spring Security：提供认证过滤器、安全上下文和权限模型支持。
     api 'org.springframework.boot:spring-boot-starter-security'
     // Elasticsearch：提供 ES 日志索引 Repository 支持。
@@ -164,12 +185,12 @@ dependencies {
     api 'com.mysql:mysql-connector-j'
     // Spring JDBC：提供 DataSource、JdbcTemplate 和事务基础能力。
     api 'org.springframework.boot:spring-boot-starter-jdbc'
-    // Druid：提供 Spring Boot 3 下的 Druid 数据库连接池。
-    api "com.alibaba:druid-spring-boot-3-starter:${druidVersion}"
-    // Dynamic Datasource：提供动态数据源切换能力。
-    api "com.baomidou:dynamic-datasource-spring-boot3-starter:${dynamicDatasourceVersion}"
-    // MyBatis-Plus Boot3 Starter：提供 MyBatis-Plus 自动配置能力。
-    api "com.baomidou:mybatis-plus-spring-boot3-starter:${mybatisPlusVersion}"
+    // Druid：提供 Spring Boot 4 下的 Druid 数据库连接池。
+    api "com.alibaba:druid-spring-boot-4-starter:${druidVersion}"
+    // Dynamic Datasource：提供 Spring Boot 4 动态数据源切换能力。
+    api "com.baomidou:dynamic-datasource-spring-boot4-starter:${dynamicDatasourceVersion}"
+    // MyBatis-Plus Boot4 Starter：提供 MyBatis-Plus 自动配置能力。
+    api "com.baomidou:mybatis-plus-spring-boot4-starter:${mybatisPlusVersion}"
     // MyBatis-Plus Core：提供 BaseMapper、条件构造器等核心能力。
     api "com.baomidou:mybatis-plus:${mybatisPlusVersion}"
     // MyBatis-Plus JSQLParser：提供租户插件、分页插件等 SQL 解析能力。
@@ -184,8 +205,8 @@ dependencies {
     api "cn.hutool:hutool-all:${hutoolVersion}"
     // Redisson：提供 Redis 分布式锁和 RedissonClient 自动配置能力。
     api "org.redisson:redisson-spring-boot-starter:${redissonVersion}"
-    // Knife4j：提供 Jakarta / OpenAPI3 接口文档增强能力。
-    api "com.github.xiaoymin:knife4j-openapi3-jakarta-spring-boot-starter:${knife4jVersion}"
+    // Springdoc OpenAPI：提供标准 OpenAPI3 /v3/api-docs 能力，不引入第三方文档 UI。
+    api "org.springdoc:springdoc-openapi-starter-webmvc-api:${springdocVersion}"
     // JJWT：提供 JWT 生成和解析能力。
     api "io.jsonwebtoken:jjwt:${jjwtVersion}"
     // OkHttp：提供 HTTP 客户端请求能力。
@@ -196,10 +217,10 @@ dependencies {
     api "org.apache.commons:commons-collections4:${commonsCollectionsVersion}"
     // Apache POI：提供 Office 文档和 Excel 处理能力。
     api "org.apache.poi:poi-ooxml:${poiVersion}"
-    // iText 5：提供旧版 PDF 生成和处理能力。
-    api "com.itextpdf:itextpdf:${itextVersion}"
-    // iText Asian：提供旧版 iText 中文字体支持。
-    api "com.itextpdf:itext-asian:${itextAsianVersion}"
+    // iText 7 core：提供 kernel/io/layout/forms 等 PDF 生成与表单处理能力。
+    api "com.itextpdf:itext7-core:${itextVersion}"
+    // iText font-asian：提供 STSong-Light 等 CJK 字体的 CMap 资源。
+    api "com.itextpdf:font-asian:${fontAsianVersion}"
     // PDFBox：提供 PDF 渲染、读取和页面处理能力。
     api "org.apache.pdfbox:pdfbox:${pdfboxVersion}"
     // Dozer：提供对象之间的属性映射能力。
@@ -248,6 +269,15 @@ publishing {
             from components.java
             // 显式设置 artifactId，保持 Maven 坐标 com:utils:<version> 中的 artifactId 稳定。
             artifactId = 'utils'
+            // 把 BOM 管理出的真实依赖版本写进发布 POM，避免消费者解析到无版本传递依赖。
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
         }
     }
     // 定义发布仓库。

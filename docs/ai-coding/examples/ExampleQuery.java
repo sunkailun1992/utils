@@ -90,7 +90,7 @@ public class ExampleQuery implements Serializable {
      * 当前页。
      * <p>
      * 分页接口通过 Controller 的 `@GetMapping(params = {"current", "size"})` 保证分页参数存在；
-     * 这里不要加 `@NotNull(groups = Select.class)`，否则 Knife4j 会忽略校验分组并把 options 接口也标记为必填。
+     * 这里不要加 `@NotNull(groups = Select.class)`，否则 OpenAPI 会忽略校验分组并把 options 接口也标记为必填。
      */
     @Schema(description = "当前页", example = "1")
     @Min(groups = {Select.class}, value = 1, message = "current最小为1")
@@ -100,7 +100,7 @@ public class ExampleQuery implements Serializable {
      * 分页显示数量。
      * <p>
      * 分页接口通过 Controller 的 `@GetMapping(params = {"current", "size"})` 保证分页参数存在；
-     * 这里只校验取值范围，避免非分页 options 接口被 Knife4j 错误标记为必填。
+     * 这里只校验取值范围，避免非分页 options 接口被 OpenAPI 错误标记为必填。
      */
     @Schema(description = "分页显示数量", example = "10")
     @Min(groups = {Select.class}, value = 1, message = "size最小为1")

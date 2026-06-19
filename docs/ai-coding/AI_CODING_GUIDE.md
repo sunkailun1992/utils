@@ -4,7 +4,7 @@
 
 ## 1. 项目定位
 
-`utils` 是面向 Spring Boot 3 / Java 17 的公共基础能力包，为 `user`、`message` 等业务服务提供统一响应、错误码、认证上下文、租户上下文、MyBatis-Plus 基础配置、AOP、请求日志、Redis、HTTP、JSON、文件、Excel、PDF 和第三方 SDK 封装。
+`utils` 是面向 Spring Boot 4 / Java 17 的公共基础能力包，为 `user`、`message` 等业务服务提供统一响应、错误码、认证上下文、租户上下文、MyBatis-Plus 基础配置、AOP、请求日志、Redis、HTTP、JSON、文件、Excel、PDF 和第三方 SDK 封装。
 
 AI 修改本项目时，必须先判断能力归属：
 

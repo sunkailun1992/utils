@@ -126,7 +126,7 @@ public final class OkHttpUtils {
      * @return JSON 请求体
      */
     public static RequestBody createRequestParamsJson(String json) {
-        return RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json);
+        return RequestBody.create(json, MediaType.parse("application/json; charset=utf-8"));
     }
 
     /**
@@ -136,7 +136,7 @@ public final class OkHttpUtils {
      * @return XML 请求体
      */
     public static RequestBody createRequestParamsXml(String params) {
-        return RequestBody.create(MediaType.parse("application/xml"), params);
+        return RequestBody.create(params, MediaType.parse("application/xml"));
     }
 
     /**

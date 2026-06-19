@@ -1,17 +1,12 @@
 package com.kellen.utils.excel;
 
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
-import com.kellen.aliyun.Oss;
-import com.kellen.aliyun.oss.OssUtils;
 import com.kellen.utils.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.ByteArrayOutputStream;
 import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,41 +46,6 @@ public class ExcelExportUtil {
         }
 
     }
-
-    /**
-     * 导出excel工具类经过oss
-     *
-     * @param list       导出数据
-     * @param title      文件名称
-     * @param header     文件头名称
-     * @param columnName 文件列名
-     * @param width      宽度
-     * @param ossTag     osstag生命周期管理
-     */
-    public static String excelExportByOos(List<?> list, String title, String[] header, String[] columnName, String prefix, int width, Map<String, String> ossTag) {
-        //oss路径
-        StringBuffer oosPath = new StringBuffer(Oss.domain).append("/");
-        //文件名称
-        StringBuffer fileUrl = new StringBuffer();
-        if (StringUtils.isNotBlank(prefix)) {
-            fileUrl.append(prefix);
-        }
-        fileUrl.append(StringUtils.isNotBlank(title)?title: IdUtil.simpleUUID())
-               .append(".xlsx");
-        //oos存放路径
-        String path = oosPath.append(fileUrl).toString();
-        //获取输出流
-        try (ExcelWriter excelWriter = ExcelUtil.getBigWriter(); ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-            doExcel(list, title, header, columnName, width, excelWriter);
-            excelWriter.flush(byteArrayOutputStream, true);
-            OssUtils.upload(byteArrayOutputStream, fileUrl.toString(), ossTag);
-        } catch (Exception e) {
-            log.error("【导出报表】异常：{}", e.getMessage());
-            throw new BusinessException("【导出报表】异常" + e.getMessage());
-        }
-        return path;
-    }
-
 
     /**
      * excel数据处理

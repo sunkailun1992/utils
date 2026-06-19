@@ -7,13 +7,14 @@ import cn.hutool.core.util.StrUtil;
 import java.util.List;
 
 /**
- * 字符串处理类
+ * 字符串处理工具类。
+ *
  * @author 孙凯伦
- * @DateTime    2020/12/27  下午4:35
- * @email       376253703@qq.com
- * 
  */
-public class StringUtils {
+public final class StringUtils {
+
+    private StringUtils() {
+    }
 
     /**
      * 元转换成分

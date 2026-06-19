@@ -38,7 +38,7 @@ com.kellen.config.file         文件上传配置
 com.kellen.config.mybatis      MyBatis-Plus 配置
 com.kellen.config.redis        Redis 缓存配置
 com.kellen.config.sensitive    敏感字段配置
-com.kellen.config.swagger      OpenAPI / Knife4j 配置
+com.kellen.config.swagger      OpenAPI / OpenAPI 配置
 com.kellen.config.web          Web MVC 拦截器配置
 com.kellen.config.wechat       微信配置属性
 com.kellen.entity              公共实体基类
