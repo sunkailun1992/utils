@@ -6,8 +6,6 @@ import lombok.Getter;
  * 数据权限范围枚举。
  *
  * @author sunkailun
- * @DateTime 2026/05/27
- * @email 376253703@qq.com
  */
 @Getter
 public enum DataScopeEnum {
@@ -47,8 +45,6 @@ public enum DataScopeEnum {
      *
      * @param desc 数据范围说明
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     DataScopeEnum(String desc) {
         this.desc = desc; // 保存展示说明，供接口和文档统一使用。

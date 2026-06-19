@@ -1,30 +1,45 @@
 package com.kellen.utils.exception;
 
 /**
- * Created with IntelliJ IDEA.
  * 幂等异常
  * @author 孙凯伦
- * @DateTime 2020/12/10  下午9:08
- * @email 376253703@qq.com
  * 
- * @explain
  */
 public class PreventRepeatException extends RuntimeException {
+    /**
+     * 构造无消息的异常。
+     */
     public PreventRepeatException() {
         super();
     }
 
 
+    /**
+     * 构造带消息与根因的异常。
+     *
+     * @param message 异常提示信息
+     * @param cause   根因异常
+     */
     public PreventRepeatException(String message, Throwable cause) {
         super(message, cause);
     }
 
 
+    /**
+     * 构造带消息的异常。
+     *
+     * @param message 异常提示信息
+     */
     public PreventRepeatException(String message) {
         super(message);
     }
 
 
+    /**
+     * 构造带根因的异常。
+     *
+     * @param cause 根因异常
+     */
     public PreventRepeatException(Throwable cause) {
         super(cause);
     }

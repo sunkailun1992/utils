@@ -198,8 +198,6 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
      * @param raw 原始值
      * @return 字符串集合
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private List<String> parseValues(Object raw) {
         List<String> values = new ArrayList<>(); // 创建结果集合。

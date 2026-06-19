@@ -8,15 +8,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @Author 孙凯伦
- * @Date 2021/7/23 10:02
- * @Classname SimpleMarkdownBuilder
- * @Description
+ * 钉钉 Markdown 消息构造器。
+ *
+ * <p>链式拼接标题、文本、列表、表格、代码块等 Markdown 片段，最终 {@link #build()} 输出消息字符串。</p>
+ *
+ * @author 孙凯伦
  */
 @SuppressWarnings("all")
 public class SimpleMarkdownBuilder {
     private StringBuilder stringBuilder = new StringBuilder();
 
+    /**
+     * 创建构造器实例。
+     *
+     * @return 新的 Markdown 构造器
+     */
     public static SimpleMarkdownBuilder create() {
         SimpleMarkdownBuilder markdownBuilder = new SimpleMarkdownBuilder();
         return markdownBuilder;
@@ -91,6 +97,12 @@ public class SimpleMarkdownBuilder {
         return this;
     }
 
+    /**
+     * 无序列表（可变参数重载）。
+     *
+     * @param contentList 列表项
+     * @return 当前构造器
+     */
     public SimpleMarkdownBuilder point(Object... contentList) {
         if (contentList != null && contentList.length > 0) {
             Arrays.stream(contentList).forEach(x -> stringBuilder.append("- ").append(x).append("\n"));
@@ -111,6 +123,12 @@ public class SimpleMarkdownBuilder {
         return this;
     }
 
+    /**
+     * 有序列表（可变参数重载）。
+     *
+     * @param list 列表项
+     * @return 当前构造器
+     */
     public SimpleMarkdownBuilder orderPoint(Object... list) {
         for (int i = 0; i < list.length; i++)
             stringBuilder.append(i + 1).append(". ").append(list[i]).append("\n");

@@ -6,18 +6,20 @@ import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration;
 
 /**
- * @ClassName ElasticsearchConfig
- * @Description es配置
- * @Author 孙凯伦
- * 
- * @Email 376253703@qq.com
- * @Time 2021/9/15 11:04 上午
+ * Elasticsearch 客户端配置。
+ *
+ * <p>从环境配置 {@code elasticsearch.url/username/password} 构建带 Basic 认证的 ES 客户端。</p>
+ *
+ * @author 孙凯伦
  */
 @Configuration
 public class ElasticsearchConfig extends ElasticsearchConfiguration {
 
     private final ConfigurableApplicationContext applicationContext;
 
+    /**
+     * @param applicationContext 用于读取 ES 连接配置的应用上下文
+     */
     public ElasticsearchConfig(ConfigurableApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }

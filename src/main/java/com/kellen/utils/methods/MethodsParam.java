@@ -6,13 +6,17 @@ import com.kellen.utils.annotations.Methods;
 import java.lang.reflect.Field;
 
 /**
- * 
- *	@Description 注解和反射,设置类
- *  @author 孙凯伦
- *  @CreatTime 2016年7月12日 下午2:55:38
- *  @since version 1.0.0
+ * {@link com.kellen.utils.annotations.Methods @Methods} 注解与字段反射的承载对象。
+ *
+ * <p>保存单个注解元数据及其对应字段的名称、类型与取值，供 {@code MethodsInit}/{@code MethodsJudge} 解析使用。</p>
+ *
+ * @author 孙凯伦
+ * @since 1.0.0
  */
 public class MethodsParam {
+    /**
+     * 构造空的注解参数对象。
+     */
     public MethodsParam(){}
     /**
      * 
@@ -67,7 +71,7 @@ public class MethodsParam {
     private Object param;
     /**
      * 
-     * @description 获得注解的全部信息
+     * 获得注解的全部信息
      * @return
      * @author 孙凯伦
      * @return FieldMeta
@@ -78,7 +82,7 @@ public class MethodsParam {
     }
     /**
      * 
-     * @description 设置注解的全部信息
+     * 设置注解的全部信息
      * @param meta
      * @author 孙凯伦
      * @return void
@@ -89,7 +93,7 @@ public class MethodsParam {
     }
     /**
      * 
-     * @description 获得反射出的类信息
+     * 获得反射出的类信息
      * @return
      * @author 孙凯伦
      * @return Field
@@ -100,7 +104,7 @@ public class MethodsParam {
     }
     /**
      * 
-     * @description 设置反射出的类信息
+     * 设置反射出的类信息
      * @param field
      * @author 孙凯伦
      * @return void
@@ -111,7 +115,7 @@ public class MethodsParam {
     }
     /**
      * 
-     * @description 获得字段名称
+     * 获得字段名称
      * @return
      * @author 孙凯伦
      * @return String
@@ -122,7 +126,7 @@ public class MethodsParam {
     }
     /**
      * 
-     * @description 设置字段名称
+     * 设置字段名称
      * @param name
      * @author 孙凯伦
      * @return void
@@ -133,7 +137,7 @@ public class MethodsParam {
     }  
     /**
      * 
-     * @description 获得字段属性
+     * 获得字段属性
      * @return
      * @author 孙凯伦
      * @return Class<?>
@@ -144,7 +148,7 @@ public class MethodsParam {
     }  
     /**
      * 
-     * @description 设置字段属性
+     * 设置字段属性
      * @param type
      * @author 孙凯伦
      * @return void
@@ -155,7 +159,7 @@ public class MethodsParam {
     }
     /**
      * 
-     * @description 获得字段值
+     * 获得字段值
      * @author 孙凯伦
      * @return void
      * @since  1.0.0
@@ -165,7 +169,7 @@ public class MethodsParam {
 	}
     /**
      * 
-     * @description 设置字段值
+     * 设置字段值
      * @author 孙凯伦
      * @return void
      * @since  1.0.0

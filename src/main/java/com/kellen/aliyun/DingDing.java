@@ -4,12 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * @ClassName DingDing
- * @Description 钉钉
- * @Author 孙凯伦
+ * 钉钉
  * 
- * @Email 376253703@qq.com
- * @Time 2021/6/25 10:35 上午
  */
 @Component
 public class DingDing {

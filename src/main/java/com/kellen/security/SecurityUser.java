@@ -62,8 +62,6 @@ public class SecurityUser implements Serializable {
      * @param tenantId    租户ID
      * @param authorities 权限码和角色码集合
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public SecurityUser(String userId, String username, String tenantId, List<String> authorities) {
         this(userId, username, tenantId, null, null, new ArrayList<>(), authorities); // 旧构造方法默认不携带部门和数据范围。

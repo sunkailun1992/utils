@@ -34,7 +34,6 @@
 - `com.kellen.security.SecurityUser`：当前登录用户模型。
 - `com.kellen.security.UserContextHolder`：用户上下文 ThreadLocal。
 - `com.kellen.utils.auth.JwtUtils`：JWT 生成与解析工具。
-- `com.kellen.utils.auth.RsaUtils`：RSA 加解密工具。
 
 使用原则：
 
@@ -119,24 +118,11 @@
 
 - `com.kellen.utils.json.JsonUtil`：JSON 序列化与反序列化工具。
 - `com.kellen.utils.http.OkHttpUtils`：OkHttp HTTP 调用工具。
-- `com.kellen.utils.redis.RedisUtils`：Redis 操作工具。
-- `com.kellen.utils.websocket.WebSocketUtils`：WebSocket 推送工具。
 - `com.kellen.utils.http.RequestUtil`：请求工具。
 - `com.kellen.utils.http.IpUtils`：IP 工具。
-- `com.kellen.utils.http.AddressUtils`：地址解析工具。
-- `com.kellen.utils.convert.MapUtils`：Map 工具。
-- `com.kellen.utils.convert.ObjectUtils`：对象工具。
-- `com.kellen.utils.convert.StringUtils`：字符串工具。
-- `com.kellen.utils.math.BigDecimalUtils`：金额与高精度数字工具。
-- `com.kellen.utils.math.FormulaUtils`：通用公式计算工具。
-- `com.kellen.utils.convert.BeanMapper`：对象映射工具。
-- `com.kellen.utils.convert.GeneralConvertor`：通用转换工具。
+- `com.kellen.utils.convert.GeneralConvertor`：通用转换工具（基于 Dozer）。
 - `com.kellen.utils.reflect.ReflectionUtils`：反射工具。
-- `com.kellen.utils.reflect.Invoker`：反射调用辅助工具。
-- `com.kellen.utils.convert.StreamUtils`：Stream 辅助工具。
-- `com.kellen.utils.file.FileFormat`：文件格式工具。
 - `com.kellen.utils.file.PdfUtils`：PDF 工具。
-- `com.kellen.utils.excel.ExcelExportUtil`：Excel 导出工具。
 
 使用原则：
 
@@ -180,11 +166,6 @@
 - `com.kellen.aliyun.dingding.markdown.*`：Markdown 消息模型与构造器。
 - `com.kellen.aliyun.dingding.text.*`：文本消息模型。
 
-邮件与微信：
-
-- `com.kellen.utils.email.EmailAccount`：邮件账号模型。
-- `com.kellen.utils.email.EmailUtils`：邮件发送工具。
-
 使用原则：
 
 - 第三方工具不得在日志中输出 accessKey、secret、token。
@@ -197,10 +178,7 @@
 
 - `com.kellen.utils.enumeration.HttpType`：HTTP 类型枚举。
 - `com.kellen.utils.enumeration.HttpWay`：HTTP 方式枚举。
-- `com.kellen.utils.enumeration.NumericEnum`：数字枚举。
-- `com.kellen.utils.enumeration.LenEnum`：长度枚举。
 - `com.kellen.utils.enumeration.SmsEnum`：短信枚举。
-- `com.kellen.utils.validation.CreditCodeUtil`：统一社会信用代码校验工具。
 - `com.kellen.utils.verify.Phone`：手机号校验注解。
 - `com.kellen.utils.verify.check.PhoneValidator`：手机号校验器。
 
@@ -216,3 +194,25 @@
 - 如果类是多个项目共享的基础能力，应补齐注释、异常边界、示例和归类。
 - 删除或迁移前必须先用 `rg` 检查 `utils` 与消费者项目引用。
 - 请求日志只保留采集、存储与服务能力，不在公共包内自动暴露查询 Controller。
+
+### 已移除的重复工具类（1.3.0）
+
+以下薄包装类已删除，请直接使用类路径上已有的主流库，不要再引入同名自定义工具：
+
+- 字符串：`org.apache.commons.lang3.StringUtils` 或 `cn.hutool.core.util.StrUtil`（原 `convert.StringUtils`）。
+- 对象类型：`cn.hutool.core.util.ObjectUtil` / `org.springframework.util.ObjectUtils`（原 `convert.ObjectUtils`）。
+- Map：`cn.hutool.core.map.MapUtil`（原 `convert.MapUtils`）。
+- 集合流：`cn.hutool.core.collection.CollStreamUtil` 或 JDK Stream（原 `convert.StreamUtils`）。
+- 对象映射：统一用 `convert.GeneralConvertor`（原 Orika 版 `convert.BeanMapper`）。
+- 高精度数字：`cn.hutool.core.util.NumberUtil` / `BigDecimal.compareTo`（原 `math.BigDecimalUtils`）。
+- 统一社会信用代码：`cn.hutool.core.util.CreditCodeUtil`（原 `validation.CreditCodeUtil`）。
+- 动态代理：按需自建 `InvocationHandler`（原 `reflect.Invoker`，无人使用）。
+
+以下零引用的工具类也已删除，需要时改用 Hutool 或迁回业务项目：
+
+- 邮件：`cn.hutool.extra.mail.MailUtil`（原 `email.EmailUtils`/`email.EmailAccount`）。
+- Excel：`cn.hutool.poi.excel.ExcelUtil`（原 `excel.ExcelExportUtil`）。
+- RSA：`cn.hutool.crypto.asymmetric.RSA`（原 `auth.RsaUtils`）。
+- Redis：直接用 `StringRedisTemplate` / `RedisCacheConfig`（原 `redis.RedisUtils`）。
+- 文件类型：`cn.hutool.core.io.FileTypeUtil`（原 `file.FileFormat`）。
+- 公式 `math.FormulaUtils`、WebSocket 推送 `websocket.WebSocketUtils`、IP 归属 `http.AddressUtils`（含硬编码密钥，已随类删除）、枚举 `enumeration.LenEnum`/`NumericEnum`：均零引用删除，需要时迁回业务项目。

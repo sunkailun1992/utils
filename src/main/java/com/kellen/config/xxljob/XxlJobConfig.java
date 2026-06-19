@@ -11,8 +11,6 @@ import org.springframework.context.annotation.Configuration;
  * XXL-JOB执行器配置
  *
  * @author sunkailun
- * @DateTime 2026/6/3 11:40
- * @email 376253703@qq.com
  */
 @Configuration
 @ConditionalOnClass(XxlJobSpringExecutor.class)
@@ -26,8 +24,6 @@ public class XxlJobConfig {
      * @param properties: XXL-JOB执行器配置
      * @return XxlJobSpringExecutor: XXL-JOB Spring执行器
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     @Bean
     @ConditionalOnProperty(prefix = "xxl.job", name = "enabled", havingValue = "true", matchIfMissing = true)

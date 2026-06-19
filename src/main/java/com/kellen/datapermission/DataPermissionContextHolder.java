@@ -6,8 +6,6 @@ import com.alibaba.ttl.TransmittableThreadLocal;
  * 数据权限线程上下文。
  *
  * @author sunkailun
- * @DateTime 2026/05/27
- * @email 376253703@qq.com
  */
 public class DataPermissionContextHolder {
 
@@ -20,8 +18,6 @@ public class DataPermissionContextHolder {
      * 私有构造方法。
      *
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private DataPermissionContextHolder() {
     }
@@ -31,8 +27,6 @@ public class DataPermissionContextHolder {
      *
      * @return void
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public static void ignore() {
         IGNORE_CONTEXT.set(Boolean.TRUE); // 当前线程后续 SQL 不追加数据权限条件。
@@ -43,8 +37,6 @@ public class DataPermissionContextHolder {
      *
      * @return true 表示忽略数据权限
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public static boolean isIgnore() {
         return Boolean.TRUE.equals(IGNORE_CONTEXT.get()); // 只把显式 true 识别为忽略，避免空值误判。
@@ -55,8 +47,6 @@ public class DataPermissionContextHolder {
      *
      * @return void
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public static void clear() {
         IGNORE_CONTEXT.remove(); // 请求或业务结束后清理线程变量，避免线程复用串权限。

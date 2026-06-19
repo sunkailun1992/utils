@@ -9,14 +9,10 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Created with IntelliJ IDEA.
  * 实体类转换
  *
  * @author 孙凯伦
- * @DateTime 2021/3/5  3:55 下午
- * @email 376253703@qq.com
  * 
- * @explain
  */
 public class GeneralConvertor {
 
@@ -81,10 +77,23 @@ public class GeneralConvertor {
         return MAPPER.map(source, clz);
     }
 
+    /**
+     * 把源对象属性深拷贝到已存在的目标对象。
+     *
+     * @param source 源对象
+     * @param object 目标对象
+     */
     public static void convertor(Object source, Object object) {
         MAPPER.map(source, object);
     }
 
+    /**
+     * 把源对象属性深拷贝到已存在的目标对象（泛型重载）。
+     *
+     * @param source 源对象
+     * @param object 目标对象
+     * @param <T>    源对象类型
+     */
     public static <T> void copyConvertor(T source, Object object) {
         MAPPER.map(source, object);
     }

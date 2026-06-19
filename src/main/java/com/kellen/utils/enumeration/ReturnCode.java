@@ -3,13 +3,9 @@ package com.kellen.utils.enumeration;
 import lombok.Getter;
 
 /**
- * Created with IntelliJ IDEA.
  *
  * @author 孙凯伦
- * @DateTime 2018/4/12  下午5:14
- * @email 376253703@qq.com
  * 
- * @explain 返回前端code代码
  */
 @Getter
 public enum ReturnCode {

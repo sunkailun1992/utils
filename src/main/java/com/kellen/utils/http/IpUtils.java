@@ -8,12 +8,13 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * ip工具类
  * @author 孙凯伦
- * @DateTime 2020/12/27  下午4:32
- * @email 376253703@qq.com
  * 
- * @explain
  */
-public class IpUtils {
+public final class IpUtils {
+
+    private IpUtils() {
+    }
+
 
     /**
      * 获取用户实际ip
@@ -32,8 +33,6 @@ public class IpUtils {
     /**
      * 获得服务器ip
      * @author 孙凯伦
-     * @DateTime    2020/7/27  12:03 下午
-     * @email       376253703@qq.com
      * 
      * @param :
      * @return      java.lang.String
@@ -45,8 +44,6 @@ public class IpUtils {
     /**
      * 本地地址判断
      * @author 孙凯伦
-     * @DateTime    2018/8/18  下午1:04
-     * @email       376253703@qq.com
      * 
      * @param ip:
      * @return      java.lang.Boolean

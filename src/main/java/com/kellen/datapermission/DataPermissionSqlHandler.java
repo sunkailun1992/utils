@@ -16,8 +16,6 @@ import java.util.stream.Collectors;
  * MyBatis-Plus 数据权限 SQL 处理器。
  *
  * @author sunkailun
- * @DateTime 2026/05/27
- * @email 376253703@qq.com
  */
 public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
 
@@ -31,8 +29,6 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      *
      * @param properties 数据权限配置属性
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public DataPermissionSqlHandler(DataPermissionProperties properties) {
         this.properties = properties; // 保存配置属性，后续按 Nacos 配置决定是否追加 SQL 条件。
@@ -46,8 +42,6 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      * @param mappedStatementId 当前 Mapper 方法ID
      * @return 数据权限 SQL 表达式
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     @Override
     public Expression getSqlSegment(Table table, Expression where, String mappedStatementId) {
@@ -69,8 +63,6 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      * @param mappedStatementId 当前 Mapper 方法ID
      * @return SQL 条件片段
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private String buildSqlSegment(Table table, String mappedStatementId) {
         if (!properties.isEnabled()) {
@@ -122,8 +114,6 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      * @param user  当前用户
      * @return SQL 条件片段
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private String buildSelfSql(String alias, DataPermissionProperties.TableRule rule, SecurityUser user) {
         String column = StringUtils.defaultIfBlank(rule.getUserColumn(), properties.getDefaultUserColumn()); // 优先使用表规则字段，未配置时使用默认创建人字段。
@@ -142,8 +132,6 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      * @param deptId 当前部门ID
      * @return SQL 条件片段
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private String buildDeptSql(String alias, DataPermissionProperties.TableRule rule, String deptId) {
         String column = StringUtils.defaultIfBlank(rule.getDeptColumn(), properties.getDefaultDeptColumn()); // 优先使用表规则字段，未配置时使用默认部门字段。
@@ -161,8 +149,6 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      * @param user  当前用户
      * @return SQL 条件片段
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private String buildDeptInSql(String alias, DataPermissionProperties.TableRule rule, SecurityUser user) {
         String column = StringUtils.defaultIfBlank(rule.getDeptColumn(), properties.getDefaultDeptColumn()); // 优先使用表规则字段，未配置时使用默认部门字段。
@@ -183,8 +169,6 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      * @param mappedStatementId Mapper 方法ID
      * @return true 表示忽略数据权限
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private boolean ignoreMappedStatement(String mappedStatementId) {
         if (StringUtils.isBlank(mappedStatementId)) {
@@ -199,8 +183,6 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      * @param tableName 当前表名
      * @return true 表示忽略数据权限
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private boolean ignoreTable(String tableName) {
         return properties.getIgnoreTables().stream().filter(StringUtils::isNotBlank).map(value -> value.toLowerCase(Locale.ROOT)).anyMatch(tableName::equals); // 小写表名匹配忽略配置。
@@ -212,8 +194,6 @@ public class DataPermissionSqlHandler implements MultiDataPermissionHandler {
      * @param value 原始值
      * @return 转义后的值
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private String escape(String value) {
         return value.replace("'", "''"); // 单引号按 SQL 字符串规则转义，避免破坏条件表达式。

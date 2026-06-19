@@ -1,6 +1,8 @@
 package com.kellen.utils.reflect;
 
 import cn.hutool.extra.spring.SpringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.Array;
@@ -11,14 +13,17 @@ import java.lang.reflect.Method;
 /**
  * 反射工具类
  * @author 孙凯伦
- * @DateTime    2020/12/27  下午4:36
- * @email       376253703@qq.com
  * 
  */
-public class ReflectionUtils {
+public final class ReflectionUtils {
+
+	private static final Logger log = LoggerFactory.getLogger(ReflectionUtils.class);
+
+	private ReflectionUtils() {
+	}
+
 	/**
 	 *
-	 * @description			得到某个对象的公共属性
 	 * @param owner			new 某个的对象
 	 * @param fieldName		参数名称
 	 * @return				返回参数
@@ -40,7 +45,6 @@ public class ReflectionUtils {
 
 	/**
 	 *
-	 * @description			得到某个对象的私有属性
 	 * @param owner			new 某个的对象
 	 * @param fieldName		参数名称
 	 * @return				返回参数
@@ -92,7 +96,6 @@ public class ReflectionUtils {
 
 	/**
 	 *
-	 * @description			访问private,私有的对象
 	 * @param owner			new 某个的对象
 	 * @param fieldName		属性名
 	 * @param set			是否更改属性参数
@@ -118,14 +121,13 @@ public class ReflectionUtils {
 			//返回参数
 			return field.get(student);
 		} catch (Exception e) {
-			System.err.println(e);
+			log.warn("反射访问对象属性失败", e);
 		}
 		return null;
 	}
 
 	/**
 	 *
-	 * @description		访问private,私有的对象
 	 * @param className	类名 (xxx.xxx.xx)
 	 * @param fieldName	属性名
 	 * @param set		是否更改参数
@@ -151,14 +153,13 @@ public class ReflectionUtils {
 			//返回参数
 			return field.get(student);
 		} catch (Exception e) {
-			System.err.println(e);
+			log.warn("反射访问对象属性失败", e);
 		}
 		return null;
 	}
 
 	/**
 	 *
-	 * @description			执行某对象方法
 	 * @param owner			new 的对象
 	 * @param methodName	方法名
 	 * @param args			参数
@@ -184,7 +185,6 @@ public class ReflectionUtils {
 	}
 	/**
 	 *
-	 * @description			执行某类的静态方法
 	 * @param className		类名
 	 * @param methodName	方法名
 	 * @param args			参数数组
@@ -211,8 +211,6 @@ public class ReflectionUtils {
 
 	/**
 	 *
-	 * @Description:  		执行内容:初始化对spring的重新注入
-	 * @Title: inject	方法名
 	 * @param className
 	 * @return
 	 * @throws Exception
@@ -244,7 +242,6 @@ public class ReflectionUtils {
 
 	/**
 	 *
-	 * @description		新建实例
 	 * @param className	类名
 	 * @param args		构造函数的参数
 	 * @return			新建的实例
@@ -269,7 +266,6 @@ public class ReflectionUtils {
 
 	/**
 	 *
-	 * @description		是不是某个类的实例
 	 * @param obj		实例
 	 * @param cls		类
 	 * @return			如果 obj 是此类的实例，则返回 true
@@ -283,7 +279,6 @@ public class ReflectionUtils {
 
 	/**
 	 *
-	 * @description		得到数组中的某个元素
 	 * @param array		数组
 	 * @param index		索引
 	 * @return			返回指定数组对象中索引组件的值

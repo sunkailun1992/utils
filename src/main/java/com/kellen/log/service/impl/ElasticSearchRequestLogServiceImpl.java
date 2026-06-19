@@ -9,14 +9,10 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.Resource;
 
 /**
- * Created with IntelliJ IDEA.
  * 操作日志
  *
  * @author 孙凯伦
- * @DateTime 2018/7/16  上午11:09
- * @email 376253703@qq.com
  * 
- * @explain
  */
 @Service
 public class ElasticSearchRequestLogServiceImpl implements ElasticSearchRequestLogService {
@@ -30,8 +26,6 @@ public class ElasticSearchRequestLogServiceImpl implements ElasticSearchRequestL
      * @param elasticSearchRequestLog:
      * @return void
      * @author 孙凯伦
-     * @DateTime 2018/7/16  上午11:15
-     * @email 376253703@qq.com
      * 
      */
     @Async

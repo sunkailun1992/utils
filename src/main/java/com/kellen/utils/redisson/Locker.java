@@ -3,13 +3,9 @@ package com.kellen.utils.redisson;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created with IntelliJ IDEA.
  *
  * @author 孙凯伦
- * @DateTime 2020/3/19  10:21 上午
- * @email 376253703@qq.com
  * 
- * @explain 锁接口
  */
 public interface Locker {
     /**
@@ -56,14 +52,11 @@ public interface Locker {
      * 要么在给定的超时时间leaseTime后释放锁
      * @author 孙凯伦
      * 
-     * @email 376253703@qq.com
-     * @name tryLock
      * @param lockKey
      * @param waitTime
      * @param leaseTime
      * @param unit
      * @return boolean
-     * @date 2022/1/18 10:35 AM
      * @throws InterruptedException
      */
     boolean tryLock(String lockKey, long waitTime, long leaseTime, TimeUnit unit) throws InterruptedException;

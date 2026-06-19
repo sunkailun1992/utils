@@ -14,6 +14,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 优雅停机端点。
+ *
+ * <p>暴露 Actuator 写操作端点 {@code shutdownGraceFul}：先从 Nacos 注销实例以停止接收新流量，
+ * 等待配置的缓冲时间后再关闭应用，避免在途请求被强制中断。</p>
+ *
+ * @author 孙凯伦
+ */
 @Slf4j
 @Component
 @Endpoint(id = "shutdownGraceFul")
@@ -31,6 +39,11 @@ public class ServiceShutDownEndpoint {
 
 
 
+    /**
+     * 优雅下线当前服务：注销 Nacos 注册、等待缓冲时间后关闭 Spring 应用。
+     *
+     * @return 包含下线结果标记的响应
+     */
     @WriteOperation
     public Map<String, Object> shutdownGraceFul() {
         log.info("开始服务下线");

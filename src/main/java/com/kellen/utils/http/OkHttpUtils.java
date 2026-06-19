@@ -24,6 +24,10 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public final class OkHttpUtils {
 
+    private OkHttpUtils() {
+    }
+
+
     /**
      * 安卓手机请求头。
      */

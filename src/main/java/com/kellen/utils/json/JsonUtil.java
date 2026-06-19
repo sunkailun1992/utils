@@ -15,8 +15,6 @@ import java.util.List;
  * json转换工具类
  *
  * @author 孙凯伦
- * @DateTime 2020/12/27  下午4:42
- * @email 376253703@qq.com
  * 
  */
 public class JsonUtil {
@@ -44,8 +42,7 @@ public class JsonUtil {
     /**
      * @return ObjectMapper        返回类型
      * @throws
-     * @Title: getJsonMapper    方法名
-     * @Description: TODO        执行内容:返回ObjectMapper
+     * 返回ObjectMapper
      */
     public static ObjectMapper getJsonMapper() {
         return mapper;
@@ -56,8 +53,7 @@ public class JsonUtil {
      * @param basicClass
      * @return T        返回类型
      * @throws
-     * @Title: java    方法名
-     * @Description: 执行内容:将json转换为对象
+     * 将json转换为对象
      */
     public static <T> T bean(String value, Class<T> basicClass) {
         //判断参数为空直径返回null
@@ -78,8 +74,7 @@ public class JsonUtil {
      * @param classType
      * @return T        返回类型
      * @throws
-     * @Title: java    方法名
-     * @Description: 执行内容:将json转换为对象
+     * 将json转换为对象
      */
     public static <T> List<T> list(String value, Class<T> classType) {
         //判断参数为空直径返回null
@@ -99,8 +94,7 @@ public class JsonUtil {
      * @param value
      * @return String        返回类型
      * @throws
-     * @Title: json    方法名
-     * @Description: 执行内容:将对象转为json
+     * 将对象转为json
      */
     public static String json(Object value) {
         try {

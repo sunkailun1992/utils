@@ -10,13 +10,9 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * Created with IntelliJ IDEA.
  *
  * @author 孙凯伦
- * @DateTime 2018/7/16  上午10:10
- * @email 376253703@qq.com
  * 
- * @explain
  */
 @Data
 @Schema(description = "日志实体类")

@@ -18,10 +18,13 @@ import java.util.*;
 
 
 /**
+ * 基于 {@link com.kellen.utils.annotations.Methods @Methods} 注解的方法元信息解析与扩展点执行。
+ *
+ * <p>从目标类的 {@code @Methods} 注解中按方法标识查找接口展示名、业务描述，并解析模板中的
+ * {@code #{占位符}#} 与 {@code ${方法表达式}$}，主要由请求日志切面调用。</p>
+ *
  * @author 孙凯伦
- * @Description 注解获得方法名称
- * @CreatTime 2016年7月12日 下午3:03:18
- * @since version 1.0.0
+ * @since 1.0.0
  */
 public class MethodsJudge {
 
@@ -29,6 +32,14 @@ public class MethodsJudge {
     private static final List<Class> WRAP_CLASS = Arrays.asList(Integer.class, Boolean.class, Double.class, Byte.class, Short.class, Long.class, Float.class, Double.class, BigDecimal.class, String.class);
 
 
+    /**
+     * 从目标类的 {@code @Methods} 注解中按方法标识返回接口展示名称。
+     *
+     * @param entity  携带 {@code @Methods} 注解的目标类
+     * @param methods 方法标识
+     * @return 接口展示名称，未匹配返回空串
+     * @throws Exception 注解反射解析异常
+     */
     public static String getInterfaceName(Class entity, String methods) throws Exception {
         //类注解的属性和内容
         List<MethodsParam> list = MethodsInit.init(entity);
@@ -43,6 +54,15 @@ public class MethodsJudge {
     }
 
 
+    /**
+     * 从目标类的 {@code @Methods} 注解中按方法标识返回业务描述，并解析其中占位符。
+     *
+     * @param entity  携带 {@code @Methods} 注解的目标类
+     * @param methods 方法标识
+     * @param map     占位符取值
+     * @return 解析后的业务描述，未匹配返回空串
+     * @throws Exception 注解反射解析异常
+     */
     public static String description(Class entity, String methods, Map<String, String> map) throws Exception {
         //类注解的属性和内容
         List<MethodsParam> list = MethodsInit.init(entity);
@@ -56,6 +76,15 @@ public class MethodsJudge {
         return "";
     }
 
+    /**
+     * 执行目标方法的前置扩展点表达式。
+     *
+     * @param entity  携带 {@code @Methods} 注解的目标类
+     * @param methods 方法标识
+     * @param map     表达式取值
+     * @return 前置扩展点执行结果，未匹配返回空串
+     * @throws Exception 表达式解析或反射调用异常
+     */
     public static String performBefore(Class entity, String methods, Map<String, String> map) throws Exception {
         //类注解的属性和内容
         List<MethodsParam> list = MethodsInit.init(entity);
@@ -70,6 +99,15 @@ public class MethodsJudge {
     }
 
 
+    /**
+     * 执行目标方法的后置扩展点表达式。
+     *
+     * @param entity  携带 {@code @Methods} 注解的目标类
+     * @param methods 方法标识
+     * @param map     表达式取值
+     * @return 后置扩展点执行结果，未匹配返回空串
+     * @throws Exception 表达式解析或反射调用异常
+     */
     public static String performAfter(Class entity, String methods, Map<String, String> map) throws Exception {
         //类注解的属性和内容
         List<MethodsParam> list = MethodsInit.init(entity);
@@ -83,6 +121,13 @@ public class MethodsJudge {
         return "";
     }
 
+    /**
+     * 解析模板中的 {@code #{key}#} 占位符，用取值映射替换为实际内容。
+     *
+     * @param parameter 含占位符的模板
+     * @param value     占位符取值
+     * @return 替换后的字符串
+     */
     public static String description(String parameter, Map<String, String> value) {
         String content = "";
         Boolean b = parameter.contains("#");
@@ -119,6 +164,14 @@ public class MethodsJudge {
         return content;
     }
 
+    /**
+     * 解析模板中的 {@code ${...}$} 方法表达式，反射调用对应 Service 取得动态内容。
+     *
+     * @param parameter 含方法表达式的模板
+     * @param value     表达式参数取值
+     * @return 解析后的字符串
+     * @throws Exception 表达式解析或反射调用异常
+     */
     public static String content(String parameter, Map<String, String> value) throws Exception {
         String content = "";
         MethodsBean methodsBean = new MethodsBean();

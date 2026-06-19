@@ -8,15 +8,14 @@ import java.util.List;
 
 /**
  * 
- *	@Description 通过注解,初始化
+ * 通过注解,初始化
  *  @author 孙凯伦
- *  @CreatTime 2016年7月12日 下午2:51:47
  *  @since version 1.0.0
  */
 public class MethodsInit{
 	/**
 	 * 
-	 * @description 初始为设置
+	 * 初始为设置
 	 * @param entity
 	 * @return
 	 * @throws Exception

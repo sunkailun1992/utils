@@ -1,12 +1,8 @@
 package com.kellen.utils.enumeration;
 
 /**
- * @ClassName HttpType
- * @Description okhttp枚举类
- * @Author 孙凯伦
+ * okhttp枚举类
  * 
- * @Email 376253703@qq.com
- * @Time 2021/4/13 2:00 下午
  */
 public enum HttpType {
     //from

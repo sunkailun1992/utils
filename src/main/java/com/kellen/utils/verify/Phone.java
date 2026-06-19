@@ -10,12 +10,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @ClassName Phone
- * @Description 手机号检验
- * @Author 孙凯伦
+ * 手机号检验
  * 
- * @Email 376253703@qq.com
- * @Time 2021/7/27 10:34 上午
  */
 @Target({ ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)

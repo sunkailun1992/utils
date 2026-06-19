@@ -6,8 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * XXL-JOB执行器配置
  *
  * @author sunkailun
- * @DateTime 2026/6/3 11:40
- * @email 376253703@qq.com
  */
 @ConfigurationProperties(prefix = "xxl.job")
 public class XxlJobProperties {
@@ -37,8 +35,6 @@ public class XxlJobProperties {
      *
      * @return Boolean: 是否启用XXL-JOB执行器
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public Boolean getEnabled() {
         // 返回执行器总开关，允许微服务通过Nacos关闭任务注册。
@@ -51,8 +47,6 @@ public class XxlJobProperties {
      * @param enabled: 是否启用XXL-JOB执行器
      * @return void
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public void setEnabled(Boolean enabled) {
         // 保存执行器总开关配置。
@@ -64,8 +58,6 @@ public class XxlJobProperties {
      *
      * @return Admin: 调度中心配置
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public Admin getAdmin() {
         // 返回调度中心配置对象。
@@ -78,8 +70,6 @@ public class XxlJobProperties {
      * @param admin: 调度中心配置
      * @return void
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public void setAdmin(Admin admin) {
         // 保存调度中心配置对象。
@@ -91,8 +81,6 @@ public class XxlJobProperties {
      *
      * @return Executor: 执行器配置
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public Executor getExecutor() {
         // 返回执行器配置对象。
@@ -105,8 +93,6 @@ public class XxlJobProperties {
      * @param executor: 执行器配置
      * @return void
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public void setExecutor(Executor executor) {
         // 保存执行器配置对象。
@@ -118,8 +104,6 @@ public class XxlJobProperties {
      *
      * @return String: 调度中心访问令牌
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public String getAccessToken() {
         // 返回调度中心访问令牌。
@@ -132,8 +116,6 @@ public class XxlJobProperties {
      * @param accessToken: 调度中心访问令牌
      * @return void
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public void setAccessToken(String accessToken) {
         // 保存调度中心访问令牌。
@@ -144,8 +126,6 @@ public class XxlJobProperties {
      * 调度中心配置
      *
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public static class Admin {
 
@@ -159,8 +139,6 @@ public class XxlJobProperties {
          *
          * @return String: 调度中心地址
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public String getAddresses() {
             // 返回调度中心地址。
@@ -173,8 +151,6 @@ public class XxlJobProperties {
          * @param addresses: 调度中心地址
          * @return void
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public void setAddresses(String addresses) {
             // 保存调度中心地址。
@@ -186,8 +162,6 @@ public class XxlJobProperties {
      * 执行器配置
      *
      * @author sunkailun
-     * @DateTime 2026/6/3 11:40
-     * @email 376253703@qq.com
      */
     public static class Executor {
 
@@ -226,8 +200,6 @@ public class XxlJobProperties {
          *
          * @return String: 执行器应用名
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public String getAppname() {
             // 返回执行器应用名。
@@ -240,8 +212,6 @@ public class XxlJobProperties {
          * @param appname: 执行器应用名
          * @return void
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public void setAppname(String appname) {
             // 保存执行器应用名。
@@ -253,8 +223,6 @@ public class XxlJobProperties {
          *
          * @return String: 执行器注册地址
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public String getAddress() {
             // 返回执行器注册地址。
@@ -267,8 +235,6 @@ public class XxlJobProperties {
          * @param address: 执行器注册地址
          * @return void
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public void setAddress(String address) {
             // 保存执行器注册地址。
@@ -280,8 +246,6 @@ public class XxlJobProperties {
          *
          * @return String: 执行器IP
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public String getIp() {
             // 返回执行器IP。
@@ -294,8 +258,6 @@ public class XxlJobProperties {
          * @param ip: 执行器IP
          * @return void
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public void setIp(String ip) {
             // 保存执行器IP。
@@ -307,8 +269,6 @@ public class XxlJobProperties {
          *
          * @return int: 执行器端口
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public int getPort() {
             // 返回执行器端口。
@@ -321,8 +281,6 @@ public class XxlJobProperties {
          * @param port: 执行器端口
          * @return void
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public void setPort(int port) {
             // 保存执行器端口。
@@ -334,8 +292,6 @@ public class XxlJobProperties {
          *
          * @return String: 执行器日志目录
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public String getLogpath() {
             // 返回执行器日志目录。
@@ -348,8 +304,6 @@ public class XxlJobProperties {
          * @param logpath: 执行器日志目录
          * @return void
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public void setLogpath(String logpath) {
             // 保存执行器日志目录。
@@ -361,8 +315,6 @@ public class XxlJobProperties {
          *
          * @return int: 执行器日志保留天数
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public int getLogretentiondays() {
             // 返回执行器日志保留天数。
@@ -375,8 +327,6 @@ public class XxlJobProperties {
          * @param logretentiondays: 执行器日志保留天数
          * @return void
          * @author sunkailun
-         * @DateTime 2026/6/3 11:40
-         * @email 376253703@qq.com
          */
         public void setLogretentiondays(int logretentiondays) {
             // 保存执行器日志保留天数。

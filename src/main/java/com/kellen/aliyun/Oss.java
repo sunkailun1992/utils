@@ -5,12 +5,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
- * @ClassName Oss
- * @Description 阿里云oss配置
- * @Author 孙凯伦
+ * 阿里云oss配置
  * 
- * @Email 376253703@qq.com
- * @Time 2021/4/14 12:56 下午
  */
 @Component
 public class Oss {

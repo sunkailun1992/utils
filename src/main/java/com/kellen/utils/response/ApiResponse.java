@@ -13,8 +13,6 @@ import java.time.LocalDateTime;
  *
  * @param <T>: 业务响应数据类型
  * @author 孙凯伦
- * @DateTime 2026/5/26 下午
- * @email 376253703@qq.com
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -63,8 +61,6 @@ public class ApiResponse<T> {
      *
      * @return
      * @author 孙凯伦
-     * @DateTime 2026/5/26 下午
-     * @email 376253703@qq.com
      */
     public ApiResponse() {
         init(ReturnCode.成功, null, null); // 默认对象表示成功空响应，保证 success、code、msg 三者一致。
@@ -75,8 +71,6 @@ public class ApiResponse<T> {
      *
      * @return com.kellen.utils.response.ApiResponse<java.lang.Void>
      * @author 孙凯伦
-     * @DateTime 2026/5/26 下午
-     * @email 376253703@qq.com
      */
     public static ApiResponse<Void> success() {
         return success(null); // 空成功响应复用成功数据响应入口，保证字段初始化规则一致。
@@ -88,8 +82,6 @@ public class ApiResponse<T> {
      * @param data: 返回给前端的业务数据
      * @return com.kellen.utils.response.ApiResponse<T>
      * @author 孙凯伦
-     * @DateTime 2026/5/26 下午
-     * @email 376253703@qq.com
      */
     public static <T> ApiResponse<T> success(T data) {
         ApiResponse<T> response = new ApiResponse<>(); // 创建标准响应对象，避免外部直接拼装返回结构。
@@ -103,8 +95,6 @@ public class ApiResponse<T> {
      * @param returnCode: 失败业务返回码
      * @return com.kellen.utils.response.ApiResponse<java.lang.Void>
      * @author 孙凯伦
-     * @DateTime 2026/5/26 下午
-     * @email 376253703@qq.com
      */
     public static ApiResponse<Void> fail(ReturnCode returnCode) {
         return fail(returnCode, null); // 无自定义错误提示时回退错误码默认提示。
@@ -117,8 +107,6 @@ public class ApiResponse<T> {
      * @param error:      返回给前端的稳定错误提示
      * @return com.kellen.utils.response.ApiResponse<java.lang.Void>
      * @author 孙凯伦
-     * @DateTime 2026/5/26 下午
-     * @email 376253703@qq.com
      */
     public static ApiResponse<Void> fail(ReturnCode returnCode, String error) {
         ApiResponse<Void> response = new ApiResponse<>(); // 创建标准响应对象，避免异常处理器直接手写字段。
@@ -134,8 +122,6 @@ public class ApiResponse<T> {
      * @param error:      失败时的稳定错误提示
      * @return void
      * @author 孙凯伦
-     * @DateTime 2026/5/26 下午
-     * @email 376253703@qq.com
      */
     private void init(ReturnCode returnCode, T data, String error) {
         ReturnCode actualCode = returnCode == null ? ReturnCode.系统执行出错 : returnCode; // 返回码为空时兜底为系统错误，避免空指针响应。
@@ -154,8 +140,6 @@ public class ApiResponse<T> {
      * @param error:      自定义错误提示
      * @return java.lang.String
      * @author 孙凯伦
-     * @DateTime 2026/5/26 下午
-     * @email 376253703@qq.com
      */
     private String defaultError(ReturnCode returnCode, String error) {
         return error == null || error.isBlank() ? returnCode.getName() : error; // 自定义提示为空时使用错误码默认提示。

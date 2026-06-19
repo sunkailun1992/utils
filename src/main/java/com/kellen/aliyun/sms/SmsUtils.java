@@ -19,15 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
+ * 阿里云短信发送工具类。
  *
  * @author 孙凯伦
- * @DateTime 2019/4/9  9:54 AM
- * @email 376253703@qq.com
- * @explain
  */
 @Slf4j
-public class SmsUtils {
+public final class SmsUtils {
+
+    private SmsUtils() {
+    }
+
 
     /**
      * 域地址
@@ -42,12 +43,7 @@ public class SmsUtils {
      * @param phone         接收短信的手机号码。支持对多个手机号码发送短信，手机号码之间以英文逗号（,）分隔。上限为1000个手机号码。批量调用相对于单条调用及时性稍有延迟。
      * @param smsEnum       短信模板ID。请在控制台模板管理页面模板CODE一列查看。
      * @param templateParam 短信模板变量对应的实际值，JSON格式。
-     * @auther: 孙凯伦
-     * @email: 376253703@qq.com
-     * @name: sendMessage
-     * @description: TODO  阿里云发送短信
      * @return: java.lang.Boolean
-     * @date: 2021/4/14 11:47 上午
      */
     public static Boolean sendMessage(String phone, SmsEnum smsEnum, String templateParam) {
         log.debug("手机号{}发送短信{}", phone, templateParam);
@@ -97,12 +93,7 @@ public class SmsUtils {
      * @param phone         接收短信的手机号码。支持对多个手机号码发送短信，手机号码之间以英文逗号（,）分隔。上限为1000个手机号码。批量调用相对于单条调用及时性稍有延迟。
      * @param smsEnum       短信模板ID。请在控制台模板管理页面模板CODE一列查看。
      * @param templateParam 短信模板变量对应的实际值，JSON格式。
-     * @auther: 孙凯伦
-     * @email: 376253703@qq.com
-     * @name: sendMessage
-     * @description: TODO  阿里云发送短信
      * @return: java.lang.Boolean
-     * @date: 2021/4/14 11:47 上午
      */
     public static Boolean sendMessage(String signName, String phone, SmsEnum smsEnum, String templateParam) {
         log.debug("手机号{}发送短信{}", phone, templateParam);
@@ -153,12 +144,7 @@ public class SmsUtils {
      * @param phone         接收短信的手机号码。支持对多个手机号码发送短信，手机号码之间以英文逗号（,）分隔。上限为1000个手机号码。批量调用相对于单条调用及时性稍有延迟。
      * @param smsEnum       短信模板ID。请在控制台模板管理页面模板CODE一列查看。
      * @param templateParam 短信模板变量对应的实际值，JSON格式。
-     * @auther: 孙凯伦
-     * @email: 376253703@qq.com
-     * @name: sendMessage
-     * @description: TODO  阿里云发送短信
      * @return: java.lang.Boolean
-     * @date: 2021/4/14 11:47 上午
      */
     public static Boolean sendMessage(String signName, String phone, String smsEnum, String templateParam) {
         log.debug("手机号{}发送短信{}", phone, templateParam);
@@ -210,12 +196,7 @@ public class SmsUtils {
      * @param phone         接收短信的手机号码。支持对多个手机号码发送短信，手机号码之间以英文逗号（,）分隔。上限为1000个手机号码。批量调用相对于单条调用及时性稍有延迟。
      * @param smsEnum       短信模板ID。请在控制台模板管理页面模板CODE一列查看。
      * @param templateParam 短信模板变量对应的实际值，JSON格式。
-     * @auther: 孙凯伦
-     * @email: 376253703@qq.com
-     * @name: sendMessage
-     * @description: TODO  阿里云发送短信
      * @return: java.lang.Boolean
-     * @date: 2021/4/14 11:47 上午
      */
     public static Boolean sendMessage(String signName, String phone, String smsEnum, String templateParam,Boolean isSign) {
         log.debug("手机号{}发送短信{}", phone, templateParam);

@@ -3,13 +3,9 @@ package com.kellen.utils.redisson;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created with IntelliJ IDEA.
  *
  * @author 孙凯伦
- * @DateTime 2020/3/19  10:22 上午
- * @email 376253703@qq.com
  * 
- * @explain redis分布式锁工具类
  */
 public class LockUtil {
 

@@ -11,17 +11,21 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * Created with IntelliJ IDEA.
+ * 异步线程池配置。
+ *
+ * <p>提供 {@code @Async} 使用的公共线程池：核心 10、最大 100、队列 10，满载时由调用线程兜底执行，
+ * 关闭时等待在途任务完成。</p>
  *
  * @author 孙凯伦
- * @DateTime 2019/5/15  5:52 PM
- * @email 376253703@qq.com
- * 
- * @explain 线程池类
  */
 @EnableAsync
 @Configuration
 public class AsyncConfig implements AsyncConfigurer {
+    /**
+     * 构建 {@code @Async} 公共线程池。
+     *
+     * @return 线程池执行器
+     */
     @Bean
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor threadPool = new ThreadPoolTaskExecutor();

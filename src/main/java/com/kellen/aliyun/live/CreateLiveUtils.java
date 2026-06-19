@@ -10,15 +10,15 @@ import java.util.Date;
 import java.util.Map;
 
 /**
+ * 阿里云直播流工具类。
  *
  * @author 孙凯伦
- * 
- * @email: 376253703@qq.com
- * @description: 阿里云流直播
- * @date: 2022/1/18 10:24 AM
- *
  */
-public class CreateLiveUtils {
+public final class CreateLiveUtils {
+
+    private CreateLiveUtils() {
+    }
+
 
     /**
      * 计算md5
@@ -44,9 +44,8 @@ public class CreateLiveUtils {
             }
             return result;
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            throw new IllegalStateException("MD5 计算失败", e);
         }
-        return null;
     }
 
 

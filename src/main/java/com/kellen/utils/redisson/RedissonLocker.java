@@ -6,18 +6,20 @@ import org.redisson.api.RedissonClient;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created with IntelliJ IDEA.
+ * 基于 Redisson 的分布式锁实现。
+ *
+ * <p>委托 {@link RedissonClient} 的 {@link org.redisson.api.RLock} 提供阻塞加锁、带租约加锁和尝试加锁；
+ * 加锁与解锁必须成对出现，异常路径需保证释放。</p>
  *
  * @author 孙凯伦
- * @DateTime 2020/3/19  10:21 上午
- * @email 376253703@qq.com
- * 
- * @explain 基于Redisson的分布式锁
  */
 public class RedissonLocker implements Locker {
 
     private RedissonClient redissonClient;
 
+    /**
+     * @param redissonClient Redisson 客户端
+     */
     public RedissonLocker(RedissonClient redissonClient) {
         super();
         this.redissonClient = redissonClient;

@@ -135,8 +135,6 @@ public class RequestRequiredAspect {
      * @param :
      * @return void
      * @author 孙凯伦
-     * @DateTime 2019/5/6  4:13 PM
-     * @email 376253703@qq.com
      */
     @AfterThrowing(value = "pointcut()", throwing = "e")
     public void afterThrow(JoinPoint joinPoint, Throwable e) throws Exception {
@@ -160,8 +158,6 @@ public class RequestRequiredAspect {
      * @param httpServletRequest:
      * @return void
      * @author 孙凯伦
-     * @DateTime 2018/7/16  下午3:04
-     * @email 376253703@qq.com
      */
     private void setLog(ProceedingJoinPoint proceedingJoinPoint, HttpServletRequest httpServletRequest, long time, Map<String, String> map, Object o, String performBefore, String performAfter) {
         SecurityUser user = UserContextHolder.get(); // 从 Spring Security 过滤器写入的上下文获取当前用户。
@@ -205,8 +201,6 @@ public class RequestRequiredAspect {
      * @param o:                   返回结果
      * @return void
      * @author 孙凯伦
-     * @DateTime 2018/7/16  下午3:04
-     * @email 376253703@qq.com
      */
     @Async
     public void dingDing(ProceedingJoinPoint proceedingJoinPoint, HttpServletRequest httpServletRequest, long time, Map<String, String> map, Object o) {
@@ -235,8 +229,6 @@ public class RequestRequiredAspect {
      * @param :
      * @return jakarta.servlet.http.HttpServletRequest
      * @author 孙凯伦
-     * @DateTime 2019/5/6  10:36 AM
-     * @email 376253703@qq.com
      */
     private HttpServletRequest getHttpServletRequest() {
         //获得请求
@@ -286,8 +278,6 @@ public class RequestRequiredAspect {
      * @param userId: Spring Security上下文中的用户ID
      * @return java.lang.Long
      * @author 孙凯伦
-     * @DateTime 2026/5/26  下午
-     * @email 376253703@qq.com
      */
     private Long parseUserId(String userId) {
         if (!StringUtils.isNumeric(userId)) { // userId 可能是 u_admin_100 这类业务字符串，不能强转 Long。

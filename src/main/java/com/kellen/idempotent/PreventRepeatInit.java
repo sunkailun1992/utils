@@ -22,13 +22,9 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created with IntelliJ IDEA.
  * 请求接口幂等
  *
  * @author 孙凯伦
- * @DateTime 2020/12/10  下午5:28
- * @email 376253703@qq.com
- * @explain
  */
 @Slf4j
 @Component
@@ -59,8 +55,6 @@ public class PreventRepeatInit {
      *                   验证码
      * @return void
      * @author 孙凯伦
-     * @DateTime 2020/12/10  下午7:20
-     * @email 376253703@qq.com
      */
     public void init(JoinPoint joinPoint) throws Exception {
         //获得执行方法
@@ -89,8 +83,6 @@ public class PreventRepeatInit {
      *                   验证码
      * @return void
      * @author 孙凯伦
-     * @DateTime 2020/12/10  下午7:21
-     * @email 376253703@qq.com
      */
     public void delete(JoinPoint joinPoint) throws Exception {
         //获得执行方法
@@ -114,8 +106,6 @@ public class PreventRepeatInit {
      * @param joinPoint: aop拦截类
      * @return java.lang.String
      * @author 孙凯伦
-     * @DateTime 2026/5/26  下午
-     * @email 376253703@qq.com
      */
     private String getRepeatKey(JoinPoint joinPoint) {
         SecurityUser user = UserContextHolder.get(); // 获取当前认证用户，替代历史 Redis token 用户查询。

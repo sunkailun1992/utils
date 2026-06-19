@@ -13,8 +13,6 @@ import java.util.Map;
  * 数据权限配置属性。
  *
  * @author sunkailun
- * @DateTime 2026/05/27
- * @email 376253703@qq.com
  */
 @Getter
 @Setter
@@ -55,8 +53,6 @@ public class DataPermissionProperties {
      * 数据权限表规则。
      *
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     @Getter
     @Setter

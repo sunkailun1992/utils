@@ -1,31 +1,46 @@
 package com.kellen.utils.exception;
 
 /**
- * Created with IntelliJ IDEA.
  * 参数为空异常
  * @author 孙凯伦
- * @DateTime 2020/12/10  下午9:28
- * @email 376253703@qq.com
  * 
- * @explain
  */
 public class ParameterNullException extends RuntimeException {
 
+    /**
+     * 构造无消息的异常。
+     */
     public ParameterNullException() {
         super();
     }
 
 
+    /**
+     * 构造带消息与根因的异常。
+     *
+     * @param message 异常提示信息
+     * @param cause   根因异常
+     */
     public ParameterNullException(String message, Throwable cause) {
         super(message, cause);
     }
 
 
+    /**
+     * 构造带消息的异常。
+     *
+     * @param message 异常提示信息
+     */
     public ParameterNullException(String message) {
         super(message);
     }
 
 
+    /**
+     * 构造带根因的异常。
+     *
+     * @param cause 根因异常
+     */
     public ParameterNullException(Throwable cause) {
         super(cause);
     }

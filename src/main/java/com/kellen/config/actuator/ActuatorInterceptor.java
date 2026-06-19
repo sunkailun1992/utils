@@ -9,6 +9,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Actuator 端点访问拦截器。
+ *
+ * <p>对 {@code /actuator} 路径校验请求头令牌，缺失或不匹配时返回 401，防止运维端点对外暴露。
+ * 令牌应外置到配置，不应硬编码在代码中。</p>
+ *
+ * @author 孙凯伦
+ */
 public class ActuatorInterceptor implements HandlerInterceptor {
 
     private static final Pattern actuatorReqPattern = Pattern.compile("/actuator$|/actuator/", Pattern.CASE_INSENSITIVE);

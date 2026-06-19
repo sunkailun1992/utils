@@ -8,12 +8,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * @ClassName RequestUtil
- * @Description 请求工具类
- * @Author 孙凯伦
+ * 请求工具类
  * 
- * @Email 376253703@qq.com
- * @Time 2021/7/22 10:10 上午
  */
 public class RequestUtil {
     /**

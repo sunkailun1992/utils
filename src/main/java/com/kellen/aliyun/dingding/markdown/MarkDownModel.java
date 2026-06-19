@@ -3,12 +3,8 @@ package com.kellen.aliyun.dingding.markdown;
 import lombok.Data;
 
 /**
- * @ClassName MarkDownModel
- * @Description 消息内容
- * @Author 孙凯伦
+ * 消息内容
  * 
- * @Email 376253703@qq.com
- * @Time 2021/6/25 9:14 上午
  */
 @Data
 public class MarkDownModel {

@@ -17,9 +17,11 @@
 - 禁止逐行翻译式注释，例如“设置字段”“返回结果”“调用工具类”。
 - 禁止用注释保留废弃实现、调试 main、临时示例或整块旧代码；历史版本交给 Git。
 - 注释必须随代码同步更新，过时注释必须删除或修正。
+- 作者与时间按主流规范（Google Java Style / Oracle Javadoc）交给版本控制：`@author` 可选保留、格式统一即可，不强制；创建时间、修改时间、邮箱不写进注释（Git 记录），禁止 `@DateTime`、`@email`、`@ClassName`、`@explain` 等非标准标签。
 
 ## 2. Java 公共 API 注释
 
+- 最低覆盖（对齐 Google Java Style / Oracle Javadoc 规范）：每个 public 类型、每个 public 或 protected 方法/字段都必须有 Javadoc；仅当成员自解释时可省略——简单 getter/setter、覆写方法（`@Override`）、含义显而易见的常量。
 - public 类型、注解、AOP、配置类、异常、上下文、工具类和第三方 SDK 封装应使用 Javadoc 说明职责、线程/租户/安全边界和消费者影响。
 - public 方法注释应说明参数约束、返回语义、副作用、异常和不适用场景；不能只复述方法名。
 - 涉及认证、租户、动态数据源、MyBatis-Plus、文件、HTTP、JSON、Excel、PDF、第三方 SDK 的注释必须说明误用风险。

@@ -4,12 +4,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * @ClassName Sms
- * @Description 阿里云短信配置
- * @Author 孙凯伦
+ * 阿里云短信配置
  * 
- * @Email 376253703@qq.com
- * @Time 2021/4/14 12:58 下午
  */
 @Component
 public class Sms{

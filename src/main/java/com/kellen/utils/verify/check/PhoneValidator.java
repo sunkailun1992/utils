@@ -7,12 +7,8 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * @ClassName PhoneValidator
- * @Description 手机号校验
- * @Author 孙凯伦
+ * 手机号校验
  * 
- * @Email 376253703@qq.com
- * @Time 2021/7/27 10:35 上午
  */
 public class PhoneValidator implements ConstraintValidator<Phone, String> {
 
