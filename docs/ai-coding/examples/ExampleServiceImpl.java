@@ -189,8 +189,6 @@ public class ExampleServiceImpl extends ServiceImpl<ExampleMapper, ExampleEntity
      * @param exampleQuery 查询参数
      * @return 查询包装器
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private QueryWrapper<ExampleEntity> buildQueryWrapper(ExampleQuery exampleQuery) {
         // 将查询参数转换为实体，用于 QueryWrapper 自动拼接同名字段等值条件。
@@ -212,8 +210,6 @@ public class ExampleServiceImpl extends ServiceImpl<ExampleMapper, ExampleEntity
      * @param queryWrapper 查询包装器
      * @return 查询包装器
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private QueryWrapper<ExampleEntity> queryArtificial(ExampleQuery exampleQuery, QueryWrapper<ExampleEntity> queryWrapper) {
         // 业务特殊查询条件统一写在这里。
@@ -238,8 +234,6 @@ public class ExampleServiceImpl extends ServiceImpl<ExampleMapper, ExampleEntity
      * @param exampleQuery 查询参数
      * @return boolean
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     private boolean needAssignment(ExampleQuery exampleQuery) {
         // 查询对象为空时默认执行结果增强。

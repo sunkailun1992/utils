@@ -54,8 +54,6 @@ public class ExampleServiceQuery {
      * @param queryWrapper 查询包装器
      * @return 查询包装器
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public QueryWrapper<ExampleEntity> query(ExampleQuery exampleQuery, QueryWrapper<ExampleEntity> queryWrapper) {
         // 查询对象为空时直接返回原包装器，避免示例生成空指针代码。
@@ -93,8 +91,6 @@ public class ExampleServiceQuery {
      * @param requestedField 前端请求排序字段
      * @return 安全排序字段
      * @author sunkailun
-     * @DateTime 2026/06/08
-     * @email 376253703@qq.com
      */
     private String resolveSortField(String requestedField) {
         // 读取请求排序字段对应的数据库列名。
@@ -114,8 +110,6 @@ public class ExampleServiceQuery {
      * @param requestedFields 前端请求显示字段
      * @return 安全查询字段
      * @author sunkailun
-     * @DateTime 2026/06/08
-     * @email 376253703@qq.com
      */
     private String[] resolveSelectFields(String requestedFields) {
         // 未指定显示字段时返回空数组，由 MyBatis-Plus 执行默认 select。

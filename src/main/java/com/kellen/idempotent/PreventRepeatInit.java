@@ -35,6 +35,17 @@ public class PreventRepeatInit {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 读取方法组合校验注解中的展示名称。
+     *
+     * <p>该方法只根据后端注解元数据解析方法名称，不读取请求参数；
+     * 找不到匹配项时返回空字符串，避免幂等或校验错误信息暴露反射异常。</p>
+     *
+     * @param entity  包含 {@link Methods} 注解的类型
+     * @param methods 需要匹配的方法标识
+     * @return 注解中的方法展示名称，未匹配时为空字符串
+     * @throws Exception 反射读取注解失败
+     */
     public static String getTime(Class entity, String methods) throws Exception {
         //类注解的属性和内容
         List<MethodsParam> list = MethodsInit.init(entity);

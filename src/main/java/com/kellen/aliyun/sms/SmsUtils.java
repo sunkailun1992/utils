@@ -40,10 +40,12 @@ public final class SmsUtils {
     final static String VERSION = "2017-05-25";
 
     /**
+     * 使用默认签名发送模板短信。
+     *
      * @param phone         接收短信的手机号码。支持对多个手机号码发送短信，手机号码之间以英文逗号（,）分隔。上限为1000个手机号码。批量调用相对于单条调用及时性稍有延迟。
      * @param smsEnum       短信模板ID。请在控制台模板管理页面模板CODE一列查看。
      * @param templateParam 短信模板变量对应的实际值，JSON格式。
-     * @return: java.lang.Boolean
+     * @return true 表示阿里云返回 OK，false 表示发送失败或客户端异常
      */
     public static Boolean sendMessage(String phone, SmsEnum smsEnum, String templateParam) {
         log.debug("手机号{}发送短信{}", phone, templateParam);
@@ -90,10 +92,13 @@ public final class SmsUtils {
 
 
     /**
+     * 使用指定签名和枚举模板发送短信。
+     *
+     * @param signName      短信签名
      * @param phone         接收短信的手机号码。支持对多个手机号码发送短信，手机号码之间以英文逗号（,）分隔。上限为1000个手机号码。批量调用相对于单条调用及时性稍有延迟。
      * @param smsEnum       短信模板ID。请在控制台模板管理页面模板CODE一列查看。
      * @param templateParam 短信模板变量对应的实际值，JSON格式。
-     * @return: java.lang.Boolean
+     * @return true 表示阿里云返回 OK，false 表示发送失败或客户端异常
      */
     public static Boolean sendMessage(String signName, String phone, SmsEnum smsEnum, String templateParam) {
         log.debug("手机号{}发送短信{}", phone, templateParam);
@@ -141,10 +146,13 @@ public final class SmsUtils {
 
 
     /**
+     * 使用指定签名和模板编码发送短信。
+     *
+     * @param signName      短信签名
      * @param phone         接收短信的手机号码。支持对多个手机号码发送短信，手机号码之间以英文逗号（,）分隔。上限为1000个手机号码。批量调用相对于单条调用及时性稍有延迟。
-     * @param smsEnum       短信模板ID。请在控制台模板管理页面模板CODE一列查看。
+     * @param smsEnum       短信模板编码。请在控制台模板管理页面模板CODE一列查看。
      * @param templateParam 短信模板变量对应的实际值，JSON格式。
-     * @return: java.lang.Boolean
+     * @return true 表示阿里云返回 OK，false 表示发送失败或客户端异常
      */
     public static Boolean sendMessage(String signName, String phone, String smsEnum, String templateParam) {
         log.debug("手机号{}发送短信{}", phone, templateParam);
@@ -193,10 +201,14 @@ public final class SmsUtils {
 
 
     /**
+     * 使用指定签名和模板编码发送短信，并允许非生产环境按调用方标记决定是否改写接收手机号。
+     *
+     * @param signName      短信签名
      * @param phone         接收短信的手机号码。支持对多个手机号码发送短信，手机号码之间以英文逗号（,）分隔。上限为1000个手机号码。批量调用相对于单条调用及时性稍有延迟。
-     * @param smsEnum       短信模板ID。请在控制台模板管理页面模板CODE一列查看。
+     * @param smsEnum       短信模板编码。请在控制台模板管理页面模板CODE一列查看。
      * @param templateParam 短信模板变量对应的实际值，JSON格式。
-     * @return: java.lang.Boolean
+     * @param isSign        非生产环境是否使用固定测试手机号
+     * @return true 表示阿里云返回 OK，false 表示发送失败或客户端异常
      */
     public static Boolean sendMessage(String signName, String phone, String smsEnum, String templateParam,Boolean isSign) {
         log.debug("手机号{}发送短信{}", phone, templateParam);

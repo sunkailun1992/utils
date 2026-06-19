@@ -28,8 +28,6 @@ public class ExampleServiceResults {
      * @param records 列表结果
      * @return 增强后的列表结果
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public List<ExampleVO> assignment(List<ExampleVO> records) {
         // 列表为空时返回空集合，避免调用方空指针。
@@ -49,8 +47,6 @@ public class ExampleServiceResults {
      * @param record 单条结果
      * @return 增强后的单条结果
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public ExampleVO assignment(ExampleVO record) {
         // 空对象直接返回。
@@ -72,8 +68,6 @@ public class ExampleServiceResults {
      * @param page 分页结果
      * @return 增强后的分页结果
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public Page<ExampleVO> assignment(Page<ExampleVO> page) {
         // 分页对象为空时直接返回空。
@@ -93,8 +87,6 @@ public class ExampleServiceResults {
      * @param recordDO DO 单条数据
      * @return VO 单条数据
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public ExampleVO toVO(ExampleEntity recordDO) {
         // DO 为空时直接返回空。
@@ -112,8 +104,6 @@ public class ExampleServiceResults {
      * @param recordsDO DO 列表数据
      * @return VO 列表数据
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public List<ExampleVO> toListVO(List<ExampleEntity> recordsDO) {
         // DO 列表为空时返回空集合。
@@ -131,8 +121,6 @@ public class ExampleServiceResults {
      * @param pageDO DO 分页
      * @return VO 分页
      * @author sunkailun
-     * @DateTime 2026/05/27
-     * @email 376253703@qq.com
      */
     public Page<ExampleVO> toPageVO(Page<ExampleEntity> pageDO) {
         // DO 分页为空时返回空分页对象。

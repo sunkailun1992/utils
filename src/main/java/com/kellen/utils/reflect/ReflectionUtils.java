@@ -11,9 +11,12 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
- * 反射工具类
+ * 反射工具类。
+ *
+ * <p>公共反射能力会绕过普通访问控制，调用方必须确保字段名来自后端白名单或可信配置，
+ * 不能把前端字段名直接传入这些方法。</p>
+ *
  * @author 孙凯伦
- * 
  */
 public final class ReflectionUtils {
 
@@ -70,6 +73,16 @@ public final class ReflectionUtils {
 	}
 
 
+	/**
+	 * 从当前对象或父类层级读取私有字段。
+	 *
+	 * <p>找不到字段时返回 null；字段名必须来自后端可信来源，避免把反射能力变成任意字段读取入口。</p>
+	 *
+	 * @param owner     目标对象
+	 * @param fieldName 字段名
+	 * @return 字段值；未找到字段时返回 null
+	 * @throws Exception 反射访问失败
+	 */
 	public static Object getParentField(Object owner, String fieldName) throws Exception {
 		try {
 			return getPrivateAttribute(owner, fieldName);
