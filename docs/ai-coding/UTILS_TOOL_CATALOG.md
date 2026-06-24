@@ -48,7 +48,8 @@
 
 - `com.kellen.utils.context.TenantContextHolder`：租户上下文 ThreadLocal。
 - `com.kellen.security.config.TenantProperties`：租户请求头配置。
-- `com.kellen.config.web.ReqInterceptor`：Feign 请求上下文透传。
+- `com.kellen.config.dubbo.DubboContextPropagationFilter`：Dubbo RPC 上下文透传。
+- `com.kellen.config.web.ReqInterceptor`：HTTP 请求租户上下文初始化。
 - `com.kellen.utils.context.DynamicSourceTtl`：动态数据源上下文。
 - `com.kellen.config.datasource.DynamicDataSourceConfig`：Druid 动态数据源配置。
 - `com.kellen.utils.datasource.DataSourceUtil`：数据源工具。
@@ -66,7 +67,7 @@
 - `IllegalSQLInnerInterceptor` 与 `BlockAttackInnerInterceptor` 属于默认安全边界，关闭前必须补充原因、替代防护和测试。
 - MyBatis-Plus `SqlInjector` 只允许作为 Mapper 通用方法扩展点，不作为 SQL 注入防护能力。
 - 需要租户隔离的调用必须显式维护 `TenantContextHolder` 生命周期。
-- Feign 透传只透传可信上下文，不把业务参数当作租户隔离依据。
+- Dubbo 透传只透传可信上下文，不把业务参数当作租户隔离依据。
 
 ## 四、AOP、幂等与请求日志
 
@@ -94,8 +95,7 @@
 核心类：
 
 - `com.kellen.config.async.AsyncConfig`：异步线程配置。
-- `com.kellen.config.feign.FeignConfiguration`：OpenFeign 配置。
-- `com.kellen.config.feign.FeignOkHttpConfig`：Feign OkHttp 配置。
+- `com.kellen.config.dubbo.DubboContextPropagationFilter`：Dubbo 动态数据源、租户和 Seata XID 透传配置。
 - `com.kellen.config.redis.RedisCacheConfig`：Redis 缓存配置。
 - `com.kellen.config.elasticsearch.ElasticsearchConfig`：Elasticsearch 配置。
 - `com.kellen.config.file.MultipartConfig`：文件上传配置。

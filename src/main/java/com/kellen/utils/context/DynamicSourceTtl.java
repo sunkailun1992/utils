@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * 动态数据源上下文管理工具。
  *
  * <p>同时维护 TransmittableThreadLocal 和 dynamic-datasource 的上下文，
- * 用于普通请求、异步线程和 Feign/Rabbit 等链路里保持数据源一致。</p>
+ * 用于普通请求、异步线程和 Dubbo/Rabbit 等链路里保持数据源一致。</p>
  *
  * @author 孙凯伦
  */

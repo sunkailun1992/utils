@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * 当前租户上下文持有器。
  *
- * <p>租户上下文主要供 MyBatis-Plus 租户插件、Feign 透传和业务代码读取。
+ * <p>租户上下文主要供 MyBatis-Plus 租户插件、Dubbo 透传和业务代码读取。
  * 请求结束或跨租户逻辑结束后必须调用 {@link #clear()} 或 {@link #clearIgnore()}。</p>
  *
  * @author 孙凯伦

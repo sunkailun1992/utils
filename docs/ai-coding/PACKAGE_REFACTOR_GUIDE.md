@@ -33,7 +33,7 @@ com.kellen.config.actuator     Actuator 端点与映射配置
 com.kellen.config.async        异步线程配置
 com.kellen.config.datasource   动态数据源配置
 com.kellen.config.elasticsearch Elasticsearch 配置
-com.kellen.config.feign        OpenFeign 配置
+com.kellen.config.dubbo        Dubbo RPC 配置
 com.kellen.config.file         文件上传配置
 com.kellen.config.mybatis      MyBatis-Plus 配置
 com.kellen.config.redis        Redis 缓存配置
