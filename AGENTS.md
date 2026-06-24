@@ -24,6 +24,7 @@
 8. `docs/ai-coding/AI_ENGINEERING_GUARDRAILS.md`：确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
 9. `docs/ai-coding/SECURITY_CODING_SPEC.md`：涉及认证、权限、SQL、文件、脱敏、日志、第三方 SDK 或安全扩展点时必须阅读。
 10. `docs/ai-coding/UTILS_TOOL_CATALOG.md`：新增或迁移工具类前确认目标包和现有能力。
+11. `docs/ai-coding/NACOS_CONFIG_SPEC.md`：涉及公共 `@ConfigurationProperties` 归属、共享 dataId 或 Nacos 配置中心拆分时必读。
 
 ## 项目边界
 
@@ -76,7 +77,7 @@ main 分支提交并推送远程 Git 仓库时，还必须发布远程私有 Mav
 ## 禁止事项
 
 - 禁止提交 Maven 仓库凭证、真实密钥、本机 Gradle 配置、本机绝对路径或发布账号。
-- 禁止 AI 自主修改已有密钥、第三方 SDK 凭证、Maven 仓库凭证或生产配置值；发现疑似密钥只能告警，由项目负责人决定是否替换。
+- 禁止 AI 触碰真实密钥、第三方 SDK 凭证或 Maven 仓库凭证（疑似密钥只能告警，由项目负责人处理）；配置中心结构性调整（dataId 拆分/合并、import 顺序、`${}` 引用、Nacos 接入地址/namespace/group）允许 AI 自主完成，但必须保值不改值，不得擅自变更生产业务配置的实际取值。
 - 禁止把业务服务专属枚举、业务公式、业务常量放进公共包。
 - 禁止把 MyBatis-Plus `SqlInjector` 描述或实现成 SQL 注入防护能力。
 - 禁止默认关闭 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 等安全拦截而不说明替代防护。
