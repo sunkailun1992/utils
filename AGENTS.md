@@ -7,7 +7,7 @@
 - 项目名称：`utils`
 - 项目类型：Spring Boot 4 / Java 17 公共基础能力包
 - 发布坐标：`com:utils`
-- 主要消费者：同级 `../user`、`../message`，以及需要统一响应、认证上下文、多租户、MyBatis-Plus、Redis、HTTP、文件、Excel、PDF、第三方 SDK 的服务
+- 主要消费者：同级 `../user`、`../message`、`../ai`，以及需要统一响应、认证上下文、多租户、MyBatis-Plus、Redis、HTTP、文件、Excel、PDF、第三方 SDK 的服务
 - 核心风险：公共 API 破坏消费者、旧认证/旧响应回流、公共工具污染业务语义、认证和租户上下文串号、SQL 安全误用
 
 ## 修改前阅读顺序
@@ -23,16 +23,18 @@
 7. `docs/ai-coding/BRANCHING_SPEC.md`：确认分支命名、短分支生命周期、release/hotfix、tag 和清理规则。
 8. `docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md`：确认环境、Nacos namespace、Java profile 和前端/小程序边界。
 9. `docs/ai-coding/VERSIONING_SPEC.md`：确认 `group = 'com'`、`version = '1.0.0'`、补丁递增和消费者同步规则。
-10. `docs/ai-coding/PROJECT_CODING_SPEC.md`：确认公共响应、异常、认证、租户、动态数据源、乐观锁、注释和 examples 规则。
-11. `docs/ai-coding/AI_ENGINEERING_GUARDRAILS.md`：确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
-12. `docs/ai-coding/SECURITY_CODING_SPEC.md`：涉及认证、权限、SQL、文件、脱敏、日志、第三方 SDK 或安全扩展点时必须阅读。
-13. `docs/ai-coding/UTILS_TOOL_CATALOG.md`：新增或迁移工具类前确认目标包和现有能力。
-14. `docs/ai-coding/NACOS_CONFIG_SPEC.md`：涉及公共 `@ConfigurationProperties` 归属、共享 dataId 或 Nacos 配置中心拆分时必读。
+10. `docs/ai-coding/RPC_API_CODING_SPEC.md`：确认 `utils` 与同级 `../rpc-api` 的 RPC 职责边界。
+11. `docs/ai-coding/PROJECT_CODING_SPEC.md`：确认公共响应、异常、认证、租户、动态数据源、乐观锁、注释和 examples 规则。
+12. `docs/ai-coding/AI_ENGINEERING_GUARDRAILS.md`：确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
+13. `docs/ai-coding/SECURITY_CODING_SPEC.md`：涉及认证、权限、SQL、文件、脱敏、日志、第三方 SDK 或安全扩展点时必须阅读。
+14. `docs/ai-coding/UTILS_TOOL_CATALOG.md`：新增或迁移工具类前确认目标包和现有能力。
+15. `docs/ai-coding/NACOS_CONFIG_SPEC.md`：涉及公共 `@ConfigurationProperties` 归属、共享 dataId 或 Nacos 配置中心拆分时必读。
 
 ## 项目边界
 
 - 多项目通用能力才放入 `utils`；单个业务服务专用逻辑必须留在业务项目。
 - 公共工具、公共配置、公共注解、公共异常、公共上下文和第三方通用封装在本仓库维护。
+- 业务 RPC 接口、DTO、枚举和值对象不放在 `utils`，统一维护在同级 `../rpc-api`。
 - 新增公共配置、SDK 适配、拦截器、策略、工具类或自动配置时，必须优先沿用 `docs/ai-coding/AI_DESIGN_PATTERN_GUIDE.md` 中的 Auto Configuration、Strategy、Adapter、Interceptor、Template、Factory 等公共包适用模式。
 - 不在 `user`、`message`、`gateway` 等消费者项目复制 `utils` 源码。
 - 修改公共 API、注解、AOP、认证、租户、异常、返回值或 MyBatis-Plus 配置时，必须评估消费者项目编译影响。
@@ -83,6 +85,7 @@ main 分支提交并推送远程 Git 仓库时，还必须发布远程私有 Mav
 - 禁止提交 Maven 仓库凭证、真实密钥、本机 Gradle 配置、本机绝对路径或发布账号。
 - 禁止 AI 触碰真实密钥、第三方 SDK 凭证或 Maven 仓库凭证（疑似密钥只能告警，由项目负责人处理）；配置中心结构性调整（dataId 拆分/合并、import 顺序、`${}` 引用、Nacos 接入地址/namespace/group）允许 AI 自主完成，但必须保值不改值，不得擅自变更生产业务配置的实际取值。
 - 禁止把业务服务专属枚举、业务公式、业务常量放进公共包。
+- 禁止把 `UserRpcService`、`MessageRpcService`、业务 RPC DTO 或 provider/consumer 实现放进公共包；这些契约属于同级 `../rpc-api`。
 - 禁止把 MyBatis-Plus `SqlInjector` 描述或实现成 SQL 注入防护能力。
 - 禁止默认关闭 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 等安全拦截而不说明替代防护。
 - 禁止在公共工具里提供绕过鉴权、租户隔离、数据归属校验、参数绑定或文件路径校验的便捷方法。

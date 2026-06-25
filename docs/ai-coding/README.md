@@ -14,13 +14,14 @@
 8. 再读 [分支管理规范](BRANCHING_SPEC.md)，确认分支命名、短分支生命周期、release/hotfix、tag 和清理规则。
 9. 再读 [环境配置入口规范](ENVIRONMENT_CONFIG_SPEC.md)，确认环境、Nacos namespace、Java profile 和前端/小程序边界。
 10. 再读 [项目版本变更规范](VERSIONING_SPEC.md)，确认 `group = 'com'`、`version = '1.0.0'`、补丁递增和公共包消费者同步规则。
-11. 涉及认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，读 [安全编码规范](SECURITY_CODING_SPEC.md)。
-12. 涉及 MyBatis-Plus 动态字段、排序、数据权限、租户、乐观锁、SQL 插件或 Mapper 扩展时，必须确认 `SqlInjector` 只用于扩展 SQL 方法，不能作为 SQL 注入防护方案。
-13. MyBatis-Plus SQL 安全优先使用后端字段白名单、参数绑定、LambdaWrapper、`SqlInjectionUtils.check(...)` 或 `checkSqlInjection()` 补充校验，以及 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 默认拦截。
-14. 涉及业务微服务标准分层、RESTful Controller、ServiceQuery、ServiceResults、BO、Query、VO、Mapper 示例时，读 [公共示例模板](examples/README.md) 和 `examples/Example*`。
-15. 再读 [工具类归类目录](UTILS_TOOL_CATALOG.md)，确认目标能力应该放在哪个包、复用哪个类、哪些历史工具需要谨慎使用。
-16. 如果涉及工具类新增或包名调整，阅读 [包结构分类说明](PACKAGE_REFACTOR_GUIDE.md)，确认目标子包。
-17. 最后阅读目标 Java 类及其上下游调用点，避免只根据类名猜测行为。
+11. 再读 [RPC API 协作规范](RPC_API_CODING_SPEC.md)，确认 `utils` 只维护 Dubbo 上下文透传等横切能力，不维护业务 RPC 契约。
+12. 涉及认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，读 [安全编码规范](SECURITY_CODING_SPEC.md)。
+13. 涉及 MyBatis-Plus 动态字段、排序、数据权限、租户、乐观锁、SQL 插件或 Mapper 扩展时，必须确认 `SqlInjector` 只用于扩展 SQL 方法，不能作为 SQL 注入防护方案。
+14. MyBatis-Plus SQL 安全优先使用后端字段白名单、参数绑定、LambdaWrapper、`SqlInjectionUtils.check(...)` 或 `checkSqlInjection()` 补充校验，以及 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 默认拦截。
+15. 涉及业务微服务标准分层、RESTful Controller、ServiceQuery、ServiceResults、BO、Query、VO、Mapper 示例时，读 [公共示例模板](examples/README.md) 和 `examples/Example*`。
+16. 再读 [工具类归类目录](UTILS_TOOL_CATALOG.md)，确认目标能力应该放在哪个包、复用哪个类、哪些历史工具需要谨慎使用。
+17. 如果涉及工具类新增或包名调整，阅读 [包结构分类说明](PACKAGE_REFACTOR_GUIDE.md)，确认目标子包。
+18. 最后阅读目标 Java 类及其上下游调用点，避免只根据类名猜测行为。
 
 ## 修改前检查
 
@@ -32,6 +33,7 @@
 - AI 新增或重构公共配置、SDK 适配、拦截器、策略、工具类或自动配置前，必须遵守 `AI_DESIGN_PATTERN_GUIDE.md`。
 - 涉及接口鉴权、数据脱敏、水平越权、文件遍历、退出清理 token、XSS 跨站脚本、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，必须同步检查 `SECURITY_CODING_SPEC.md`。
 - 涉及 MyBatis-Plus Wrapper、Mapper XML、排序字段、动态列名、动态表名、导出字段、查询增强时，必须先设计后端白名单，再考虑 `SqlInjectionUtils` 或 `checkSqlInjection()` 补充校验。
+- 涉及业务 Dubbo RPC 接口、DTO、枚举和值对象时，必须去同级 `../rpc-api` 修改；`utils` 只维护 Dubbo 上下文透传等横切能力，不新增 `com.kellen.rpc.*` 业务契约。
 - 不得把 MyBatis-Plus `SqlInjector` 写成防 SQL 注入能力；它是自定义通用 Mapper 方法的扩展点，新增前必须证明标准 `BaseMapper`、Service 或 XML 无法满足需求。
 - 修改 `docs/ai-coding/examples` 公共示例模板时，必须以 `utils` 为唯一源头，并同步到 `user`、`message` 等业务微服务的本地副本。
 - 新增或修改功能前必须按 `AI_AUTOMATION_WORKFLOW.md` 先整理需求说明、验收标准和开发手册；小改动可以简化输出，但检查项不能跳过。
@@ -54,4 +56,5 @@
 - 新增或调整架构规则时，同步更新 [项目编码规范](PROJECT_CODING_SPEC.md)。
 - 新增或调整安全规则时，同步更新 [安全编码规范](SECURITY_CODING_SPEC.md)。
 - 新增或调整公共 examples 时，先改 `utils/docs/ai-coding/examples`，再同步到业务微服务本地副本。
+- 新增或调整 RPC 契约时，先改同级 `../rpc-api` 的源码和 AI 规范，再同步 provider/consumer 依赖。
 - 根目录 `README.md` 只放项目定位、构建命令和最高优先级约束。
