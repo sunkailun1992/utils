@@ -20,12 +20,13 @@
 4. `docs/ai-coding/AI_DIRECTORY_STRUCTURE_GUIDE.md`：确认 Java Library、公共包、测试、文档和消费者边界。
 5. `docs/ai-coding/AI_COMMENT_STYLE_GUIDE.md`：确认注释规范、自解释优先、禁止注释掉死代码和排版要求。
 6. `docs/ai-coding/AI_DESIGN_PATTERN_GUIDE.md`：确认公共包设计模式、公共 API 兼容性和禁止巨型工具类规则。
-7. `docs/ai-coding/VERSIONING_SPEC.md`：确认 `group = 'com'`、`version = '1.0.0'`、补丁递增和消费者同步规则。
-8. `docs/ai-coding/PROJECT_CODING_SPEC.md`：确认公共响应、异常、认证、租户、动态数据源、乐观锁、注释和 examples 规则。
-9. `docs/ai-coding/AI_ENGINEERING_GUARDRAILS.md`：确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
-10. `docs/ai-coding/SECURITY_CODING_SPEC.md`：涉及认证、权限、SQL、文件、脱敏、日志、第三方 SDK 或安全扩展点时必须阅读。
-11. `docs/ai-coding/UTILS_TOOL_CATALOG.md`：新增或迁移工具类前确认目标包和现有能力。
-12. `docs/ai-coding/NACOS_CONFIG_SPEC.md`：涉及公共 `@ConfigurationProperties` 归属、共享 dataId 或 Nacos 配置中心拆分时必读。
+7. `docs/ai-coding/BRANCHING_SPEC.md`：确认分支命名、短分支生命周期、release/hotfix、tag 和清理规则。
+8. `docs/ai-coding/VERSIONING_SPEC.md`：确认 `group = 'com'`、`version = '1.0.0'`、补丁递增和消费者同步规则。
+9. `docs/ai-coding/PROJECT_CODING_SPEC.md`：确认公共响应、异常、认证、租户、动态数据源、乐观锁、注释和 examples 规则。
+10. `docs/ai-coding/AI_ENGINEERING_GUARDRAILS.md`：确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
+11. `docs/ai-coding/SECURITY_CODING_SPEC.md`：涉及认证、权限、SQL、文件、脱敏、日志、第三方 SDK 或安全扩展点时必须阅读。
+12. `docs/ai-coding/UTILS_TOOL_CATALOG.md`：新增或迁移工具类前确认目标包和现有能力。
+13. `docs/ai-coding/NACOS_CONFIG_SPEC.md`：涉及公共 `@ConfigurationProperties` 归属、共享 dataId 或 Nacos 配置中心拆分时必读。
 
 ## 项目边界
 
