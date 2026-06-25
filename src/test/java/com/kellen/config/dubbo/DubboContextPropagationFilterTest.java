@@ -1,6 +1,8 @@
 package com.kellen.config.dubbo;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.kellen.traffic.TrafficGovernanceContext;
+import com.kellen.traffic.TrafficGovernanceHeaders;
 import com.kellen.utils.context.DynamicSourceTtl;
 import com.kellen.utils.context.TenantContextHolder;
 import io.seata.core.context.RootContext;
@@ -31,13 +33,15 @@ class DubboContextPropagationFilterTest {
         }
         DynamicSourceTtl.clear();
         TenantContextHolder.clear();
+        TrafficGovernanceContext.clear();
     }
 
     @Test
-    void consumerAttachesDatasourceTenantAndSeataXid() {
+    void consumerAttachesDatasourceTenantSeataXidAndTrafficContext() {
         DynamicSourceTtl.push(DynamicSourceTtl.SLAVE_DATASOURCE);
         TenantContextHolder.setTenantId("1001");
         RootContext.bind("xid-consumer");
+        TrafficGovernanceContext.set(new TrafficGovernanceContext.Snapshot("2.0.0", "canary", "gray", 20));
         RpcInvocation invocation = invocation();
 
         filter.invoke(new TestInvoker(CommonConstants.CONSUMER, ignored -> new AppResponse("ok")), invocation);
@@ -48,24 +52,39 @@ class DubboContextPropagationFilterTest {
         assertThat(invocation.getAttachment("X-Tenant-Id")).isEqualTo("1001");
         assertThat(invocation.getAttachment(RootContext.KEY_XID)).isEqualTo("xid-consumer");
         assertThat(invocation.getAttachment("tx_xid")).isEqualTo("xid-consumer");
+        assertThat(invocation.getAttachment(TrafficGovernanceHeaders.RELEASE_VERSION)).isEqualTo("2.0.0");
+        assertThat(invocation.getAttachment(TrafficGovernanceHeaders.RELEASE_VERSION_ATTACHMENT)).isEqualTo("2.0.0");
+        assertThat(invocation.getAttachment(TrafficGovernanceHeaders.TRAFFIC_LANE)).isEqualTo("canary");
+        assertThat(invocation.getAttachment(TrafficGovernanceHeaders.TRAFFIC_LANE_ATTACHMENT)).isEqualTo("canary");
+        assertThat(invocation.getAttachment(TrafficGovernanceHeaders.CANARY_TAG)).isEqualTo("gray");
+        assertThat(invocation.getAttachment(CommonConstants.TAG_KEY)).isEqualTo("gray");
+        assertThat(invocation.getAttachment(CommonConstants.DUBBO_TAG_HEADER)).isEqualTo("gray");
+        assertThat(invocation.getAttachment(TrafficGovernanceHeaders.CANARY_WEIGHT)).isEqualTo("20");
+        assertThat(invocation.getAttachment(TrafficGovernanceHeaders.CANARY_WEIGHT_ATTACHMENT)).isEqualTo("20");
     }
 
     @Test
-    void providerBindsAndCleansDatasourceTenantAndSeataXid() {
+    void providerBindsAndCleansDatasourceTenantSeataXidAndTrafficContext() {
         RpcInvocation invocation = invocation();
         invocation.setAttachment("dataSource", DynamicSourceTtl.SLAVE_DATASOURCE);
         invocation.setAttachment("tenantId", "1001");
         invocation.setAttachment(RootContext.KEY_XID, "xid-provider");
+        invocation.setAttachment(TrafficGovernanceHeaders.RELEASE_VERSION_ATTACHMENT, "2.0.0");
+        invocation.setAttachment(TrafficGovernanceHeaders.TRAFFIC_LANE_ATTACHMENT, "canary");
+        invocation.setAttachment(CommonConstants.TAG_KEY, "gray");
+        invocation.setAttachment(TrafficGovernanceHeaders.CANARY_WEIGHT_ATTACHMENT, "20");
         AtomicReference<String> dataSourceInProvider = new AtomicReference<>();
         AtomicReference<String> dynamicHolderInProvider = new AtomicReference<>();
         AtomicReference<String> tenantInProvider = new AtomicReference<>();
         AtomicReference<String> xidInProvider = new AtomicReference<>();
+        AtomicReference<TrafficGovernanceContext.Snapshot> trafficInProvider = new AtomicReference<>();
 
         filter.invoke(new TestInvoker(CommonConstants.PROVIDER, ignored -> {
             dataSourceInProvider.set(DynamicSourceTtl.get());
             dynamicHolderInProvider.set(DynamicDataSourceContextHolder.peek());
             tenantInProvider.set(TenantContextHolder.getTenantId());
             xidInProvider.set(RootContext.getXID());
+            trafficInProvider.set(TrafficGovernanceContext.get());
             return new AppResponse("ok");
         }), invocation);
 
@@ -73,8 +92,13 @@ class DubboContextPropagationFilterTest {
         assertThat(dynamicHolderInProvider).hasValue(DynamicSourceTtl.SLAVE_DATASOURCE);
         assertThat(tenantInProvider).hasValue("1001");
         assertThat(xidInProvider).hasValue("xid-provider");
+        assertThat(trafficInProvider.get().releaseVersion()).isEqualTo("2.0.0");
+        assertThat(trafficInProvider.get().lane()).isEqualTo("canary");
+        assertThat(trafficInProvider.get().canaryTag()).isEqualTo("gray");
+        assertThat(trafficInProvider.get().canaryWeight()).isEqualTo(20);
         assertThat(RootContext.getXID()).isNull();
         assertThat(TenantContextHolder.getTenantId()).isNull();
+        assertThat(TrafficGovernanceContext.get()).isNull();
         assertThat(DynamicSourceTtl.dataSourceContext.get()).isNull();
         assertThat(DynamicDataSourceContextHolder.peek()).isNull();
     }

@@ -1,6 +1,8 @@
 package com.kellen.config.dubbo;
 
 import com.kellen.security.config.TenantProperties;
+import com.kellen.traffic.TrafficGovernanceContext;
+import com.kellen.traffic.TrafficGovernanceHeaders;
 import com.kellen.utils.context.DynamicSourceTtl;
 import com.kellen.utils.context.TenantContextHolder;
 import io.seata.core.context.RootContext;
@@ -21,8 +23,8 @@ import java.util.List;
 /**
  * Dubbo RPC 上下文透传过滤器。
  *
- * <p>负责在 Dubbo 调用链路中透传动态数据源、租户和 Seata XID，并在 Provider
- * 线程上临时绑定上下文后清理，避免线程复用串库、串租户或串事务。</p>
+ * <p>负责在 Dubbo 调用链路中透传动态数据源、租户、Seata XID 和流量治理上下文，
+ * 并在 Provider 线程上临时绑定上下文后清理，避免线程复用串库、串租户、串事务或串泳道。</p>
  *
  * @author 孙凯伦
  */
@@ -106,8 +108,10 @@ public class DubboContextPropagationFilter implements Filter {
         if (StringUtils.isNotBlank(tenantId)) {
             putTenantAttachment(invocation, tenantId);
         }
-        log.debug("Dubbo consumer context attached: method={}, dataSource={}, xidPresent={}, tenantPresent={}",
-                invocation.getMethodName(), dataSource, StringUtils.isNotBlank(currentXid), StringUtils.isNotBlank(tenantId));
+        attachTrafficGovernanceContext(invocation);
+        log.debug("Dubbo consumer context attached: method={}, dataSource={}, xidPresent={}, tenantPresent={}, trafficPresent={}",
+                invocation.getMethodName(), dataSource, StringUtils.isNotBlank(currentXid), StringUtils.isNotBlank(tenantId),
+                TrafficGovernanceContext.get() != null);
     }
 
     /**
@@ -121,8 +125,10 @@ public class DubboContextPropagationFilter implements Filter {
         boolean dataSourceBound = false;
         boolean tenantBound = false;
         boolean xidBound = false;
+        boolean trafficBound = false;
         String previousTenantId = TenantContextHolder.getTenantId();
         boolean previousTenantIgnore = TenantContextHolder.isIgnore();
+        TrafficGovernanceContext.Snapshot previousTraffic = TrafficGovernanceContext.get();
         try {
             String dataSource = firstAttachment(invocation, DATA_SOURCE_KEY);
             if (StringUtils.isNotBlank(dataSource)) {
@@ -142,12 +148,16 @@ public class DubboContextPropagationFilter implements Filter {
             } else if (StringUtils.isNotBlank(xid) && !StringUtils.equals(xid, currentXid)) {
                 log.warn("Dubbo provider received different Seata XID, incoming={}, current={}", xid, currentXid);
             }
-            log.debug("Dubbo provider context bound: method={}, dataSource={}, xidBound={}, tenantBound={}",
-                    invocation.getMethodName(), dataSource, xidBound, tenantBound);
+            trafficBound = bindTrafficGovernanceContext(invocation);
+            log.debug("Dubbo provider context bound: method={}, dataSource={}, xidBound={}, tenantBound={}, trafficBound={}",
+                    invocation.getMethodName(), dataSource, xidBound, tenantBound, trafficBound);
             return invoker.invoke(invocation);
         } finally {
             if (xidBound) {
                 RootContext.unbind();
+            }
+            if (trafficBound) {
+                restoreTraffic(previousTraffic);
             }
             if (tenantBound) {
                 restoreTenant(previousTenantId, previousTenantIgnore);
@@ -168,6 +178,36 @@ public class DubboContextPropagationFilter implements Filter {
     private void putAttachment(Invocation invocation, String key, String value) {
         invocation.setAttachment(key, value);
         RpcContext.getClientAttachment().setAttachment(key, value);
+    }
+
+    /**
+     * 写入流量治理上下文 attachment。
+     *
+     * @param invocation Dubbo 调用信息
+     */
+    private void attachTrafficGovernanceContext(Invocation invocation) {
+        TrafficGovernanceContext.Snapshot snapshot = TrafficGovernanceContext.get();
+        if (snapshot == null) {
+            return;
+        }
+        if (StringUtils.isNotBlank(snapshot.releaseVersion())) {
+            putAttachment(invocation, TrafficGovernanceHeaders.RELEASE_VERSION, snapshot.releaseVersion());
+            putAttachment(invocation, TrafficGovernanceHeaders.RELEASE_VERSION_ATTACHMENT, snapshot.releaseVersion());
+        }
+        if (StringUtils.isNotBlank(snapshot.lane())) {
+            putAttachment(invocation, TrafficGovernanceHeaders.TRAFFIC_LANE, snapshot.lane());
+            putAttachment(invocation, TrafficGovernanceHeaders.TRAFFIC_LANE_ATTACHMENT, snapshot.lane());
+        }
+        if (StringUtils.isNotBlank(snapshot.canaryTag())) {
+            putAttachment(invocation, TrafficGovernanceHeaders.CANARY_TAG, snapshot.canaryTag());
+            putAttachment(invocation, CommonConstants.TAG_KEY, snapshot.canaryTag());
+            putAttachment(invocation, CommonConstants.DUBBO_TAG_HEADER, snapshot.canaryTag());
+        }
+        if (snapshot.canaryWeight() != null) {
+            String weight = String.valueOf(snapshot.canaryWeight());
+            putAttachment(invocation, TrafficGovernanceHeaders.CANARY_WEIGHT, weight);
+            putAttachment(invocation, TrafficGovernanceHeaders.CANARY_WEIGHT_ATTACHMENT, weight);
+        }
     }
 
     /**
@@ -231,6 +271,49 @@ public class DubboContextPropagationFilter implements Filter {
     }
 
     /**
+     * Provider 侧绑定流量治理上下文。
+     *
+     * @param invocation Dubbo 调用信息
+     * @return true 表示绑定过新上下文
+     */
+    private boolean bindTrafficGovernanceContext(Invocation invocation) {
+        String releaseVersion = firstAttachment(invocation,
+                TrafficGovernanceHeaders.RELEASE_VERSION,
+                TrafficGovernanceHeaders.RELEASE_VERSION_ATTACHMENT);
+        String lane = firstAttachment(invocation,
+                TrafficGovernanceHeaders.TRAFFIC_LANE,
+                TrafficGovernanceHeaders.TRAFFIC_LANE_ATTACHMENT);
+        String canaryTag = firstAttachment(invocation,
+                TrafficGovernanceHeaders.CANARY_TAG,
+                CommonConstants.TAG_KEY,
+                CommonConstants.DUBBO_TAG_HEADER);
+        Integer canaryWeight = parseWeight(firstAttachment(invocation,
+                TrafficGovernanceHeaders.CANARY_WEIGHT,
+                TrafficGovernanceHeaders.CANARY_WEIGHT_ATTACHMENT));
+        TrafficGovernanceContext.Snapshot snapshot = new TrafficGovernanceContext.Snapshot(
+                releaseVersion, lane, canaryTag, canaryWeight);
+        if (snapshot.isEmpty()) {
+            return false;
+        }
+        TrafficGovernanceContext.set(snapshot);
+        return true;
+    }
+
+    /**
+     * 解析受控权重。
+     *
+     * @param raw 原始权重
+     * @return 0 到 100 之间的权重，非法时返回 null
+     */
+    private Integer parseWeight(String raw) {
+        if (StringUtils.isBlank(raw) || !StringUtils.isNumeric(raw)) {
+            return null;
+        }
+        int weight = Integer.parseInt(raw);
+        return weight >= 0 && weight <= 100 ? weight : null;
+    }
+
+    /**
      * 恢复 Provider 线程原有租户上下文。
      *
      * @param previousTenantId     调用前租户ID
@@ -243,6 +326,18 @@ public class DubboContextPropagationFilter implements Filter {
         }
         if (previousTenantIgnore) {
             TenantContextHolder.ignore();
+        }
+    }
+
+    /**
+     * 恢复 Provider 线程原有流量治理上下文。
+     *
+     * @param previousTraffic 调用前流量治理上下文
+     */
+    private void restoreTraffic(TrafficGovernanceContext.Snapshot previousTraffic) {
+        TrafficGovernanceContext.clear();
+        if (previousTraffic != null && !previousTraffic.isEmpty()) {
+            TrafficGovernanceContext.set(previousTraffic);
         }
     }
 }

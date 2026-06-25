@@ -12,7 +12,7 @@ plugins {
 group = 'com'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.4.0'
+version = '1.5.0'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
