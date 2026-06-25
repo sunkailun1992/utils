@@ -7,12 +7,12 @@
 ## 1. 机制：只用官方主流方式，不自创
 
 - **统一用 Spring Cloud Alibaba 的 `spring.config.import` 导入远程配置**（SCA 2025.x 官方文档主推的多配置导入方式）。
-  - 写法：`- "optional:nacos:{dataId}?group=DEFAULT_GROUP&refreshEnabled=true"`。
-  - 当前 fleet 的 import URL 必须显式写 `group=DEFAULT_GROUP`；`spring.cloud.nacos.config.group` / `custom.nacos-group` 仍作为注册与默认分组入口。`spring.config.import` 必须与对应 profile 的 Nacos 地址同文件，避免 ConfigData 解析阶段拿不到 `custom.nacos-ip`。
+  - 写法：`- "optional:nacos:{dataId}?refreshEnabled=true"`。
+  - 当前 fleet 的 import URL 不重复写 `group=DEFAULT_GROUP`；默认 group 由同一 profile 文件中的 `spring.cloud.nacos.config.group` / `custom.nacos-group` 控制。只有跨 group 特例才在单条 import URL 显式写 `group`。`spring.config.import` 必须与对应 profile 的 Nacos 地址同文件，避免 ConfigData 解析阶段拿不到 `custom.nacos-ip`。
   - **不使用** `bootstrap.yml` + `spring.cloud.nacos.config.shared-configs/extension-configs` 经典写法，全 fleet 不混用两套机制。
 - **dataId 命名**：
   - 服务自身配置：`{spring.application.name}.yaml`（业务）与 `{spring.application.name}-spring.yaml`（Spring 框架/环境）。
-  - 共享 / 横切模块：**显式命名 dataId**（如 `redis.yaml`、`aliyun.yaml`、`a2a.yaml`）——显式命名 import 就是官方示例写法，合规。
+  - 共享 / 横切模块：**显式命名 dataId**（如 `redis.yaml`、`qdrant.yaml`、`aliyun.yaml`、`a2a.yaml`）——显式命名 import 就是官方示例写法，合规。
 - **一个 `@ConfigurationProperties` 前缀树只存在于唯一一个 dataId**。禁止把同一前缀树拆到多个 dataId、靠加载顺序“合并”——这是非主流技巧，全 fleet 禁止。
 - **共享的“值”用标准 `${占位符}` 引用**（Spring 原生占位符）。禁止裸 IP / 裸密钥散落到各服务文件；基础设施地址一律引用 `reuse-configuration.yaml` 的 `custom.*`。
 
@@ -21,7 +21,7 @@
 | 层 | dataId | group | 内容 |
 |---|---|---|---|
 | **L0 本地引导** | 各服务仓库 `src/main/resources/application.yml` + `application-dev.yml` / `application-test.yml` / `application-prod.yml` | — | 连 Nacos 前必需的最小集：`application.yml` 放 `server.port`、`spring.application.name`、`spring.profiles.active`、`custom.nacos-group`；`application-*.yml` 放对应环境的 Nacos `server-addr`、`namespace`、Nacos config/discovery 绑定逻辑和本环境 `spring.config.import`。**不放任何业务/密钥**。`utils` 本身是公共包，不直连 Nacos |
-| **L1 共享基础设施** | `logging.yml` `reuse-configuration.yaml` `traffic-governance.yaml` `redis.yaml` `rabbitmq.yaml` `elasticsearch.yaml` `seata.yaml` `zipkin.yaml` `admin.yaml` `dubbo.yaml` `xxl-job.yaml` `mybatis-plus.yaml` `security-auth.yaml` `swagger.yaml` | DEFAULT_GROUP | fleet 公共基础设施 / 框架配置 |
+| **L1 共享基础设施** | `logging.yml` `reuse-configuration.yaml` `traffic-governance.yaml` `redis.yaml` `rabbitmq.yaml` `elasticsearch.yaml` `qdrant.yaml` `seata.yaml` `zipkin.yaml` `admin.yaml` `dubbo.yaml` `xxl-job.yaml` `mybatis-plus.yaml` `security-auth.yaml` `swagger.yaml` | DEFAULT_GROUP | fleet 公共基础设施 / 框架配置 |
 | **L2 共享横切域** | `aliyun.yaml`（aliyun 账号+OSS+SMS+钉钉+直播+email）、`a2a.yaml`（A2A 共享值） | DEFAULT_GROUP | 多服务共享的第三方/领域配置 |
 | **L3 服务业务** | `{svc}.yaml` | DEFAULT_GROUP | 本服务业务键 + 本服务**私有**的 `@ConfigurationProperties` 树（如 `ai` 的 `wechat`、`aliyun.oss` bucket） |
 | **L4 服务框架/环境** | `{svc}-spring.yaml` | DEFAULT_GROUP | datasource、profile、discovery、`spring.ai` model、gateway 路由等 Spring/环境配置 |
@@ -33,6 +33,7 @@
 - **`reuse-configuration.yaml`**：**只放 `custom.*` 公共变量**（基础设施地址 + Nacos 凭据变量，如 `custom.infra-*`、`custom.nacos-username/password/context-path`）。**不放任何业务块或第三方密钥块**。
 - **`traffic-governance.yaml`**：统一放灰度发布请求头名、默认 `X-Release-Version`、默认 `X-Traffic-Lane`、实例 `release.version`/`traffic.lane`/`canary.tag`/`traffic.weight` 元数据，以及 Nacos Discovery 元数据。**权重是治理配置和实例元数据，不由公网前端随意决定**；公网前端默认只带发布版本和泳道，灰度 tag/权重必须由受控配置显式开启。
 - **`logging/traffic-governance/redis/rabbitmq/elasticsearch/seata/zipkin/admin/dubbo/xxl-job/mybatis-plus/security-auth`**：各对应一组 utils 自动配置 / Spring 体系前缀，整组留在各自 dataId。
+- **`qdrant.yaml`**：Qdrant 向量数据库连接配置，当前由 `ai` profile 导入作为备用向量库入口；保留连接能力不等于默认启用本地 RAG 或 Spring AI VectorStore 执行链。
 - **`swagger.yaml`**：`swagger.enable` + `swagger.name=${spring.application.name}`；要自定义显示名的服务在自己的 `{svc}.yaml` 覆盖一行。
 - **`aliyun.yaml`**：整棵 `aliyun`（account key + `oss` + `sms` + `dingding` + `liveStreaming`）+ 顶层 `email`。绑定方为 utils 的 `CommonAliyunProperties(prefix="aliyun")`。**凡使用任一 aliyun 能力、或可能触发 utils `@RequestRequired` 钉钉告警的服务都要 import**。
 - **`a2a.yaml`**：A2A 共享值，统一放 `custom.a2a-*`（协议版本、context-path、tenant、provider-org、agent 名契约）+ Nacos 凭据引用。`ai`（消费端 `ai.agent-registry.*`）与 `ai-agent`（生产端 `ai.agent.registry.*`）各自的块**引用** `${custom.a2a-*}`，agent 名两端共用同一变量，保证契约一致。
@@ -43,7 +44,7 @@
 
 ```
 logging → reuse-configuration → traffic-governance → security-auth(仅鉴权服务) → swagger
-→ {svc} → {svc}-spring
+→ {svc} → {svc}-spring → qdrant(ai 备用向量库)
 → mybatis-plus → redis → rabbitmq → elasticsearch → seata → zipkin → admin → dubbo → xxl-job
 → aliyun(用到 aliyun/钉钉告警的服务) → a2a(A2A 参与方)
 ```
@@ -60,6 +61,7 @@ logging → reuse-configuration → traffic-governance → security-auth(仅鉴�
 | security-auth | ❌(自有微信鉴权) | ❌ | ✅ | ✅ | ❌ |
 | swagger | ✅ | ✅ | ✅ | ✅ | ✅ |
 | {svc} / {svc}-spring | ✅ | ✅ | ✅ | ✅ | ✅ |
+| qdrant | ✅(备用向量库) | ❌ | ❌ | ❌ | ❌ |
 | mybatis-plus | ✅ | ❌ | ✅ | ✅ | ❌ |
 | redis | ✅ | ❌ | ✅ | ✅ | ✅ |
 | rabbitmq | ✅ | ❌ | ✅ | ✅ | ❌ |
