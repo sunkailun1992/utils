@@ -15,13 +15,14 @@
 9. 再读 [环境配置入口规范](ENVIRONMENT_CONFIG_SPEC.md)，确认环境、Nacos namespace、Java profile 和前端/小程序边界。
 10. 再读 [项目版本变更规范](VERSIONING_SPEC.md)，确认 `group = 'com'`、`version = '1.0.0'`、补丁递增和公共包消费者同步规则。
 11. 再读 [RPC API 协作规范](RPC_API_CODING_SPEC.md)，确认 `utils` 只维护 Dubbo 上下文透传等横切能力，不维护业务 RPC 契约。
-12. 涉及认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，读 [安全编码规范](SECURITY_CODING_SPEC.md)。
-13. 涉及 MyBatis-Plus 动态字段、排序、数据权限、租户、乐观锁、SQL 插件或 Mapper 扩展时，必须确认 `SqlInjector` 只用于扩展 SQL 方法，不能作为 SQL 注入防护方案。
-14. MyBatis-Plus SQL 安全优先使用后端字段白名单、参数绑定、LambdaWrapper、`SqlInjectionUtils.check(...)` 或 `checkSqlInjection()` 补充校验，以及 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 默认拦截。
-15. 涉及业务微服务标准分层、RESTful Controller、ServiceQuery、ServiceResults、BO、Query、VO、Mapper 示例时，读 [公共示例模板](examples/README.md) 和 `examples/Example*`。
-16. 再读 [工具类归类目录](UTILS_TOOL_CATALOG.md)，确认目标能力应该放在哪个包、复用哪个类、哪些历史工具需要谨慎使用。
-17. 如果涉及工具类新增或包名调整，阅读 [包结构分类说明](PACKAGE_REFACTOR_GUIDE.md)，确认目标子包。
-18. 最后阅读目标 Java 类及其上下游调用点，避免只根据类名猜测行为。
+12. 再读 [测试分层规范](TESTING_SPEC.md)，确认公共包单元测试、组件测试、Spring 上下文测试和消费者编译验证边界。
+13. 涉及认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，读 [安全编码规范](SECURITY_CODING_SPEC.md)。
+14. 涉及 MyBatis-Plus 动态字段、排序、数据权限、租户、乐观锁、SQL 插件或 Mapper 扩展时，必须确认 `SqlInjector` 只用于扩展 SQL 方法，不能作为 SQL 注入防护方案。
+15. MyBatis-Plus SQL 安全优先使用后端字段白名单、参数绑定、LambdaWrapper、`SqlInjectionUtils.check(...)` 或 `checkSqlInjection()` 补充校验，以及 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 默认拦截。
+16. 涉及业务微服务标准分层、RESTful Controller、ServiceQuery、ServiceResults、BO、Query、VO、Mapper 示例时，读 [公共示例模板](examples/README.md) 和 `examples/Example*`。
+17. 再读 [工具类归类目录](UTILS_TOOL_CATALOG.md)，确认目标能力应该放在哪个包、复用哪个类、哪些历史工具需要谨慎使用。
+18. 如果涉及工具类新增或包名调整，阅读 [包结构分类说明](PACKAGE_REFACTOR_GUIDE.md)，确认目标子包。
+19. 最后阅读目标 Java 类及其上下游调用点，避免只根据类名猜测行为。
 
 ## 修改前检查
 
@@ -38,6 +39,7 @@
 - 修改 `docs/ai-coding/examples` 公共示例模板时，必须以 `utils` 为唯一源头，并同步到 `user`、`message` 等业务微服务的本地副本。
 - 新增或修改功能前必须按 `AI_AUTOMATION_WORKFLOW.md` 先整理需求说明、验收标准和开发手册；小改动可以简化输出，但检查项不能跳过。
 - 新增或修改功能后必须按 `AI_ENGINEERING_GUARDRAILS.md` 做风险分级、Definition of Done、测试证据、安全检查、风险和回滚说明。
+- 测试按 `TESTING_SPEC.md` 分层；`assertThat` 只是断言工具，公共包以单元/组件测试为主，不把纯对象断言伪装成业务集成测试。
 - 新增或修改 README、AI 规范、配置、脚本、测试、示例和代码时，禁止写入个人电脑绝对路径、本机下载目录、本机 JDK 路径或本机仓库完整路径；需要表达目录关系时使用相对路径、环境变量或 `<PLACEHOLDER>` 占位符。
 - 只要本次任务修改生产代码、配置、构建脚本或公共示例，就必须按 `VERSIONING_SPEC.md` 提升一次 `build.gradle` 的 `version`；同一批未提交改动只提升一次版本号，后续补代码、补测试、补文档不得重复提升。
 - 纯 README、AI 规范、注释或说明文档改动不强制提升制品版本；如果同时改了代码或构建配置，则仍按 `VERSIONING_SPEC.md` 提升一次。
