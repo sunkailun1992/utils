@@ -87,6 +87,7 @@ cd ../gateway
 - 不再把 HTTP 请求头里的 `version` 当作业务版本校验。
 - 不再新增 `bank`、`hz`、`hx`、`jghx` 等动态数据源常量或配置。
 - 不在 `gateway`、`user` 等消费者项目内复制 `utils` 工具类源码。
+- 业务库公共基础脚本源头为 `src/main/resources/db/common-infra-schema.sql`；接入 MyBatis-Plus DDL 与 Seata AT 的消费者服务首次启动空库前，必须在目标业务库手动执行该脚本，先建 `ddl_history` 和 `undo_log`。
 - 不把网关路由、Nacos 配置、SLS/Logback 本地配置放进本仓库。
 - AI 新增或修改 Java 代码时，必须补充说明公共职责、消费者影响和安全边界的有效注释，禁止机械逐行或行尾堆叠注释。
 - 新增 Java 类必须补齐类注释、字段注释、方法 JavaDoc，并在关键逻辑块前说明为什么这样实现。

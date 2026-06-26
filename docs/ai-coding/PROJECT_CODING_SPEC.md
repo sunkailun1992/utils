@@ -63,6 +63,7 @@
 
 - 实体基础字段统一继承 `EntityBase`。
 - `EntityBase.version` 只表示 MyBatis-Plus 乐观锁字段。
+- `src/main/resources/db/common-infra-schema.sql` 是业务库公共基础脚本源头，维护 `ddl_history` 与 Seata AT `undo_log`。消费者服务全新或空业务库首次启动前，必须在目标业务库手动执行该脚本；Seata AT 会在 `DataSource` 初始化时先检查 `undo_log`，不能依赖 MyBatis-Plus DDL 首次启动自动创建。
 - 乐观锁由 `MyBatisPlusConfig` 注册 `OptimisticLockerInnerInterceptor`。
 - 更新接口需要提交查询时拿到的当前 `version`。
 - 更新建议使用 `updateById(entity)`，避免只按 id 的 `UpdateWrapper` 绕过乐观锁。
