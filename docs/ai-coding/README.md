@@ -36,6 +36,7 @@
 - 涉及 MyBatis-Plus Wrapper、Mapper XML、排序字段、动态列名、动态表名、导出字段、查询增强时，必须先设计后端白名单，再考虑 `SqlInjectionUtils` 或 `checkSqlInjection()` 补充校验。
 - 涉及业务 Dubbo RPC 接口、DTO、枚举和值对象时，必须去同级 `../rpc-api` 修改；`utils` 只维护 Dubbo 上下文透传等横切能力，不新增 `com.kellen.rpc.*` 业务契约。
 - 不得把 MyBatis-Plus `SqlInjector` 写成防 SQL 注入能力；它是自定义通用 Mapper 方法的扩展点，新增前必须证明标准 `BaseMapper`、Service 或 XML 无法满足需求。
+- 涉及业务表设计、`EntityBase` 或公共 examples 时，按 `PROJECT_CODING_SPEC.md` 的公共字段清单维护；`version` 只做乐观锁，业务版本使用 `*_version` 命名。
 - 修改 `docs/ai-coding/examples` 公共示例模板时，必须以 `utils` 为唯一源头，并同步到 `user`、`message` 等业务微服务的本地副本。
 - 新增或修改功能前必须按 `AI_AUTOMATION_WORKFLOW.md` 先整理需求说明、验收标准和开发手册；小改动可以简化输出，但检查项不能跳过。
 - 新增或修改功能后必须按 `AI_ENGINEERING_GUARDRAILS.md` 做风险分级、Definition of Done、测试证据、安全检查、风险和回滚说明。
