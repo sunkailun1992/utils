@@ -82,6 +82,7 @@ public class SecurityAuthProperties {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/auth/tenants",
-            "/auth/sessions"
+            "/auth/sessions",
+            "/auth/sessions/refresh"
     ));
 }

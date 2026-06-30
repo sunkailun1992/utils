@@ -3,9 +3,11 @@ package com.kellen.security.config;
 import com.kellen.security.SecurityAuthenticationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -44,7 +46,8 @@ public class SecurityAuthConfig {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/auth/tenants",
-            "/auth/sessions"
+            "/auth/sessions",
+            "/auth/sessions/refresh"
     );
 
     /**
@@ -53,12 +56,18 @@ public class SecurityAuthConfig {
     private final SecurityAuthProperties securityAuthProperties;
 
     /**
+     * Redis字符串客户端。
+     */
+    private final StringRedisTemplate stringRedisTemplate;
+
+    /**
      * 构造 Spring Security 自动配置。
      *
      * @param securityAuthProperties 认证配置属性
      */
-    public SecurityAuthConfig(SecurityAuthProperties securityAuthProperties) {
+    public SecurityAuthConfig(SecurityAuthProperties securityAuthProperties, ObjectProvider<StringRedisTemplate> stringRedisTemplateProvider) {
         this.securityAuthProperties = securityAuthProperties; // 保存认证配置，供过滤器和安全链使用。
+        this.stringRedisTemplate = stringRedisTemplateProvider.getIfAvailable(); // Redis 不存在时只解析 JWT，不启用服务端撤销状态。
     }
 
     /**
@@ -68,7 +77,7 @@ public class SecurityAuthConfig {
      */
     @Bean
     public SecurityAuthenticationFilter securityAuthenticationFilter() {
-        return new SecurityAuthenticationFilter(securityAuthProperties); // 将认证配置传入过滤器。
+        return new SecurityAuthenticationFilter(securityAuthProperties, stringRedisTemplate); // 将认证配置和 token 生命周期 Redis 状态传入过滤器。
     }
 
     /**

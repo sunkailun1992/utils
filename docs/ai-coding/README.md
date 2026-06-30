@@ -13,7 +13,7 @@
 7. 再读 [AI 工程门禁规范](AI_ENGINEERING_GUARDRAILS.md)，确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
 8. 再读 [分支管理规范](BRANCHING_SPEC.md)，确认分支命名、短分支生命周期、release/hotfix、tag 和清理规则。
 9. 再读 [环境配置入口规范](ENVIRONMENT_CONFIG_SPEC.md)，确认环境、Nacos namespace、Java profile 和前端/小程序边界。
-10. 再读 [项目版本变更规范](VERSIONING_SPEC.md)，确认 `group = 'com'`、`version = '1.0.0'`、补丁递增和公共包消费者同步规则。
+10. 再读 [项目版本变更规范](VERSIONING_SPEC.md)，确认 `group = 'com.kellen'`、补丁递增和公共包消费者同步规则。
 11. 再读 [RPC API 协作规范](RPC_API_CODING_SPEC.md)，确认 `utils` 只维护 Dubbo 上下文透传等横切能力，不维护业务 RPC 契约。
 12. 再读 [测试分层规范](TESTING_SPEC.md)，确认公共包单元测试、组件测试、Spring 上下文测试和消费者编译验证边界。
 13. 涉及认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，读 [安全编码规范](SECURITY_CODING_SPEC.md)。

@@ -23,9 +23,9 @@ public final class JwtUtils {
 
 
     /**
-     * 默认过期时间：30分钟。
+     * 默认过期时间：1天。
      */
-    private static final long EXPIRE_TIME = 30 * 60 * 1000;
+    public static final long DEFAULT_EXPIRE_TIME = 24 * 60 * 60 * 1000L;
 
     /**
      * 默认签名密钥。
@@ -57,7 +57,22 @@ public final class JwtUtils {
      * @return JWT字符串
      */
     public static String createJwt(String id, String subject, Map<String, Object> claims) {
+        return createJwt(id, subject, claims, DEFAULT_EXPIRE_TIME);
+    }
 
+    /**
+     * 按指定过期时间创建JWT。
+     *
+     * @param id           JWT唯一标识
+     * @param subject      JWT主体，通常放用户ID
+     * @param claims       业务声明
+     * @param expireMillis 过期毫秒数
+     * @return JWT字符串
+     */
+    public static String createJwt(String id, String subject, Map<String, Object> claims, long expireMillis) {
+        if (expireMillis <= 0) {
+            throw new IllegalArgumentException("expireMillis must be greater than zero");
+        }
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256; // 使用 HS256 对称签名算法。
 
         long nowMillis = System.currentTimeMillis(); // 记录当前时间戳。
@@ -72,7 +87,7 @@ public final class JwtUtils {
                 .setIssuedAt(now) // 写入签发时间。
                 .setIssuer(ISSUER) // 写入签发人。
                 .setSubject(subject) // 写入主体，一般为用户ID。
-                .setExpiration(new Date(nowMillis + EXPIRE_TIME)) // 写入过期时间。
+                .setExpiration(new Date(nowMillis + expireMillis)) // 写入过期时间。
                 .signWith(signatureAlgorithm, key); // 写入签名算法和密钥。
 
         return builder.compact(); // 压缩生成最终 JWT 字符串。

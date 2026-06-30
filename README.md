@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.2.2`
+- 发布坐标：`com.kellen:utils:1.4.3`
 - Java 版本：`17`
 - Spring Boot：`4.0.4`
 - Spring Cloud：`2025.1.1`
@@ -26,7 +26,7 @@
 ## 仓库边界
 
 - `utils`：公共工具、公共配置、公共注解、公共异常、公共上下文和可被多个服务复用的第三方封装。
-- `user`：用户、认证、租户、权限、账号等业务实现，依赖 `com:utils` 制品，具体版本以消费者项目 `build.gradle` 为准。
+- `user`：用户、认证、租户、权限、账号等业务实现，依赖 `com.kellen:utils` 制品，具体版本以消费者项目 `build.gradle` 为准。
 - `gateway`：只做路由、跨域、限流、Actuator 访问保护和 OpenAPI 聚合；不保留 `com.kellen.utils` 本地副本。
 
 维护原则：

@@ -8,11 +8,11 @@ plugins {
     id 'io.spring.dependency-management' version '1.1.7'
 }
 
-// 设置 Maven groupId，必须保持与历史 Maven 坐标一致。
-group = 'com'
+// 设置 Maven groupId，使用美联专属坐标，避免与个人项目旧公共包坐标串用。
+group = 'com.kellen'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.4.1'
+version = '1.4.4'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -273,7 +273,7 @@ publishing {
         mavenJava(MavenPublication) {
             // 从 Java 组件发布 jar、sourcesJar、javadocJar。
             from components.java
-            // 显式设置 artifactId，保持 Maven 坐标 com:utils:<version> 中的 artifactId 稳定。
+            // 显式设置 artifactId，保持 Maven 坐标 com.kellen:utils:<version> 中的 artifactId 稳定。
             artifactId = 'utils'
             // 把 BOM 管理出的真实依赖版本写进发布 POM，避免消费者解析到无版本传递依赖。
             versionMapping {
@@ -288,7 +288,7 @@ publishing {
     }
     // 定义发布仓库。
     repositories {
-        // 发布到本机 Maven Local，供消费者项目使用当前 com:utils:<version> 做本地验证。
+        // 发布到本机 Maven Local，供消费者项目使用当前 com.kellen:utils:<version> 做本地验证。
         mavenLocal()
         // 发布到阿里云 Maven Release 仓库，供其他机器和项目拉取 utils 制品。
         maven {

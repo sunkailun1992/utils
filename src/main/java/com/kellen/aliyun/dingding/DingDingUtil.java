@@ -15,7 +15,6 @@ import org.apache.commons.codec.binary.Base64;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.URLEncoder;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -150,23 +149,6 @@ public class DingDingUtil {
      */
     public static String sendKeyReboot(String message) throws Exception {
         return sendPost(DingDing.url, message);
-    }
-
-    public static void main(String[] args) {
-        //text类型的消息：
-        String text = DingDingUtil.test(false, "测试", Arrays.asList("13777579028"));
-
-        //markDown类型的消息：使用于字体加粗，超链接隐藏
-        String markDown = DingDingUtil.markdown(false, "杭州天气", "@13777579028 @17767259525  #### 杭州天气 \n > 9度，西北风1级，空气良89，相对温度73%\n > ![screenshot](https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png)\n > ###### 10点20分发布 [天气](https://www.dingtalk.com) \n", Arrays.asList("13777579028", "17767259525"));
-
-        //钉钉机器人推送
-        try {
-            String message = DingDingUtil.test(false, "测试", null);
-            String i = DingDingUtil.sendReboot(message,"https://oapi.dingtalk.com/robot/send?access_token=72c3ae1bf443763eeef644372d71eb848758a2703b4a4dc120c9a20259acbc8e","SECc6fc6d79efa9a9e560e4d5ed6b5c91172b107c95ad2c23a0bbe2e5427cb1eec0");
-            System.out.printf("");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
 }

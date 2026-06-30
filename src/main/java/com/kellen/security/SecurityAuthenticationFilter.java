@@ -9,6 +9,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,12 +43,28 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
     private final SecurityAuthProperties securityAuthProperties;
 
     /**
+     * Redis字符串客户端。
+     */
+    private final StringRedisTemplate stringRedisTemplate;
+
+    /**
      * 构造认证上下文过滤器。
      *
      * @param securityAuthProperties 认证配置属性
      */
     public SecurityAuthenticationFilter(SecurityAuthProperties securityAuthProperties) {
+        this(securityAuthProperties, null);
+    }
+
+    /**
+     * 构造认证上下文过滤器。
+     *
+     * @param securityAuthProperties 认证配置属性
+     * @param stringRedisTemplate    Redis字符串客户端
+     */
+    public SecurityAuthenticationFilter(SecurityAuthProperties securityAuthProperties, StringRedisTemplate stringRedisTemplate) {
         this.securityAuthProperties = securityAuthProperties; // 保存配置，后续按开关决定是否解析 JWT 或请求头。
+        this.stringRedisTemplate = stringRedisTemplate; // 保存 Redis 客户端，用于校验 token 撤销状态和用户 token 版本。
     }
 
     /**
@@ -124,6 +141,9 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
         }
         try {
             Claims claims = JwtUtils.parseJwt(authorization.substring(BEARER_PREFIX.length())); // 去掉 Bearer 前缀并校验 JWT 签名。
+            if (!isAccessTokenActive(claims)) {
+                return null; // access token 被撤销、tokenVersion 过期或 refresh token 被误用于访问接口时视为未认证。
+            }
             String userId = firstNotBlank(claims.get("userId", String.class), claims.getSubject()); // 优先使用 userId 声明，缺失时用 subject。
             String username = firstNotBlank(claims.get("username", String.class), claims.get("userName", String.class)); // 兼容 username 与 userName 两种声明。
             String tenantId = claims.get("tenantId", String.class); // 读取租户ID声明。
@@ -135,6 +155,46 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception ignored) {
             return null; // JWT 无效或过期时不抛出底层异常，由 Spring Security 继续按未认证处理。
         }
+    }
+
+    /**
+     * 校验 access token 是否仍处于有效生命周期。
+     *
+     * @param claims JWT声明
+     * @return true 表示 token 可继续使用
+     */
+    private boolean isAccessTokenActive(Claims claims) {
+        String tokenType = claims.get(AuthTokenRedisKeys.CLAIM_TOKEN_TYPE, String.class);
+        if (StringUtils.isNotBlank(tokenType) && !AuthTokenRedisKeys.ACCESS_TOKEN_TYPE.equals(tokenType)) {
+            return false; // refresh token 只能换取新 access token，不能直接访问业务接口。
+        }
+        if (stringRedisTemplate == null) {
+            return true; // 未配置 Redis 时只做 JWT 签名和过期校验，兼容尚未接入撤销能力的服务。
+        }
+        String tokenId = claims.getId();
+        if (StringUtils.isNotBlank(tokenId) && Boolean.TRUE.equals(stringRedisTemplate.hasKey(AuthTokenRedisKeys.accessTokenRevoked(tokenId)))) {
+            return false; // 退出登录撤销过的 access token 不再接受。
+        }
+        String userId = firstNotBlank(claims.get("userId", String.class), claims.getSubject());
+        if (StringUtils.isBlank(userId)) {
+            return false;
+        }
+        String issuedVersion = normalizeTokenVersion(claims.get(AuthTokenRedisKeys.CLAIM_TOKEN_VERSION));
+        String currentVersion = normalizeTokenVersion(stringRedisTemplate.opsForValue().get(AuthTokenRedisKeys.userTokenVersion(userId)));
+        return issuedVersion.equals(currentVersion);
+    }
+
+    /**
+     * 标准化 token 版本。
+     *
+     * @param raw 原始版本
+     * @return token 版本字符串
+     */
+    private String normalizeTokenVersion(Object raw) {
+        if (raw == null || StringUtils.isBlank(String.valueOf(raw))) {
+            return "0";
+        }
+        return String.valueOf(raw).trim();
     }
 
     /**

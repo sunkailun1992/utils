@@ -14,7 +14,7 @@
 
 ## 依赖和 CI
 
-- `utils` 不添加 `implementation "com:rpc-api:..."`。
+- `utils` 不添加 `implementation "com.kellen:rpc-api:..."`。
 - 修改 Dubbo 上下文透传能力后，需要编译依赖 `utils` 的 provider/consumer 服务。
 - 修改业务 RPC 契约时，去 `../rpc-api` 改，不在 `utils` 新增 `com.kellen.rpc.*`。
 
