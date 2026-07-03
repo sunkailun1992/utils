@@ -45,9 +45,14 @@ public class SecurityAuthConfig {
             "/webjars/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
+            "/.well-known/**",
             "/auth/tenants",
             "/auth/sessions",
-            "/auth/sessions/refresh"
+            "/auth/sessions/refresh",
+            "/auth/third-party/sessions",
+            "/auth/open/signatures/verify",
+            "/oauth2/authorize",
+            "/oauth2/token"
     );
 
     /**
