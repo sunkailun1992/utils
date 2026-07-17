@@ -24,6 +24,54 @@ import java.util.Map;
 public class DynamicDataSourceConfig {
 
     /**
+     * 连接有效性检查 SQL。
+     */
+    @Value("${utils.datasource.health.validation-query:SELECT 1}")
+    private String validationQuery = "SELECT 1";
+
+    /**
+     * 连接有效性检查超时秒数。
+     */
+    @Value("${utils.datasource.health.validation-query-timeout:3}")
+    private int validationQueryTimeout = 3;
+
+    /**
+     * 是否在连接借出前检查有效性。
+     */
+    @Value("${utils.datasource.health.test-on-borrow:true}")
+    private boolean testOnBorrow = true;
+
+    /**
+     * 是否在空闲检测时检查连接有效性。
+     */
+    @Value("${utils.datasource.health.test-while-idle:true}")
+    private boolean testWhileIdle = true;
+
+    /**
+     * 是否保活最小空闲连接。
+     */
+    @Value("${utils.datasource.health.keep-alive:true}")
+    private boolean keepAlive = true;
+
+    /**
+     * 连接池空闲检测间隔毫秒数。
+     */
+    @Value("${utils.datasource.health.eviction-run-interval-millis:30000}")
+    private long evictionRunIntervalMillis = 30_000L;
+
+    /**
+     * 空闲连接保活间隔毫秒数。
+     */
+    @Value("${utils.datasource.health.keep-alive-interval-millis:60000}")
+    private long keepAliveIntervalMillis = 60_000L;
+
+    /**
+     * 每个数据源保留的最小空闲连接数。
+     */
+    @Value("${utils.datasource.health.min-idle:1}")
+    private int minIdle = 1;
+
+    /**
      * 主库 JDBC URL。
      */
     @Value("${mysql.url}")
@@ -79,12 +127,7 @@ public class DynamicDataSourceConfig {
      */
     @Bean(name = "master")
     public DruidDataSource master() {
-        DruidDataSource druidDataSource = new DruidDataSource(); // 创建 Druid 数据源实例。
-        druidDataSource.setUrl(url); // 设置 JDBC URL。
-        druidDataSource.setUsername(username); // 设置数据库用户名。
-        druidDataSource.setPassword(password); // 设置数据库密码。
-        druidDataSource.setDriverClassName(driverClassName); // 设置数据库驱动类名。
-        return druidDataSource; // 返回主库数据源。
+        return createDruidDataSource(url, username, password, driverClassName);
     }
 
 
@@ -95,12 +138,64 @@ public class DynamicDataSourceConfig {
      */
     @Bean(name = "gray")
     public DataSource gray() {
-        DruidDataSource druidDataSource = new DruidDataSource(); // 创建 Druid 数据源实例。
-        druidDataSource.setUrl(urlGray); // 设置 JDBC URL。
-        druidDataSource.setUsername(usernameGray); // 设置数据库用户名。
-        druidDataSource.setPassword(passwordGray); // 设置数据库密码。
-        druidDataSource.setDriverClassName(driverClassNameGray); // 设置数据库驱动类名。
-        return druidDataSource; // 返回灰度库数据源。
+        return createDruidDataSource(urlGray, usernameGray, passwordGray, driverClassNameGray);
+    }
+
+    /**
+     * 创建具备失效连接检测与空闲保活能力的 Druid 数据源。
+     *
+     * <p>数据库可能按 {@code wait_timeout} 主动关闭长期空闲连接。借出前校验负责淘汰
+     * 已失效连接，空闲检测与保活负责降低首次业务请求命中坏连接的概率。</p>
+     *
+     * @param jdbcUrl        JDBC 地址
+     * @param jdbcUsername   数据库用户名
+     * @param jdbcPassword   数据库密码
+     * @param jdbcDriverName JDBC 驱动类名
+     * @return 已配置连接健康检查的 Druid 数据源
+     */
+    private DruidDataSource createDruidDataSource(String jdbcUrl,
+                                                   String jdbcUsername,
+                                                   String jdbcPassword,
+                                                   String jdbcDriverName) {
+        DruidDataSource druidDataSource = new DruidDataSource();
+        druidDataSource.setUrl(jdbcUrl);
+        druidDataSource.setUsername(jdbcUsername);
+        druidDataSource.setPassword(jdbcPassword);
+        druidDataSource.setDriverClassName(jdbcDriverName);
+
+        druidDataSource.setValidationQuery(validationQuery);
+        druidDataSource.setValidationQueryTimeout(validationQueryTimeout);
+        druidDataSource.setTestOnBorrow(testOnBorrow);
+        druidDataSource.setTestWhileIdle(testWhileIdle);
+        druidDataSource.setKeepAlive(keepAlive);
+        long safeEvictionRunIntervalMillis = Math.max(1L, evictionRunIntervalMillis);
+        druidDataSource.setTimeBetweenEvictionRunsMillis(safeEvictionRunIntervalMillis);
+        druidDataSource.setKeepAliveBetweenTimeMillis(
+                normalizeKeepAliveInterval(safeEvictionRunIntervalMillis, keepAliveIntervalMillis));
+        druidDataSource.setMinIdle(minIdle);
+        return druidDataSource;
+    }
+
+    /**
+     * 保证 Druid 保活间隔严格大于空闲检测间隔。
+     *
+     * <p>Druid 初始化时会拒绝相等或更小的组合。这里同时修正默认值和外部误配置，
+     * 避免公共配置升级后所有消费者在创建数据源阶段直接启动失败。</p>
+     *
+     * @param evictionIntervalMillis 空闲检测间隔
+     * @param configuredKeepAliveIntervalMillis 配置的保活间隔
+     * @return 可被 Druid 接受的保活间隔
+     */
+    private long normalizeKeepAliveInterval(long evictionIntervalMillis,
+                                            long configuredKeepAliveIntervalMillis) {
+        if (configuredKeepAliveIntervalMillis > evictionIntervalMillis) {
+            return configuredKeepAliveIntervalMillis;
+        }
+        long increment = Math.max(1_000L, Math.min(evictionIntervalMillis, 60_000L));
+        if (evictionIntervalMillis > Long.MAX_VALUE - increment) {
+            return Long.MAX_VALUE;
+        }
+        return evictionIntervalMillis + increment;
     }
 
     /**

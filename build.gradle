@@ -12,19 +12,18 @@ plugins {
 group = 'com.kellen'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.4.6'
+version = '1.4.7'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
 
-// 设置阿里云 Maven 制品仓库地址，发布和拉取远程制品时复用。
-def aliyunMavenReleaseUrl = 'https://packages.aliyun.com/695230d97a1ed8d3da00b21e/maven/2633353-release-no0hfp'
-
-// 从 Gradle 属性或环境变量读取阿里云 Maven 用户名，避免把密钥写进仓库。
-def aliyunMavenUsername = providers.gradleProperty('aliyunMavenUsername').orElse(providers.environmentVariable('ALIYUN_MAVEN_USERNAME'))
-
-// 从 Gradle 属性或环境变量读取阿里云 Maven 密码，避免把密钥写进仓库。
-def aliyunMavenPassword = providers.gradleProperty('aliyunMavenPassword').orElse(providers.environmentVariable('ALIYUN_MAVEN_PASSWORD'))
+// 私有 Maven 仓库是可选能力，只能通过本机 Gradle 属性或环境变量注入。
+def privateMavenUrl = providers.gradleProperty('privateMavenUrl')
+        .orElse(providers.environmentVariable('PRIVATE_MAVEN_URL'))
+def privateMavenUsername = providers.gradleProperty('privateMavenUsername')
+        .orElse(providers.environmentVariable('PRIVATE_MAVEN_USERNAME'))
+def privateMavenPassword = providers.gradleProperty('privateMavenPassword')
+        .orElse(providers.environmentVariable('PRIVATE_MAVEN_PASSWORD'))
 
 // 定义依赖版本，集中管理避免依赖声明里散落魔法版本。
 ext {
@@ -92,6 +91,25 @@ ext {
     orikaVersion = '1.5.4'
     // XXL-JOB 版本，与当前 XXL-JOB Admin 2.4.0 保持一致。
     xxlJobVersion = '2.4.0'
+}
+
+// 项目级仓库配置是依赖拉取的唯一入口，避免 settings.gradle 覆盖私库注入策略。
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    if (privateMavenUrl.isPresent()) {
+        maven {
+            name = 'privateRelease'
+            url = uri(privateMavenUrl.get())
+            if (privateMavenUsername.isPresent() && privateMavenPassword.isPresent()) {
+                credentials {
+                    username = privateMavenUsername.get()
+                    password = privateMavenPassword.get()
+                }
+            }
+        }
+    }
 }
 
 // 配置 Java 编译目标。
@@ -290,18 +308,17 @@ publishing {
     repositories {
         // 发布到本机 Maven Local，供消费者项目使用当前 com.kellen:utils:<version> 做本地验证。
         mavenLocal()
-        // 发布到阿里云 Maven Release 仓库，供其他机器和项目拉取 utils 制品。
-        maven {
-            // 设置远程发布仓库名称，执行 publish 时会生成 publishMavenJavaPublicationToAliyunReleaseRepository 任务。
-            name = 'aliyunRelease'
-            // 设置阿里云 Maven Release 仓库地址。
-            url = uri(aliyunMavenReleaseUrl)
-            // 设置远程仓库访问凭证。
-            credentials {
-                // 从 ~/.gradle/gradle.properties 或 ALIYUN_MAVEN_USERNAME 读取用户名。
-                username = aliyunMavenUsername.orNull
-                // 从 ~/.gradle/gradle.properties 或 ALIYUN_MAVEN_PASSWORD 读取密码。
-                password = aliyunMavenPassword.orNull
+        // 仅在显式配置私库地址时创建远程发布任务；开源仓库不保存地址或密钥。
+        if (privateMavenUrl.isPresent()) {
+            maven {
+                name = 'privateRelease'
+                url = uri(privateMavenUrl.get())
+                if (privateMavenUsername.isPresent() && privateMavenPassword.isPresent()) {
+                    credentials {
+                        username = privateMavenUsername.get()
+                        password = privateMavenPassword.get()
+                    }
+                }
             }
         }
     }

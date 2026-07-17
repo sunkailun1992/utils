@@ -13,34 +13,5 @@ pluginManagement {
     }
 }
 
-// 设置依赖仓库管理，统一约束所有项目使用的依赖仓库。
-dependencyResolutionManagement {
-    // 允许项目级 repositories 配置，兼容后续特殊依赖仓库。
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    // 配置公共依赖仓库。
-    repositories {
-        // 优先读取本地 Maven 仓库，支持 publishToMavenLocal 后被本机项目消费。
-        mavenLocal()
-        // CI 优先使用 Maven Central，避免镜像仓库短时 5xx 直接阻断公共依赖解析。
-        mavenCentral()
-        // 使用阿里云公共仓库作为国内网络兜底镜像。
-        maven { url 'https://maven.aliyun.com/repository/public' }
-        // 使用阿里云 central 代理作为补充兜底。
-        maven { url 'https://maven.aliyun.com/repository/central' }
-        // 使用阿里云 Maven Release 仓库，拉取公司内部发布的制品。
-        maven {
-            // 设置阿里云 Maven Release 仓库地址。
-            url = 'https://packages.aliyun.com/695230d97a1ed8d3da00b21e/maven/2633353-release-no0hfp'
-            // 设置远程仓库访问凭证。
-            credentials {
-                // 从 ~/.gradle/gradle.properties 或 ALIYUN_MAVEN_USERNAME 读取用户名。
-                username = providers.gradleProperty('aliyunMavenUsername').orElse(providers.environmentVariable('ALIYUN_MAVEN_USERNAME')).orNull
-                // 从 ~/.gradle/gradle.properties 或 ALIYUN_MAVEN_PASSWORD 读取密码。
-                password = providers.gradleProperty('aliyunMavenPassword').orElse(providers.environmentVariable('ALIYUN_MAVEN_PASSWORD')).orNull
-            }
-        }
-    }
-}
-
 // 设置根项目名称，生成的 Gradle 项目名和发布 artifact 保持一致。
 rootProject.name = 'utils'

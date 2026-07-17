@@ -62,6 +62,7 @@
 当前边界：
 
 - 只保留 `master` 与 `gray` 两个数据源。
+- Druid 数据源默认启用借出前有效性校验、空闲检测和最小连接保活；消费者可通过 `utils.datasource.health.*` 覆盖校验语句、超时、检测间隔和最小空闲连接数。
 - `version` 只作为 MyBatis-Plus 乐观锁字段。
 - `MyBatisPlusConfig` 默认注册租户、数据权限、非法 SQL、防全表更新删除、分页和乐观锁插件。
 - `IllegalSQLInnerInterceptor` 与 `BlockAttackInnerInterceptor` 属于默认安全边界，关闭前必须补充原因、替代防护和测试。

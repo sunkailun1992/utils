@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com.kellen:utils:1.4.3`
+- 发布坐标：`com.kellen:utils:1.4.7`
 - Java 版本：`17`
 - Spring Boot：`4.0.4`
 - Spring Cloud：`2025.1.1`
@@ -21,6 +21,7 @@
 - 认证上下文：使用 `SecurityUser` 与 `UserContextHolder`
 - 租户上下文：使用 `TenantContextHolder`
 - 动态数据源：只保留 `master` 与 `gray`
+- 数据源连接健康：默认借出前执行 `SELECT 1` 校验，并启用空闲检测与保活；保活间隔默认 60 秒且会自动归一化为严格大于空闲检测间隔，避免 MySQL 空闲超时后的首次请求命中失效连接或 Druid 因非法时间组合启动失败
 - 乐观锁：`EntityBase.version` 只表示 MyBatis-Plus `@Version` 数据库版本号
 
 ## 仓库边界
