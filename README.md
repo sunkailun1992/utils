@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com.kellen:utils:1.4.7`
+- 发布坐标：`com.kellen:utils:1.4.8`
 - Java 版本：`17`
 - Spring Boot：`4.0.4`
 - Spring Cloud：`2025.1.1`
@@ -23,6 +23,17 @@
 - 动态数据源：只保留 `master` 与 `gray`
 - 数据源连接健康：默认借出前执行 `SELECT 1` 校验，并启用空闲检测与保活；保活间隔默认 60 秒且会自动归一化为严格大于空闲检测间隔，避免 MySQL 空闲超时后的首次请求命中失效连接或 Druid 因非法时间组合启动失败
 - 乐观锁：`EntityBase.version` 只表示 MyBatis-Plus `@Version` 数据库版本号
+- JSON：`JsonUtil` 使用 Spring Boot 4 默认 Jackson 3 databind API；`json/bean/list` 方法签名保持兼容
+
+### Jackson 3 迁移说明
+
+- `JsonUtil.getJsonMapper()` 的返回类型由 Jackson 2
+  `com.fasterxml.jackson.databind.ObjectMapper` 调整为 Jackson 3
+  `tools.jackson.databind.ObjectMapper`，直接调用该方法的消费者必须重新编译。
+- `JsonUtil.json(...)`、`bean(...)`、`list(...)` 的方法签名及空值、日期、
+  单引号、未知字段和高精度小数规则保持不变。
+- Jackson 注解仍使用 `com.fasterxml.jackson.annotation` 包；这里只迁移 databind/core API，
+  不要求业务 DTO 改写注解。
 
 ## 仓库边界
 
@@ -49,8 +60,9 @@
 阿里云 Maven 仓库凭证不要写入仓库文件，放到本机 `~/.gradle/gradle.properties`：
 
 ```properties
-aliyunMavenUsername=你的用户名
-aliyunMavenPassword=你的密码
+privateMavenUrl=<PRIVATE_MAVEN_URL>
+privateMavenUsername=<PRIVATE_MAVEN_USERNAME>
+privateMavenPassword=<PRIVATE_MAVEN_PASSWORD>
 ```
 
 发布到阿里云 Maven 仓库：

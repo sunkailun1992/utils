@@ -117,7 +117,7 @@
 
 核心类：
 
-- `com.kellen.utils.json.JsonUtil`：JSON 序列化与反序列化工具。
+- `com.kellen.utils.json.JsonUtil`：基于 Spring Boot 4 默认 Jackson 3 的 JSON 序列化与反序列化工具。
 - `com.kellen.utils.http.OkHttpUtils`：OkHttp HTTP 调用工具。
 - `com.kellen.utils.http.RequestUtil`：请求工具。
 - `com.kellen.utils.http.IpUtils`：IP 工具。

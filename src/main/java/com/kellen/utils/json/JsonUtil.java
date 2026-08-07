@@ -1,107 +1,103 @@
 package com.kellen.utils.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.lang3.StringUtils;
+import tools.jackson.core.json.JsonReadFeature;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
 
 /**
- * json转换工具类
+ * 基于 Spring Boot 4 默认 Jackson 3 实现的 JSON 转换工具。
  *
- * @author 孙凯伦
- * 
+ * <p>共享 mapper 在类初始化时完成全部配置，消费者不得在运行期间修改其序列化规则，
+ * 避免多个线程和多个业务服务之间出现不可预测的 JSON 行为。</p>
  */
 public class JsonUtil {
 
-    private static ObjectMapper mapper = new ObjectMapper();
-
     /**
-     * 对静态变量进行统一参数设置
+     * 公共 JSON mapper，兼容历史单引号、未知字段忽略、空值不输出和日期格式规则。
      */
-    static {
-        //序列化日期时是否以timestamps输出
-        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        //设置可用单引号
-        mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-        //设置实体无属性和json串属性对应时不会出错
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        //对象为null不进行序列化
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        //设置时间格式
-        mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
-        //使用最大精度
-        mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
-    }
+    private static final ObjectMapper MAPPER = JsonMapper.builder()
+            .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+            .changeDefaultPropertyInclusion(inclusion ->
+                    inclusion.withValueInclusion(JsonInclude.Include.NON_NULL))
+            .defaultDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"))
+            .findAndAddModules()
+            .build();
 
     /**
-     * @return ObjectMapper        返回类型
-     * @throws
-     * 返回ObjectMapper
+     * 返回公共 Jackson 3 mapper。
+     *
+     * <p>该对象由所有调用方共享，只允许读写 JSON，不应重新配置或注册模块。</p>
+     *
+     * @return 已完成公共规则配置的共享 mapper
      */
     public static ObjectMapper getJsonMapper() {
-        return mapper;
+        return MAPPER;
     }
 
     /**
-     * @param value
-     * @param basicClass
-     * @return T        返回类型
-     * @throws
-     * 将json转换为对象
+     * 将 JSON 文本转换为指定类型。
+     *
+     * @param value JSON 文本；null 或空字符串返回 null
+     * @param basicClass 目标类型
+     * @param <T> 目标类型
+     * @return 转换结果
+     * @throws IllegalStateException JSON 格式错误或类型不兼容时抛出
      */
     public static <T> T bean(String value, Class<T> basicClass) {
-        //判断参数为空直径返回null
         if (StringUtils.isEmpty(value)) {
             return null;
         }
         try {
-            //将json转换为java类
-            return mapper.readValue(value, basicClass);
+            return MAPPER.readValue(value, basicClass);
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("JSON 反序列化失败", e);
         }
     }
 
-
     /**
-     * @param value
-     * @param classType
-     * @return T        返回类型
-     * @throws
-     * 将json转换为对象
+     * 将 JSON 数组文本转换为指定元素类型的列表。
+     *
+     * @param value JSON 数组文本；null 或空字符串返回 null
+     * @param classType 列表元素类型
+     * @param <T> 列表元素类型
+     * @return 转换后的列表
+     * @throws IllegalStateException JSON 格式错误或元素类型不兼容时抛出
      */
     public static <T> List<T> list(String value, Class<T> classType) {
-        //判断参数为空直径返回null
         if (StringUtils.isEmpty(value)) {
             return null;
         }
         try {
-            JavaType javaType = mapper.getTypeFactory().constructParametricType(List.class, classType);
-            //将json转换为java类
-            return mapper.readValue(value, javaType);
+            JavaType javaType = MAPPER.getTypeFactory().constructCollectionType(List.class, classType);
+            return MAPPER.readValue(value, javaType);
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("JSON 列表反序列化失败", e);
         }
     }
 
     /**
-     * @param value
-     * @return String        返回类型
-     * @throws
-     * 将对象转为json
+     * 将对象序列化为 JSON 文本。
+     *
+     * @param value 待序列化对象
+     * @return JSON 文本
+     * @throws IllegalStateException 对象无法序列化时抛出
      */
     public static String json(Object value) {
         try {
-            //将java类转换为json
-            return mapper.writeValueAsString(value);
+            return MAPPER.writeValueAsString(value);
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("JSON 序列化失败", e);
         }
     }
 
