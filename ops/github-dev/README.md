@@ -57,6 +57,8 @@ python3 ops/github-dev/scripts/sync_nacos.py
 
 ## 本地启动
 
+个人公共制品使用 `com:utils:1.5.1` 和 `com:rpc-api:1.0.7`。与美联共用阿里云 Maven 仓库地址，但美联制品使用 `com.kellen` group，两边独立发布和递增版本。Maven 凭据从私有环境或用户 Gradle 配置注入，不放进本目录；发布前核对目标版本未占用，发布后核对远程 POM、JAR 和本地构建的 SHA-256。历史验收 JSON 中的 `1.4.9` 是当时运行快照，不能作为新构建的坐标。
+
 先构建目标服务，再从 `utils` 启动：
 
 ```bash

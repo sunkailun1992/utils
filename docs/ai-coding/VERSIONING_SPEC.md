@@ -7,11 +7,12 @@
 Java / Spring / Gradle 新项目默认使用以下基础坐标：
 
 ```groovy
-group = 'com.kellen'
-version = '1.4.3'
+group = 'com'
+version = '1.5.1'
 ```
 
-- 已经发布过的项目保持现有 `group` 坐标，不因为补文档或小版本升级强行迁移；当前公共包使用 `com.kellen`，后续不得在普通补丁发布中擅自切换坐标。
+- 个人 GitHub 公共包统一使用 `com:utils` 和 `com:rpc-api`；美联使用 `com.kellen:utils` 和 `com.kellen:rpc-api`。同一个阿里云 Maven 仓库按 group 隔离制品路径，两边独立递增版本。不得把公司同步过来的 `com.kellen` group 或依赖坐标带入个人项目。
+- 本次按用户要求将个人 utils 从误用的 `com.kellen:utils:1.4.9` 迁回 `com:utils:1.5.1`；所有个人消费者同步精确坐标。Java package `com.kellen.*` 保持不变，它与 Maven group 无关。后续补丁发布保持个人 `com` 坐标。远程个人版本清单已登记 `1.5.0`，本次不重复使用该版本；`1.5.1` 发布前须核对目标不存在。
 - 非 Java 项目没有 Gradle `group`；如果存在 `package.json`、小程序上传版本或其它制品版本，递增规则仍按本规范执行。
 - 构建制品 `version` 不等同于接口版本、Nacos dataId 版本、流量治理头 `X-Release-Version`、数据库乐观锁 `version` 字段。
 

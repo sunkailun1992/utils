@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com.kellen:utils:1.4.9`
+- 发布坐标：`com:utils:1.5.1`
 - Java 版本：`17`
 - Spring Boot：`4.0.4`
 - Spring Cloud：`2025.1.1`
@@ -38,7 +38,7 @@
 ## 仓库边界
 
 - `utils`：公共工具、公共配置、公共注解、公共异常、公共上下文和可被多个服务复用的第三方封装。
-- `user`：用户、认证、租户、权限、账号等业务实现，依赖 `com.kellen:utils` 制品，具体版本以消费者项目 `build.gradle` 为准。
+- `user`：用户、认证、租户、权限、账号等业务实现，依赖 `com:utils` 制品，具体版本以消费者项目 `build.gradle` 为准。
 - `gateway`：只做路由、跨域、限流、Actuator 访问保护和 OpenAPI 聚合；不保留 `com.kellen.utils` 本地副本。
 
 维护原则：
@@ -67,6 +67,10 @@
 - 未使用 OSS、短信、钉钉、直播的服务不再需要这些可选配置的占位值；调用对应功能时仍须提供真实运行配置。
 
 ## 远程发布
+
+个人公共包统一使用 `com:utils:1.5.1` 和 `com:rpc-api:1.0.7`；美联公共包使用 `com.kellen:utils` 和 `com.kellen:rpc-api`。两边共用阿里云 Maven 地址，由 group 形成不同仓库路径，独立发布和递增版本。个人消费者不得引用 `com.kellen` 的这两个制品；Java package `com.kellen.*` 不受 Maven group 迁移影响。
+
+本次从个人旧坐标 `com.kellen:utils:1.4.9` 迁移到 `com:utils:1.5.1`。先发布新坐标并验证，再同步升级所有个人消费者；保留旧制品用于历史构建，不覆盖或删除美联制品。回滚需同时回滚消费者依赖和对应代码，不能仅改制品 group。
 
 阿里云 Maven 仓库凭证不要写入仓库文件，放到本机 `~/.gradle/gradle.properties`：
 
