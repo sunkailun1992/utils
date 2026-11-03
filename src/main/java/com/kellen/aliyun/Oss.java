@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
- * 阿里云oss配置
+ * 可选阿里云 OSS 配置；未使用 OSS 的本地化部署无需提供占位连接信息。
  * 
  */
 @Component
@@ -23,7 +23,7 @@ public class Oss {
      */
     public static String domain;
 
-    @Value("${aliyun.oss.bucket}")
+    @Value("${aliyun.oss.bucket:}")
     public void setBucket(String bucket) {
         Oss.bucket = bucket;
         refreshDerivedDomain();
@@ -35,7 +35,7 @@ public class Oss {
         refreshDerivedDomain();
     }
 
-    @Value("${aliyun.oss.endpoint}")
+    @Value("${aliyun.oss.endpoint:}")
     public void setEndpoint(String endpoint) {
         Oss.endpoint = endpoint;
         refreshDerivedDomain();

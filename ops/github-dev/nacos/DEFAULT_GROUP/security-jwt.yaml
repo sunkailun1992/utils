@@ -1,0 +1,4 @@
+security:
+  jwt:
+    secret: ${GITHUB_JWT_SECRET:}
+    issuer: github-dev

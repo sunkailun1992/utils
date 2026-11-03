@@ -1,0 +1,13 @@
+# X File Storage is the only new-file storage entry. The bucket remains private.
+dromara:
+  x-file-storage:
+    default-platform: minio-private
+    minio:
+      - platform: minio-private
+        enable-storage: true
+        end-point: ${GITHUB_MINIO_ENDPOINT}
+        access-key: ${GITHUB_MINIO_ACCESS_KEY}
+        secret-key: ${GITHUB_MINIO_SECRET_KEY}
+        bucket-name: ${GITHUB_MINIO_BUCKET:kellen-github-dev}
+        base-path: ''
+        domain: ''

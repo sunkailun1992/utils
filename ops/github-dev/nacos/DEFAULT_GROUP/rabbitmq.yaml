@@ -1,0 +1,12 @@
+spring:
+  rabbitmq:
+    host: ${GITHUB_RABBITMQ_HOST:localhost}
+    port: ${GITHUB_RABBITMQ_PORT:5672}
+    username: ${GITHUB_RABBITMQ_USERNAME:}
+    password: ${GITHUB_RABBITMQ_PASSWORD:}
+    virtual-host: ${GITHUB_RABBITMQ_VHOST:/github-dev}
+    listener:
+      simple:
+        auto-startup: false
+      direct:
+        auto-startup: false

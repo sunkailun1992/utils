@@ -1,0 +1,14 @@
+redis:
+  hostName: ${custom.infra-redis-host}
+  port: ${custom.infra-redis-port}
+  database: ${GITHUB_REDIS_DATABASE:12}
+  password: ${GITHUB_REDIS_PASSWORD:}
+  cache:
+    cache-names: githubCache-30
+spring:
+  data:
+    redis:
+      host: ${redis.hostName}
+      port: ${redis.port}
+      database: ${redis.database}
+      password: ${redis.password}

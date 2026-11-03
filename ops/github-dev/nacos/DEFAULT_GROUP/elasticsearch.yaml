@@ -1,0 +1,9 @@
+elasticsearch:
+  url: ${GITHUB_ELASTICSEARCH_ADDRESS:localhost:9200}
+  username: ${GITHUB_ELASTICSEARCH_USERNAME:}
+  password: ${GITHUB_ELASTICSEARCH_PASSWORD:}
+spring:
+  elasticsearch:
+    uris: http://${elasticsearch.url}
+    username: ${elasticsearch.username}
+    password: ${elasticsearch.password}

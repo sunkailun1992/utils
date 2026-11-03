@@ -1,6 +1,9 @@
 package com.kellen.config.web;
 
 import com.kellen.security.config.TenantProperties;
+import com.kellen.security.config.SecurityAuthProperties;
+import com.kellen.security.SecurityUser;
+import com.kellen.security.UserContextHolder;
 import com.kellen.traffic.TrafficGovernanceContext;
 import com.kellen.traffic.TrafficGovernanceProperties;
 import com.kellen.utils.context.TenantContextHolder;
@@ -8,6 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +22,8 @@ import java.util.regex.PatternSyntaxException;
 /**
  * HTTP 请求上下文拦截器。
  *
- * <p>当前拦截器负责从请求头初始化租户和流量治理上下文，并在请求结束后清理。</p>
+ * <p>认证启用时只采用认证上下文中的租户，不接受 HTTP 头覆盖。未启用统一认证的旧消费者
+ * 保留显式租户头契约；Dubbo/MQ 的上下文协议不由此 MVC 拦截器修改。请求结束后清理上下文。</p>
  *
  * @author 孙凯伦
  */
@@ -33,6 +39,8 @@ public class ReqInterceptor implements HandlerInterceptor {
      */
     private final TrafficGovernanceProperties trafficGovernanceProperties;
 
+    private final SecurityAuthProperties securityAuthProperties;
+
     /**
      * 构造 HTTP 请求上下文拦截器。
      *
@@ -40,8 +48,14 @@ public class ReqInterceptor implements HandlerInterceptor {
      * @param trafficGovernanceProperties 流量治理配置属性
      */
     public ReqInterceptor(TenantProperties tenantProperties, TrafficGovernanceProperties trafficGovernanceProperties) {
+        this(tenantProperties, trafficGovernanceProperties, new SecurityAuthProperties());
+    }
+
+    public ReqInterceptor(TenantProperties tenantProperties, TrafficGovernanceProperties trafficGovernanceProperties,
+                          SecurityAuthProperties securityAuthProperties) {
         this.tenantProperties = tenantProperties; // 保存租户配置，供请求头解析使用。
         this.trafficGovernanceProperties = trafficGovernanceProperties; // 保存流量治理配置，供请求头解析使用。
+        this.securityAuthProperties = securityAuthProperties;
     }
 
     /**
@@ -55,7 +69,12 @@ public class ReqInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        initTenantContext(request); // 从请求头初始化租户上下文。
+        if (!initTenantContext(request)) {
+            TenantContextHolder.clear();
+            TrafficGovernanceContext.clear();
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
         initTrafficGovernanceContext(request); // 从请求头初始化发布版本、泳道和灰度 tag 上下文。
         response.addHeader("traceId", MDC.get("traceId")); // 将日志 traceId 回写响应头，便于前后端联查日志。
         return HandlerInterceptor.super.preHandle(request, response, handler); // 继续执行后续处理链。
@@ -96,17 +115,37 @@ public class ReqInterceptor implements HandlerInterceptor {
      *
      * @param request 当前HTTP请求
      */
-    private void initTenantContext(HttpServletRequest request) {
+    private boolean initTenantContext(HttpServletRequest request) {
         if (!tenantProperties.isEnabled()) {
-            return; // 未开启租户时不读取租户请求头。
+            return true; // 未开启租户时不读取租户请求头。
+        }
+        SecurityUser user = UserContextHolder.get();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (user == null && authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof SecurityUser principal) {
+            user = principal;
+        }
+        if (user != null) {
+            if (StringUtils.isBlank(user.getTenantId())) {
+                return false; // 已认证但没有租户的身份不能用伪造头补足租户。
+            }
+            TenantContextHolder.setTenantId(user.getTenantId());
+            return true; // JWT/OAuth 的可信租户始终优先，HTTP 头不得覆盖。
+        }
+        if (securityAuthProperties.isEnabled()) {
+            TenantContextHolder.clear();
+            // 未认证的受保护请求由 SecurityFilterChain 拒绝；登录等公开入口保持无租户上下文，
+            // 由对应业务服务从受验证参数建立上下文。不能从匿名 HTTP 请求头补租户。
+            return true;
         }
         for (String headerName : tenantProperties.getHeaderNames()) {
             String tenantId = request.getHeader(headerName); // 按配置顺序读取租户请求头。
             if (StringUtils.isNotBlank(tenantId)) {
                 TenantContextHolder.setTenantId(tenantId); // 找到第一个非空租户ID后写入上下文。
-                return;
+                return true;
             }
         }
+        return tenantProperties.isIgnoreWithoutTenant();
     }
 
     /**

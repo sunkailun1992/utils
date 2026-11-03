@@ -1,0 +1,6 @@
+custom:
+  infra-mysql-host: ${GITHUB_MYSQL_HOST}
+  infra-mysql-port: ${GITHUB_MYSQL_PORT:3306}
+  infra-redis-host: ${GITHUB_REDIS_HOST}
+  infra-redis-port: ${GITHUB_REDIS_PORT:6379}
+  dubbo-group: GITHUB_DEV_DUBBO

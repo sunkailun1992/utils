@@ -1,0 +1,7 @@
+rag:
+  vector:
+    enabled: true
+    qdrant-url: http://${GITHUB_QDRANT_HOST}:6333
+    collection-name: github_dev_rag
+    qwen-base-url: ${GITHUB_RAG_QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    qwen-api-key: ${GITHUB_RAG_QWEN_API_KEY}

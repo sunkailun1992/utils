@@ -1,0 +1,22 @@
+security:
+  auth:
+    enabled: true
+    header-enabled: false
+    jwt-enabled: true
+  data-permission:
+    enabled: true
+    default-user-column: owner_user_id
+    default-dept-column: dept_id
+    table-rules:
+      auth_user:
+        user-column: id
+        dept-column: dept_id
+      auth_dept:
+        user-column: owner_user_id
+        dept-column: id
+      auth_role:
+        user-column: owner_user_id
+        dept-column: dept_id
+tenant:
+  enabled: true
+  ignore-without-tenant: false

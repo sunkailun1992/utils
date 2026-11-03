@@ -1,0 +1,4 @@
+qdrant:
+  host: ${GITHUB_QDRANT_HOST:localhost}
+  port: ${GITHUB_QDRANT_GRPC_PORT:6334}
+  api-key: ${GITHUB_QDRANT_API_KEY:}

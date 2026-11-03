@@ -1,0 +1,11 @@
+security:
+  actuator:
+    token: ${GITHUB_ACTUATOR_TOKEN:}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

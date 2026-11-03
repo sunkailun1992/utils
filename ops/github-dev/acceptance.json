@@ -1,0 +1,189 @@
+{
+  "date": "2026-11-03",
+  "nacos": {
+    "namespace": "github-dev",
+    "group": "DEFAULT_GROUP",
+    "data_ids": 37,
+    "official_sdk_publish_and_full_readback": true,
+    "company_dev_not_modified": true
+  },
+  "database": {
+    "schemas": {
+      "github_dev_ai": 17,
+      "github_dev_ai_memory": 9,
+      "github_dev_rag": 4,
+      "github_dev_message": 3,
+      "github_dev_user": 15,
+      "github_dev_mcp": 2,
+      "github_dev_report": 2
+    },
+    "total_tables": 52,
+    "resources": 39,
+    "admin_grants": 27,
+    "human_accounts": 0,
+    "oauth_clients": 0,
+    "service_identity_clients": 1,
+    "application_account_company_schema_access_denied": true,
+    "migration_add_and_repeat_verified": true
+  },
+  "storage": {
+    "framework": "X File Storage 2.3.0",
+    "platform": "minio-private",
+    "bucket": "kellen-github-dev",
+    "actual_post_exists_signed_get": true,
+    "tampered_key_mime_and_oversize_rejected": true,
+    "test_objects_removed": true
+  },
+  "gateway_live": {
+    "allowed_origin": {
+      "status": 200,
+      "allow_origin": "http://localhost:8000"
+    },
+    "rejected_origin": {
+      "status": 403,
+      "allow_origin": null
+    },
+    "null_origin": {
+      "status": 403,
+      "allow_origin": null
+    },
+    "/user/actuator/env": 404,
+    "/actuator/env": 404,
+    "routed_tenants": {
+      "status": 200,
+      "body": {
+        "code": "0",
+        "data": [
+          {
+            "code": "github-dev",
+            "id": "100",
+            "name": "GitHub 开发",
+            "sorting": 0,
+            "state": "启用",
+            "stateDesc": "启用",
+            "version": 1
+          }
+        ],
+        "msg": "成功",
+        "success": true,
+        "timestamp": "2026-11-03 00:57:47"
+      }
+    },
+    "routed_anonymous_protected": {
+      "status": 403
+    },
+    "rate_limit_http_status_counts": {
+      "200": 19,
+      "429": 21
+    }
+  },
+  "user_live": {
+    "checked_at": "2026-11-03T05:56:37.336785+00:00",
+    "service": "user",
+    "port": 17200,
+    "java_pid": 66572,
+    "launcher_pid": 66570,
+    "profile": "dev",
+    "nacos_namespace": "github-dev",
+    "jar": "user/build/libs/user.jar",
+    "jar_sha256": "bc18651a806a174b76fea7ebc07163f58d9446bd45ba7717f01f74942c7fcb91",
+    "embedded_utils_version": "1.4.9",
+    "embedded_utils_matches_latest_maven_local": true,
+    "checks": {
+      "/actuator/health": {
+        "status": 503,
+        "body": {
+          "groups": [
+            "liveness",
+            "readiness"
+          ],
+          "status": "DOWN"
+        }
+      },
+      "/actuator/health/liveness": {
+        "status": 200,
+        "body": {
+          "status": "UP"
+        }
+      },
+      "/actuator/health/readiness": {
+        "status": 200,
+        "body": {
+          "status": "UP"
+        }
+      },
+      "/auth/tenants": {
+        "status": 200,
+        "body": {
+          "code": "0",
+          "data": [
+            {
+              "code": "github-dev",
+              "id": "100",
+              "name": "GitHub 开发",
+              "sorting": 0,
+              "state": "启用",
+              "stateDesc": "启用",
+              "version": 1
+            }
+          ],
+          "msg": "成功",
+          "success": true,
+          "timestamp": "2026-11-03 00:56:37"
+        }
+      },
+      "/auth/current/resources": {
+        "status": 403,
+        "body": null
+      }
+    },
+    "remaining": "aggregate health DOWN: Elasticsearch Java client9.2.6 incompatible with shared Elasticsearch7.17.9 cluster health response; no ES functional acceptance",
+    "credential_values_recorded": false,
+    "root_scope_decision": "Keep user running for gateway routing acceptance; aggregate health503 remains explicit; no disabling health contributor or upgrading shared middleware in this task.",
+    "minimal_next_step": "Separate task: validate a matched Elasticsearch client/server pair in an isolated personal environment; reproduce cluster-health response decoding, then test required index operations. Do not upgrade the shared company Elasticsearch cluster as part of this task."
+  },
+  "ai_agent_live": {
+    "port": 17310,
+    "health": {
+      "http": 200,
+      "status": "UP"
+    },
+    "anonymous_model": {
+      "http": 401,
+      "code": "AGENT_AUTH_REQUIRED"
+    },
+    "configuration_evidence": {
+      "google_provider_initialized": true,
+      "prompt_auto_sync_disabled": true,
+      "agent_card_registration_disabled": true,
+      "no_agent_card_published_log": true,
+      "no_prompt_sync_completed_log": true
+    },
+    "owned_listener_count": 1,
+    "cleanup": {
+      "active_owned_processes": 0,
+      "port_released": true
+    }
+  },
+  "model_inference_performed": false,
+  "runtime_test_cleanup": {
+    "gateway": {
+      "port_released": true
+    },
+    "user": {
+      "port_released": true
+    }
+  },
+  "final_checks": {
+    "diff_and_repository_secret_checks": 25,
+    "private_credential_value_leaks": 0,
+    "source_tracked_modifications": 0,
+    "java_test_cases": 414,
+    "default_skips": 2,
+    "separate_minio_live_executed": 1,
+    "frontend_auth_tests": 8,
+    "mini_program_upload_tests": 2,
+    "configuration_verifier_passed": true
+  },
+  "git_evidence_scope": "Runtime validation captured before the user authorized Git publication; current publication state must be checked against Git refs."
+}

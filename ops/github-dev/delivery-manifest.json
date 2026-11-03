@@ -1,0 +1,489 @@
+{
+  "branch": "codex/sync-security-architecture-20261103",
+  "repositories": {
+    "utils": {
+      "baseline_head": "c9ca3f3242513ec19aae634e3f6ad841b47dc9cd",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.4.9",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "docs/ai-coding/UTILS_TOOL_CATALOG.md",
+        "src/main/java/com/kellen/aliyun/DingDing.java",
+        "src/main/java/com/kellen/aliyun/LiveStreaming.java",
+        "src/main/java/com/kellen/aliyun/Oss.java",
+        "src/main/java/com/kellen/aliyun/Sms.java",
+        "src/main/java/com/kellen/aliyun/oss/token/OssTokenUtils.java",
+        "src/main/java/com/kellen/aliyun/oss/token/OssUploadPolicy.java",
+        "src/main/java/com/kellen/config/actuator/ActuatorInterceptor.java",
+        "src/main/java/com/kellen/config/web/ReqConfig.java",
+        "src/main/java/com/kellen/config/web/ReqInterceptor.java",
+        "src/main/java/com/kellen/security/config/SecurityAuthConfig.java",
+        "src/main/java/com/kellen/security/config/SecurityAuthProperties.java",
+        "src/main/java/com/kellen/utils/auth/JwtUtils.java",
+        "src/test/java/com/kellen/utils/auth/JwtUtilsTest.java"
+      ],
+      "tests": {
+        "tests": 72,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "source_head": "f491660d0236a318a1ce7c6dbc78041676e97aa1",
+      "new_files": [
+        "ops/github-dev/.gitignore",
+        "ops/github-dev/README.md",
+        "ops/github-dev/acceptance.json",
+        "ops/github-dev/delivery-manifest.json",
+        "ops/github-dev/nacos/DEFAULT_GROUP/a2a.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/actuator.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/admin.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/ai-agent-spring.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/ai-agent.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/ai-memory-spring.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/ai-memory.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/ai-model-secrets.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/ai-spring.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/ai.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/dubbo.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/elasticsearch.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/gateway-spring.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/logging.yml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/mcp-spring.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/mcp.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/message-spring.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/message.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/mybatis-plus.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/qdrant.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/rabbitmq.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/rag-spring.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/rag.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/redis.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/report-spring.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/report.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/reuse-configuration.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/seata.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/security-auth.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/security-jwt.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/storage.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/swagger.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/traffic-governance.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/user-spring.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/user.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/xxl-job.yaml",
+        "ops/github-dev/nacos/DEFAULT_GROUP/zipkin.yaml",
+        "ops/github-dev/scripts/GithubNacosConfigSync.java",
+        "ops/github-dev/scripts/prepare_databases.py",
+        "ops/github-dev/scripts/render_nacos.py",
+        "ops/github-dev/scripts/start_service.py",
+        "ops/github-dev/scripts/sync_nacos.py",
+        "ops/github-dev/scripts/verify_configuration.py",
+        "src/main/java/com/kellen/security/config/ActuatorSecurityConfig.java",
+        "src/main/java/com/kellen/security/config/ActuatorTokenAuthorizationManager.java",
+        "src/main/java/com/kellen/storage/ObjectStorageConfig.java",
+        "src/main/java/com/kellen/storage/PrivateObjectStorageService.java",
+        "src/main/java/com/kellen/utils/auth/JwtKeyConfig.java",
+        "src/test/java/com/kellen/aliyun/OptionalAliyunConfigurationTest.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorConsumerChainCoexistenceTest.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorEndpointProtectionTest.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorEndpointProtectionWithAuthEnabledTest.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorEndpointProtectionWithoutTokenTest.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorInfrastructureTestConfiguration.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorManagementPortProtectionTest.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorPackageExclusionTest.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorPathVariantProtectionTest.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorProtectionTestApplication.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorProtectionTestSupport.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorShutdownEndpointProtectionTest.java",
+        "src/test/java/com/kellen/config/actuator/ActuatorTokenRefreshTest.java",
+        "src/test/java/com/kellen/config/actuator/LegacyActuatorInterceptorTest.java",
+        "src/test/java/com/kellen/config/actuator/MainSecurityChainActuatorWhitelistTest.java",
+        "src/test/java/com/kellen/storage/MinioStorageSmokeTest.java",
+        "src/test/java/com/kellen/storage/ObjectStorageConfigTest.java",
+        "src/test/java/com/kellen/storage/PrivateObjectStorageServiceTest.java",
+        "src/test/java/com/kellen/web/TenantHttpIsolationTest.java"
+      ],
+      "excluded_existing_dirty": [
+        "bin/"
+      ]
+    },
+    "rpc-api": {
+      "baseline_head": "86701466b28711b94cad950b956c195979951841",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.0.7",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "src/main/java/com/kellen/rpc/auth/AuthOpenApiRpcService.java"
+      ],
+      "tests": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_head": "7bd1fbe19e1c351aae06798d4c79902a8afd7d17",
+      "new_files": [],
+      "excluded_existing_dirty": [
+        ".classpath",
+        ".project",
+        ".settings/",
+        "bin/"
+      ]
+    },
+    "gateway": {
+      "baseline_head": "943fff9af028e18c752dca10bc063674d046d6cc",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.0.7",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "src/main/java/com/kellen/config/CorsFilter.java",
+        "src/main/resources/application-dev.yml",
+        "src/main/resources/application-prod.yml",
+        "src/main/resources/application-test.yml",
+        "src/main/resources/application.yml"
+      ],
+      "tests": {
+        "tests": 43,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_head": "b65dc06729cfbe93dc8f852d7ef2b361d230f316",
+      "new_files": [
+        "src/main/java/com/kellen/config/GatewayExposureProperties.java",
+        "src/main/java/com/kellen/config/SensitiveEndpointBlockFilter.java",
+        "src/test/java/com/kellen/config/ApiDocsEnabledIntegrationTest.java",
+        "src/test/java/com/kellen/config/CorsPolicyHttpIntegrationTest.java",
+        "src/test/java/com/kellen/config/SensitiveEndpointBlockFilterIntegrationTest.java",
+        "src/test/java/com/kellen/config/SensitiveEndpointBlockFilterTest.java",
+        "src/test/java/com/kellen/config/StubBackend.java"
+      ]
+    },
+    "user": {
+      "baseline_head": "f09b74a269099de967ad4853ce4f8838ea3cf72f",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.1.4",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "src/main/java/com/kellen/auth/rpc/AuthOpenApiRpcServiceImpl.java",
+        "src/main/java/com/kellen/auth/service/AuthThirdPartyAuthenticationService.java",
+        "src/main/java/com/kellen/auth/service/impl/AuthOAuthTokenServiceImpl.java",
+        "src/main/java/com/kellen/auth/service/impl/AuthThirdPartyAuthenticationServiceImpl.java",
+        "src/main/resources/application-dev.yml",
+        "src/main/resources/application-prod.yml",
+        "src/main/resources/application-test.yml",
+        "src/main/resources/application.yml",
+        "src/main/resources/db/auth-oauth-client-schema.sql",
+        "src/main/resources/db/auth-schema.sql",
+        "src/test/java/com/kellen/auth/service/AuthOAuthTokenServiceTest.java",
+        "src/test/java/com/kellen/auth/service/AuthTokenLifecycleServiceTest.java",
+        "src/test/java/com/kellen/bean/MysqlDdlTest.java"
+      ],
+      "tests": {
+        "tests": 53,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_head": "3143bb8e24c0098b6b2a3fb66322fbac8ae5b2c3",
+      "new_files": [
+        "src/test/java/com/kellen/auth/controller/ActuatorAuthChainHttpIntegrationTest.java",
+        "src/test/java/com/kellen/auth/service/AuthRequiredOpenApiSignatureTest.java"
+      ],
+      "excluded_existing_dirty": [
+        "bin/"
+      ]
+    },
+    "ai": {
+      "baseline_head": "2da05f0324fd9908cf63a48b1e48156b6dba54e4",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.4.8",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "src/main/java/com/kellen/agent/AiAgentClient.java",
+        "src/main/java/com/kellen/config/MysqlDdl.java",
+        "src/main/java/com/kellen/file/AiFileObjectEntity.java",
+        "src/main/java/com/kellen/file/FileUploadCompleteRequest.java",
+        "src/main/java/com/kellen/file/FileUploadPolicyResponse.java",
+        "src/main/java/com/kellen/file/OssFileService.java",
+        "src/main/java/com/kellen/prompt/AiRolePromptInitializer.java",
+        "src/main/java/com/kellen/questionnaire/QuestionnaireTemplateInitializer.java",
+        "src/main/resources/application-dev.yml",
+        "src/main/resources/application-prod.yml",
+        "src/main/resources/application-test.yml",
+        "src/main/resources/application.yml",
+        "src/main/resources/db/ai-init.sql",
+        "src/test/java/com/ai/AiApplicationTests.java",
+        "src/test/java/com/ai/file/OssFileServiceTests.java",
+        "src/test/java/com/ai/questionnaire/ConversationalQuestionnaireServiceTests.java",
+        "src/test/resources/schema.sql"
+      ],
+      "tests": {
+        "tests": 49,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_head": "036434928cad83a4fc42f650028be5e0b752faf1",
+      "new_files": [
+        "docs/security-architecture-sync.md",
+        "src/main/java/com/kellen/agent/AiAgentRequestSigner.java",
+        "src/main/java/com/kellen/config/AiAgentClientAuthProperties.java",
+        "src/main/resources/db/ai-file-storage-platform.sql",
+        "src/test/java/com/ai/agent/AiAgentSignedClientHttpTests.java",
+        "src/test/java/com/ai/file/PrivateStorageMetadataPersistenceTest.java",
+        "src/test/java/com/ai/prompt/DemoContentBootstrapSafetyTest.java"
+      ]
+    },
+    "ai-agent": {
+      "baseline_head": "f8e47ea41cb021e8d1124c53c3e9b8bc1a3cc47d",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "0.1.8",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "src/main/java/com/kellen/agent/config/AgentRegistryProperties.java",
+        "src/main/java/com/kellen/agent/service/NacosAiAgentCardRegistrar.java",
+        "src/main/java/com/kellen/agent/service/NacosAiPromptClient.java",
+        "src/main/resources/application-dev.yml",
+        "src/main/resources/application-prod.yml",
+        "src/main/resources/application-test.yml",
+        "src/main/resources/application.yml"
+      ],
+      "tests": {
+        "tests": 75,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "source_head": "1b9b93e8c48d74f38c4ee63e6c9c2aab4cde939d",
+      "new_files": [
+        "docs/security-architecture-sync.md",
+        "src/main/java/com/kellen/agent/config/AgentSecurityProperties.java",
+        "src/main/java/com/kellen/agent/security/ActuatorAccessFilter.java",
+        "src/main/java/com/kellen/agent/security/ActuatorManagementPortConfiguration.java",
+        "src/main/java/com/kellen/agent/security/AgentGatewayModeCondition.java",
+        "src/main/java/com/kellen/agent/security/AgentServiceAuthenticationFilter.java",
+        "src/main/java/com/kellen/agent/security/AgentSignatureVerifier.java",
+        "src/main/java/com/kellen/agent/security/ReplayableAgentRequest.java",
+        "src/main/java/com/kellen/agent/service/NacosAiPromptWarmup.java",
+        "src/main/resources/META-INF/spring/org.springframework.boot.actuate.autoconfigure.web.ManagementContextConfiguration.imports",
+        "src/test/java/com/kellen/agent/security/ActuatorAccessFilterStartupCheckTest.java",
+        "src/test/java/com/kellen/agent/security/ActuatorAccessHttpTest.java",
+        "src/test/java/com/kellen/agent/security/ActuatorAccessWithoutTokenHttpTest.java",
+        "src/test/java/com/kellen/agent/security/ActuatorCustomBasePathHttpTest.java",
+        "src/test/java/com/kellen/agent/security/ActuatorHttpTestSupport.java",
+        "src/test/java/com/kellen/agent/security/ActuatorManagementPortHttpTest.java",
+        "src/test/java/com/kellen/agent/security/ActuatorManagementRootBasePathHttpTest.java",
+        "src/test/java/com/kellen/agent/security/ActuatorProbeConfiguration.java",
+        "src/test/java/com/kellen/agent/security/ActuatorServletPathHttpTest.java",
+        "src/test/java/com/kellen/agent/security/ActuatorShutdownHttpTest.java",
+        "src/test/java/com/kellen/agent/security/ActuatorTokenRotationHttpTest.java",
+        "src/test/java/com/kellen/agent/security/ActuatorUnresolvedTokenHttpTest.java",
+        "src/test/java/com/kellen/agent/security/AgentServiceAuthenticationHttpTest.java",
+        "src/test/java/com/kellen/agent/security/AgentServiceLegacyHttpTest.java",
+        "src/test/java/com/kellen/agent/security/AgentServiceUnconfiguredHttpTest.java",
+        "src/test/java/com/kellen/agent/service/NacosAiPromptClientTests.java",
+        "src/test/java/com/kellen/agent/service/NacosAiPromptWarmupTests.java"
+      ]
+    },
+    "ai-memory": {
+      "baseline_head": "ac3c98017f701b3de2b2fa34ec30bc30058f0eaa",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.0.2",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "src/main/java/com/kellen/memory/service/impl/DefaultMemoryRetrievalService.java",
+        "src/main/resources/application-dev.yml",
+        "src/main/resources/application-prod.yml",
+        "src/main/resources/application-test.yml",
+        "src/main/resources/application.yml"
+      ],
+      "tests": {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_head": "e6011795beb0a908ce0dff79be21b7b79cdcb550",
+      "new_files": [
+        "docs/security-architecture-sync.md",
+        "src/test/java/com/kellen/memory/service/impl/MemoryRetrievalTenantEvaluationTest.java"
+      ]
+    },
+    "rag": {
+      "baseline_head": "452f6dda49689f0af3669e7572f8ab44fdc1edf3",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.0.4",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "src/main/java/com/kellen/rag/controller/RagDocumentController.java",
+        "src/main/java/com/kellen/rag/graph/KnowledgeGraphProjector.java",
+        "src/main/java/com/kellen/rag/parser/KnowledgeDocumentParser.java",
+        "src/main/resources/application-dev.yml",
+        "src/main/resources/application-prod.yml",
+        "src/main/resources/application-test.yml",
+        "src/main/resources/application.yml",
+        "src/test/java/com/kellen/rag/parser/KnowledgeDocumentParserTest.java"
+      ],
+      "tests": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_head": "9663638f543488addf5a696e5eb2858a16027de8",
+      "new_files": [
+        "docs/security-architecture-sync.md"
+      ]
+    },
+    "mcp": {
+      "baseline_head": "2f9765ae8a126ef023fbba6c70c707041adc1d06",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.0.4",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "src/main/java/com/kellen/mcp/config/McpAgentRegistryProperties.java",
+        "src/main/java/com/kellen/mcp/config/McpOAuthResourceServerFilter.java",
+        "src/main/java/com/kellen/mcp/config/McpServerRegistryProperties.java",
+        "src/main/java/com/kellen/mcp/service/McpAgentCardRegistrar.java",
+        "src/main/java/com/kellen/mcp/service/McpProtocolService.java",
+        "src/main/java/com/kellen/mcp/service/McpServerRegistrar.java",
+        "src/main/java/com/kellen/mcp/service/NacosAiRegistrySupport.java",
+        "src/main/resources/application-dev.yml",
+        "src/main/resources/application-prod.yml",
+        "src/main/resources/application-test.yml",
+        "src/main/resources/application.yml",
+        "src/test/java/com/kellen/mcp/config/McpOAuthResourceServerFilterTest.java",
+        "src/test/java/com/kellen/mcp/service/McpProtocolServiceTest.java"
+      ],
+      "tests": {
+        "tests": 74,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_head": "48b2e83136e1209d1a043592baa09448c09a43f9",
+      "new_files": [
+        "src/main/java/com/kellen/mcp/security/McpVerifiedCaller.java",
+        "src/main/java/com/kellen/mcp/service/McpRegistryGatewayAddress.java",
+        "src/main/java/com/kellen/mcp/service/McpRegistryPublicationService.java",
+        "src/main/java/com/kellen/mcp/service/McpReleaseVersion.java",
+        "src/test/java/com/kellen/mcp/config/McpGatewayRegistryBindingTest.java",
+        "src/test/java/com/kellen/mcp/config/McpRegistryEndpointBindingTest.java",
+        "src/test/java/com/kellen/mcp/security/ActuatorAccessIntegrationTest.java",
+        "src/test/java/com/kellen/mcp/service/McpRegistryNacosSdkRegressionTest.java",
+        "src/test/java/com/kellen/mcp/service/McpRegistryPublicationIntegrationTest.java",
+        "src/test/java/com/kellen/mcp/service/McpReleaseVersionTest.java",
+        "src/test/java/com/kellen/mcp/service/NacosRegistryErrorCodeTest.java"
+      ]
+    },
+    "message": {
+      "baseline_head": "5db6e5b94e6e0828ef09b7de4c7c8ac1c9c11d57",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.0.7",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "src/main/resources/application-dev.yml",
+        "src/main/resources/application-prod.yml",
+        "src/main/resources/application-test.yml",
+        "src/main/resources/application.yml"
+      ],
+      "tests": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_head": "0a5114f75f2cab60b1b8b7a468eb35a3e1f1cc0b",
+      "new_files": [
+        "src/test/java/com/kellen/message/security/ActuatorAccessIntegrationTest.java"
+      ]
+    },
+    "report": {
+      "baseline_head": "aa4711b53c6f529e76bbf3f2085b927f6aa48f35",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.0.4",
+      "tracked_changed_files": [
+        "README.md",
+        "build.gradle",
+        "docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md",
+        "docs/ai-coding/NACOS_CONFIG_SPEC.md",
+        "src/main/resources/application-dev.yml",
+        "src/main/resources/application-prod.yml",
+        "src/main/resources/application-test.yml",
+        "src/main/resources/application.yml"
+      ],
+      "tests": {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "source_head": "9db28888f56fc96d0360a88bb4461deba56695d2",
+      "new_files": [
+        "src/test/java/com/kellen/report/security/ActuatorAccessIntegrationTest.java"
+      ]
+    },
+    "admin-web": {
+      "baseline_head": "228a8e1c4cc14512ef873480479d6db1cb870244",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": "1.0.0",
+      "tracked_changed_files": [
+        "README.md",
+        "package.json",
+        "src/app.ts"
+      ],
+      "tests": null,
+      "source_head": "a8dcf5d7abc47427599470cb38395fad07c5a7f0",
+      "new_files": [
+        "src/utils/requestAuth.ts",
+        "tests/unit/request-auth.test.mjs"
+      ]
+    },
+    "ai-wechat-mini-programs": {
+      "baseline_head": "50066cdf85016a41e9368bf4cdf8ea1ee9f54669",
+      "branch": "codex/sync-security-architecture-20261103",
+      "version": null,
+      "tracked_changed_files": [
+        "miniprogram/app.js",
+        "miniprogram/utils/oss-upload.js"
+      ],
+      "tests": null,
+      "new_files": [
+        "tests/oss-upload.test.js"
+      ],
+      "excluded_existing_dirty": [
+        "README.md"
+      ]
+    }
+  },
+  "snapshot_phase": "pre-publication validation",
+  "captured_before_git_publication": true
+}

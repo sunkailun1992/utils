@@ -1,0 +1,19 @@
+ai:
+  bootstrap:
+    seed-demo-content: false
+  oss:
+    base-dir: github/ai
+    upload-expire-seconds: 300
+    view-expire-seconds: 300
+    max-upload-bytes: 20971520
+  agent-registry:
+    enabled: false
+    server-addr: ${custom.nacos-ip}
+    namespace: ${custom.namespace}
+    username: ${custom.nacos-username:}
+    password: ${custom.nacos-password:}
+  agent-client:
+    auth:
+      enabled: true
+      client-id: ${GITHUB_AGENT_CLIENT_ID:github-ai}
+      client-secret: ${GITHUB_AGENT_CLIENT_SECRET:}

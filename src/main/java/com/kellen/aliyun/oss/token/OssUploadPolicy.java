@@ -1,5 +1,7 @@
 package com.kellen.aliyun.oss.token;
 
+import java.util.Map;
+
 /**
  * OSS PostObject 直传策略。
  *
@@ -13,6 +15,7 @@ package com.kellen.aliyun.oss.token;
  * @param mimeType       标准化后的 MIME 类型。
  * @param maxUploadBytes 单文件上传上限。
  * @param securityToken  STS 临时令牌，AccessKey 签名模式为空。
+ * @param formFields     平台签名要求的完整 POST 表单，支持 OSS 及 MinIO；客户端优先原样提交。
  */
 public record OssUploadPolicy(
         String accessId,
@@ -24,6 +27,18 @@ public record OssUploadPolicy(
         String fileType,
         String mimeType,
         long maxUploadBytes,
-        String securityToken
+        String securityToken,
+        Map<String, String> formFields
 ) {
+    /** 保留既有 OSS 消费者的构造契约。新客户端优先原样提交 formFields。 */
+    public OssUploadPolicy(String accessId, String policy, String signature, String host, String expire,
+                           String objectKey, String fileType, String mimeType, long maxUploadBytes,
+                           String securityToken) {
+        this(accessId, policy, signature, host, expire, objectKey, fileType, mimeType, maxUploadBytes,
+                securityToken, Map.of());
+    }
+
+    public OssUploadPolicy {
+        formFields = formFields == null ? Map.of() : Map.copyOf(formFields);
+    }
 }

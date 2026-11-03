@@ -1,0 +1,4 @@
+custom:
+  a2a-tenant: github-dev
+  a2a-provider-org: github-personal
+  a2a-context-path: /a2a

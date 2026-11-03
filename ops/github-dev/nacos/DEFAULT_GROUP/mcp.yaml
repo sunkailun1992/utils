@@ -1,0 +1,23 @@
+mcp:
+  server:
+    registry:
+      enabled: false
+      server-addr: ${custom.nacos-ip}
+      namespace: ${custom.namespace}
+      username: ${custom.nacos-username:}
+      password: ${custom.nacos-password:}
+      public-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
+  agent:
+    registry:
+      enabled: false
+      server-addr: ${custom.nacos-ip}
+      namespace: ${custom.namespace}
+      username: ${custom.nacos-username:}
+      password: ${custom.nacos-password:}
+  oauth:
+    resource-server:
+      enabled: true
+      issuer: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
+      authorization-server: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
+      external-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
+      audiences: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}/api/mcp

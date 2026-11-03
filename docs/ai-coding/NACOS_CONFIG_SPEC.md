@@ -1,5 +1,7 @@
 # Nacos 配置中心规范（Fleet 统一）
 
+> GitHub 个人环境现行覆盖：namespace 固定独立为 `github-dev/github-test/github-prod`；只使用 `GITHUB_NACOS_*` 引导变量，不回落公司 dev。通用模板与私有 CAS 发布见同级 `utils/ops/github-dev/README.md`。本轮不复制公司业务 dataId。
+
 > 本文件是**全 fleet 统一**的 Nacos 配置中心分层与拆分规范，各服务仓库内容一致。
 > `utils` 是公共基础包，本身不直连 Nacos，但它的 `@ConfigurationProperties`（如 `CommonAliyunProperties`、`CommonWechatProperties`）与自动配置决定了各 dataId 的归属，新增/调整公共配置前必须遵循本规范。
 > Fleet 成员：`ai`、`ai-agent`、`user`、`message`、`gateway`（公共能力由 `utils` 提供）。

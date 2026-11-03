@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- *
+ * 可选直播配置；未启用该能力的消费者不需要提供阿里云配置。
  * @author 孙凯伦
  * 
  */
@@ -31,27 +31,27 @@ public class LiveStreaming {
      */
     public static String pushKey;
 
-    @Value("${aliyun.liveStreaming.appName}")
+    @Value("${aliyun.liveStreaming.appName:}")
     public void setAppName(String appName) {
         LiveStreaming.appName = appName;
     }
 
-    @Value("${aliyun.liveStreaming.pullDomain}")
+    @Value("${aliyun.liveStreaming.pullDomain:}")
     public void setNavicat(String pullDomain) {
         LiveStreaming.pullDomain = pullDomain;
     }
 
-    @Value("${aliyun.liveStreaming.pullKey}")
+    @Value("${aliyun.liveStreaming.pullKey:}")
     public void setPullKey(String pullKey) {
         LiveStreaming.pullKey = pullKey;
     }
 
-    @Value("${aliyun.liveStreaming.pushDomain}")
+    @Value("${aliyun.liveStreaming.pushDomain:}")
     public void setPushDomain(String pushDomain) {
         LiveStreaming.pushDomain = pushDomain;
     }
 
-    @Value("${aliyun.liveStreaming.pushKey}")
+    @Value("${aliyun.liveStreaming.pushKey:}")
     public void setPushKey(String pushKey) {
         LiveStreaming.pushKey = pushKey;
     }

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * 阿里云短信配置
+ * 可选阿里云短信配置；未启用短信能力时不要求配置签名。
  * 
  */
 @Component
@@ -14,7 +14,7 @@ public class Sms{
      */
     public static String signName;
 
-    @Value("${aliyun.sms.signName}")
+    @Value("${aliyun.sms.signName:}")
     public void setSignName(String signName) {
         Sms.signName = signName;
     }

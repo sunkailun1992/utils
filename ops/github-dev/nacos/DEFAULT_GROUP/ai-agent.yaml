@@ -1,0 +1,31 @@
+ai:
+  prompts:
+    sync:
+      enabled: false
+    nacos:
+      enabled: false
+      server-addr: ${custom.nacos-ip}
+      namespace: ${custom.namespace}
+      username: ${custom.nacos-username:}
+      password: ${custom.nacos-password:}
+  agent:
+    provider: google
+    deepseek:
+      api-key: ${GITHUB_DEEPSEEK_API_KEY}
+      base-url: ${GITHUB_DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      model: ${GITHUB_DEEPSEEK_MODEL:deepseek-chat}
+    qwen:
+      api-key: ${GITHUB_QWEN_API_KEY}
+      base-url: ${GITHUB_QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      model: ${GITHUB_QWEN_CHAT_MODEL:qwen-plus}
+    registry:
+      enabled: false
+      server-addr: ${custom.nacos-ip}
+      namespace: ${custom.namespace}
+      username: ${custom.nacos-username:}
+      password: ${custom.nacos-password:}
+      public-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
+    security:
+      provider-code: github-agent
+      allowed-client-ids: ${GITHUB_AGENT_CLIENT_ID:github-ai}
+      max-body-bytes: 33554432

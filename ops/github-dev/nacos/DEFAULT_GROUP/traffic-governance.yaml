@@ -1,0 +1,9 @@
+traffic:
+  governance:
+    enabled: false
+spring:
+  cloud:
+    nacos:
+      discovery:
+        metadata:
+          traffic.lane: github-dev

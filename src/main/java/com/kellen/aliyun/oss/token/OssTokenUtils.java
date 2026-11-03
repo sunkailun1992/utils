@@ -270,7 +270,21 @@ public final class OssTokenUtils {
         String baseDir = requiredText(oss.baseDir(), "oss.baseDir")
                 .replaceAll("^/+", "")
                 .replaceAll("/+$", "");
-        return baseDir + "/" + normalizeOwnerScope(ownerScope) + "/";
+        return ownerBasePrefix(baseDir, ownerScope);
+    }
+
+    /** 与存储供应商无关的所有者目录，只接受业务生成的相对路径。 */
+    public static String ownerBasePrefix(String baseDir, String ownerScope) {
+        String root = normalizeOwnerScope(baseDir);
+        return root + "/" + normalizeOwnerScope(ownerScope) + "/";
+    }
+
+    /** 创建可用于 OSS 或 MinIO 的所有者隔离对象键，不读取云凭据。 */
+    public static String createObjectKey(String baseDir, String ownerScope, String fileType,
+                                         String fileName, String mimeType) {
+        return ownerBasePrefix(baseDir, ownerScope) + fileType + "/"
+                + LocalDate.now().format(DATE_PATH_FORMATTER) + "/"
+                + UUID.randomUUID().toString().replace("-", "") + "." + extension(fileName, mimeType);
     }
 
     private static String buildObjectKey(OssTokenProperties oss, String ownerScope, String fileType, String fileName, String mimeType) {

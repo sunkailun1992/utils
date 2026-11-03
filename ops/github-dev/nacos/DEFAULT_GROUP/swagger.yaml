@@ -1,0 +1,8 @@
+swagger:
+  enable: ${GITHUB_SWAGGER_ENABLED:false}
+  name: ${spring.application.name}
+springdoc:
+  api-docs:
+    enabled: ${GITHUB_SWAGGER_ENABLED:false}
+  swagger-ui:
+    enabled: ${GITHUB_SWAGGER_ENABLED:false}

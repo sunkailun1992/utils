@@ -4,7 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.apache.commons.codec.binary.Base64;
+import org.springframework.core.env.Environment;
+import java.util.Base64;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -28,14 +29,25 @@ public final class JwtUtils {
     public static final long DEFAULT_EXPIRE_TIME = 24 * 60 * 60 * 1000L;
 
     /**
-     * 默认签名密钥。
+     * 当前 Spring 环境，密钥仅在使用时读取，不缓存默认口令。
      */
-    public static final String KEY = "skl19921210";
+    private static volatile Environment environment;
 
     /**
      * 默认签发人。
      */
-    public static final String ISSUER = "skl";
+    @Deprecated
+    public static final String ISSUER = "kellen";
+
+    static void configure(Environment configuredEnvironment) {
+        environment = configuredEnvironment;
+    }
+
+    public static String issuer() {
+        Environment current = environment;
+        String value = current == null ? null : current.getProperty("security.jwt.issuer");
+        return value == null || value.isBlank() ? "kellen" : value;
+    }
 
     /**
      * 由字符串生成签名密钥。
@@ -43,9 +55,21 @@ public final class JwtUtils {
      * @return 签名密钥
      */
     public static SecretKey generalKey() {
-        byte[] encodedKey = Base64.decodeBase64(KEY); // 将配置密钥按 Base64 解码为字节数组。
-        SecretKeySpec key = new SecretKeySpec(encodedKey, 0, encodedKey.length, "AES"); // 使用 AES 密钥格式兼容旧 jjwt 签名逻辑。
-        return key; // 返回签名密钥。
+        Environment current = environment;
+        String encoded = current == null ? null : current.getProperty("security.jwt.secret");
+        if (encoded == null || encoded.isBlank()) {
+            throw new IllegalStateException("security.jwt.secret 未配置");
+        }
+        byte[] decoded;
+        try {
+            decoded = Base64.getDecoder().decode(encoded);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalStateException("security.jwt.secret 必须使用有效 Base64");
+        }
+        if (decoded.length < 32) {
+            throw new IllegalStateException("security.jwt.secret 解码后至少需要 32 字节");
+        }
+        return new SecretKeySpec(decoded, "HmacSHA256");
     }
 
     /**
@@ -70,7 +94,7 @@ public final class JwtUtils {
      * @return JWT字符串
      */
     public static String createJwt(String id, String subject, Map<String, Object> claims, long expireMillis) {
-        return createJwt(id, subject, claims, expireMillis, ISSUER);
+        return createJwt(id, subject, claims, expireMillis, issuer());
     }
 
     /**
@@ -96,10 +120,10 @@ public final class JwtUtils {
 
         JwtBuilder builder = Jwts.
                 builder() // 创建 JWT 构造器。
-                .setClaims(claims) // 写入业务声明，必须在标准声明前设置，避免覆盖标准声明。
+                .setClaims(claims == null ? new java.util.HashMap<>() : new java.util.HashMap<>(claims)) // 写入业务声明，必须在标准声明前设置，避免覆盖标准声明。
                 .setId(id) // 写入 jti，便于后续做重放保护或日志定位。
                 .setIssuedAt(now) // 写入签发时间。
-                .setIssuer(issuer == null || issuer.isBlank() ? ISSUER : issuer) // 写入签发人。
+                .setIssuer(issuer == null || issuer.isBlank() ? issuer() : issuer) // 写入签发人。
                 .setSubject(subject) // 写入主体，一般为用户ID。
                 .setExpiration(new Date(nowMillis + expireMillis)) // 写入过期时间。
                 .signWith(signatureAlgorithm, key); // 写入签名算法和密钥。

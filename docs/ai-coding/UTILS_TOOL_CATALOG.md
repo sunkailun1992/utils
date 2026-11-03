@@ -152,6 +152,8 @@
 - `com.kellen.aliyun.AliyunKey`：阿里云密钥配置。
 - `com.kellen.aliyun.Oss`：OSS 配置。
 - `com.kellen.aliyun.oss.OssUtils`：OSS 操作工具。
+- `com.kellen.storage.PrivateObjectStorageService`：X File Storage 私有存储门面，统一 OSS / MinIO 的 POST 策略、对象存在性、短时 GET 签名与服务端上传；所有者与 token 授权由业务服务维护。
+- `com.kellen.storage.ObjectStorageConfig`：加载官方 `dromara.x-file-storage` 平台配置，不复制业务文件服务或保存另一套存储凭据。
 - `com.kellen.aliyun.Sms`：短信配置。
 - `com.kellen.aliyun.sms.SmsUtils`：短信发送工具。
 - `com.kellen.aliyun.LiveStreaming`：直播配置。

@@ -12,7 +12,7 @@ plugins {
 group = 'com.kellen'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.4.8'
+version = '1.4.9'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -53,6 +53,8 @@ ext {
     druidVersion = '1.2.28'
     // Dynamic Datasource 版本，用于主库、灰度库等数据源切换能力。
     dynamicDatasourceVersion = '4.5.0'
+    xFileStorageVersion = '2.3.0'
+    minioVersion = '8.6.0'
     // 阿里云 OSS SDK 版本，用于对象存储上传、下载和签名能力。
     aliyunOssVersion = '3.18.5'
     // 阿里云 Java Core SDK 版本，用于短信、STS、函数工作流等基础客户端能力。
@@ -221,6 +223,9 @@ dependencies {
     api "com.baomidou:mybatis-plus-jsqlparser:${mybatisPlusVersion}"
     // MyBatis Mate：提供 MyBatis-Plus 企业增强能力。
     api "com.baomidou:mybatis-mate-starter:${mybatisMateVersion}"
+    // X File Storage 统一管理对象存储客户端；MinIO 保持兼容的 8.x 安全修复线。
+    api "org.dromara.x-file-storage:x-file-storage-spring:${xFileStorageVersion}"
+    api "io.minio:minio:${minioVersion}"
     // Aliyun OSS：提供阿里云对象存储上传、下载、签名能力。
     api "com.aliyun.oss:aliyun-sdk-oss:${aliyunOssVersion}"
     // Aliyun Core：提供阿里云短信、STS、函数工作流等 SDK 基础客户端。
@@ -275,6 +280,8 @@ dependencies {
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     // Spring Boot Test：提供 JUnit、AssertJ、Mockito、Spring Test 等测试能力。
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.security:spring-security-test'
     // 对齐 Gradle 测试运行器与 JUnit Platform Launcher 版本，避免测试发现阶段版本错配。
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

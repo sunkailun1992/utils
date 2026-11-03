@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com.kellen:utils:1.4.8`
+- 发布坐标：`com.kellen:utils:1.4.9`
 - Java 版本：`17`
 - Spring Boot：`4.0.4`
 - Spring Cloud：`2025.1.1`
@@ -54,6 +54,17 @@
 ./gradlew clean build -x test
 ./gradlew publishToMavenLocal
 ```
+
+## 管理端点与私有文件存储
+
+- `ActuatorSecurityConfig` 为已暴露的 Actuator 端点建立独立安全链，与 `security.auth.enabled` 无关。health 及探针保持公开；其它端点需要 `actuatorReq` 请求头匹配运行时 `security.actuator.token`，配置缺失时拒绝访问。令牌每次请求重新读取，轮换无需重启。旧 MVC `ActuatorInterceptor` 已停用，不能再注册为保护措施。
+- JWT 的 create/parse 静态 API 保留，由 `JwtKeyConfig` 从当前 Spring `Environment` 读取 `security.jwt.secret`；必须为 Base64 且解码后至少 32 字节，未初始化、缺值、格式错误或弱密钥均拒绝签发和解析，不使用历史固定口令。`security.jwt.issuer` 控制默认 issuer，显式传入的 OAuth issuer 保持原值。个人与其它环境使用独立随机密钥，切换密钥会使旧 token 失效。
+- MVC 租户上下文优先采用已认证 JWT/OAuth 的 `SecurityUser`，不能被 `tenantId`、`tenant-id` 或 `X-Tenant-Id` HTTP 头覆盖。已认证但无租户的请求返回 403；公开登录入口不从匿名头建立租户，由业务验证登录参数。`tenant.ignore-without-tenant=false` 防止 SQL 层缺上下文时跳过租户条件；Dubbo/MQ 的既有租户头契约保留。
+- 文件存储统一入口是 `com.kellen.storage.PrivateObjectStorageService`，使用 X File Storage `2.3.0` 管理 OSS / MinIO 平台与客户端。MinIO SDK 固定 `8.6.0`，保留兼容的 8.x API 并包含 XML 值替换漏洞修复。
+- 配置使用官方 `dromara.x-file-storage.default-platform`、`minio[]` 或 `aliyun-oss[]`。平台项需要 `platform`、`enable-storage: true`、`end-point`、`bucket-name`、`access-key`、`secret-key`；`base-path` 必须为空，由业务 `baseDir` 形成对象键。凭据只从环境或个人 Nacos namespace 注入，桶应为私有。
+- `createUploadPolicy(...)` 保持 POST 表单上传；`OssUploadPolicy.formFields` 是完整表单字段，新客户端原样提交。原 OSS 字段和十参数构造器保留，MinIO 使用 S3 V4 签名字段。X File Storage 尚无 POST policy 统一 API，此处通过它管理的同一个客户端做协议适配。
+- `verifyObjectExists(platform, key)`、`signedViewUri(platform, key, expiry)` 支持读取持久化平台；调用方必须先完成所有者和展示 token 校验，不能把此通用门面当成授权服务。历史文件保留原平台，切换默认平台不会迁移已有对象。
+- 未使用 OSS、短信、钉钉、直播的服务不再需要这些可选配置的占位值；调用对应功能时仍须提供真实运行配置。
 
 ## 远程发布
 

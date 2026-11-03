@@ -1,0 +1,16 @@
+dubbo:
+  application:
+    name: github-dev-${spring.application.name}
+    qos-enable: false
+  registry:
+    address: nacos://${custom.nacos-ip}
+    group: ${custom.dubbo-group}
+    username: ${custom.nacos-username:}
+    password: ${custom.nacos-password:}
+    parameters:
+      namespace: ${custom.namespace}
+  protocol:
+    name: tri
+    port: -1
+  consumer:
+    check: false

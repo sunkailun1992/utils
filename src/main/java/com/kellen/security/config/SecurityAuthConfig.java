@@ -39,9 +39,13 @@ public class SecurityAuthConfig {
 
     /**
      * 框架内置公开接口。
+     *
+     * <p>Actuator 只公开 health 供探活，其余端点由 {@code ActuatorSecurityConfig} 校验运维令牌，
+     * 不能整体放进公开白名单。</p>
      */
     private static final List<String> BUILTIN_PERMIT_URLS = List.of(
-            "/actuator/**",
+            "/actuator/health",
+            "/actuator/health/**",
             "/webjars/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",

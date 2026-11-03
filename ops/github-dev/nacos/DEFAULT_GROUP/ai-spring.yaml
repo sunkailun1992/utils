@@ -1,0 +1,10 @@
+mysql:
+  url: jdbc:mysql://${custom.infra-mysql-host}:${custom.infra-mysql-port}/github_dev_ai?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+  username: ${GITHUB_MYSQL_USERNAME}
+  password: ${GITHUB_MYSQL_PASSWORD}
+  driverClassName: com.mysql.cj.jdbc.Driver
+mysql-gray:
+  url: ${mysql.url}
+  username: ${mysql.username}
+  password: ${mysql.password}
+  driverClassName: ${mysql.driverClassName}

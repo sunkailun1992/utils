@@ -74,10 +74,11 @@ public class SecurityAuthProperties {
     private String rolesHeader = "X-Roles";
 
     /**
-     * 开启认证后仍放行的接口。
+     * 开启认证后仍放行的接口。Actuator 只放行 health，其余端点必须携带运维令牌。
      */
     private List<String> permitUrls = new ArrayList<>(Arrays.asList(
-            "/actuator/**",
+            "/actuator/health",
+            "/actuator/health/**",
             "/webjars/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
