@@ -6,6 +6,7 @@
 
 - `nacos/DEFAULT_GROUP/`：37 个可提交模板，只含公共默认值与 `GITHUB_*` 占位符。
 - `~/.config/kellen-github/dev.env`：本机私有配置，普通文件、权限 `0600`，不进 Git。
+- 各 Java 服务根目录的 `config/application-dev.properties`：本机私有 Nacos 引导配置，权限 `0600`，已加入对应 `.gitignore`。仅保存 Nacos dev 地址、命名空间、group、username/password 五个连接键；不要复制模型、数据库或业务配置进去。
 - `~/.config/kellen-github/nacos-rendered/DEFAULT_GROUP/`：包含真实连接值及通用模型密钥的私有渲染结果，文件权限 `0600`。禁止复制到仓库或 Wiki。
 - 模型密钥经用户明确确认沿用其通用自有密钥；没有复制医院、患者、问卷、报告模板、企微或设备业务配置。微信应用身份未因模型密钥授权而复制。
 - Nacos 引导只接受 `GITHUB_NACOS_*`，不再回落到旧 `NACOS_NAMESPACE`。Spring discovery/config、Dubbo 与未来启用的 AI SDK namespace 都引用同一个 `custom.namespace`。
@@ -56,6 +57,10 @@ python3 ops/github-dev/scripts/sync_nacos.py
 最后一项默认只读，使用仓库现有 Gradle 依赖中的官方 Nacos SDK，逐 dataId 读回核对，日志只在私有目录。新建配置需显式 `--publish`；更新已有配置还需 `--previous <已复核的旧配置目录>`，程序比对旧内容并通过 CAS 发布，遇到漂移拒绝覆盖。真实配置只发到固定的 `github-dev/DEFAULT_GROUP`，不写 Nacos 数据库。
 
 ## 本地启动
+
+IDE、`bootRun`、`java -jar` 的工作目录统一为当前服务仓库根目录。Spring Boot 会自动读取本机 `config/application-dev.properties`，`application.yml` 保持原样，默认 profile 为 `dev`。该文件填写 `GITHUB_NACOS_DEV_SERVER_ADDR`、`GITHUB_NACOS_DEV_NAMESPACE=github-dev`、`GITHUB_NACOS_GROUP=DEFAULT_GROUP`、`GITHUB_NACOS_USERNAME`、`GITHUB_NACOS_PASSWORD`；真实值不进 Git，OS 环境变量优先。`test`/`prod` 不读取 dev 文件；缺少私有文件且没有地址变量时，dev 启动立即失败。
+
+本机 Nacos 控制台端口是 `18080`，应用端 `server-addr` 使用 `8848`，gRPC 使用 `9848`。命名空间显示名和真实 ID 均为 `github-dev`。控制台 URL 与 SDK 地址分别配置，不能把控制台地址直接填进应用。
 
 个人公共制品使用 `com:utils:1.5.1` 和 `com:rpc-api:1.0.7`。与美联共用阿里云 Maven 仓库地址，但美联制品使用 `com.kellen` group，两边独立发布和递增版本。Maven 凭据从私有环境或用户 Gradle 配置注入，不放进本目录；发布前核对目标版本未占用，发布后核对远程 POM、JAR 和本地构建的 SHA-256。历史验收 JSON 中的 `1.4.9` 是当时运行快照，不能作为新构建的坐标。
 

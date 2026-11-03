@@ -1,5 +1,7 @@
 # AI 自动化开发流程
 
+Git 流程以 `AGENTS.md` 与 `BRANCHING_SPEC.md` 为准：最新 main 起完整功能短分支，test 集成、preprod 候选分别验证并保留源分支；完整进入 main 且远端核实后才删除本次已合短分支。main/test/preprod、未合分支与其他 worktree 使用中的分支均保护。Git 阶段不切换当前 dev profile/namespace，不代表环境已部署；纯规范不升业务版本。
+
 本文用于约束 AI 在任意业务需求中按统一流程完成需求理解、方案拆解、工程实现、验收验证和交付说明。本文只保留通用流程，不写某个微服务的私有接口、默认账号、私有 IP、真实 token 或本机绝对路径。
 
 ## 一、标准流程
@@ -116,7 +118,7 @@
 - [ ] 如果修改生产代码、配置、构建脚本或公共示例，`build.gradle` 的 `version` 已在本批未提交改动中提升一次。
 - [ ] 同一批未提交改动没有因为补代码、补测试、补文档或修编译错误重复提升版本号。
 - [ ] 纯 README、AI 规范、注释或说明文档改动未强制提升制品版本。
-- [ ] 如果从 `main` 分支提交并推送 Git 仓库，已同步执行 `./gradlew publish` 发布远程私有 Maven 制品。
+- [ ] 公共包版本变化并从 `main` 发布该确定提交时，已执行 `./gradlew publish` 发布远程私有 Maven 制品。
 - [ ] 如果不是 `main` 分支或尚未提交，只执行 `./gradlew publishToMavenLocal` 做本地消费者验证。
 ```
 

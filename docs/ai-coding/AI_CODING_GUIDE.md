@@ -1,5 +1,7 @@
 # utils AI 编码指导规范
 
+Git 流程以 `AGENTS.md` 与 `BRANCHING_SPEC.md` 为准：最新 main 起完整功能短分支，test 集成、preprod 候选分别验证并保留源分支；完整进入 main 且远端核实后才删除本次已合短分支。main/test/preprod、未合分支与其他 worktree 使用中的分支均保护。Git 阶段不切换当前 dev profile/namespace，不代表环境已部署；纯规范不升业务版本。
+
 > 本文件是 `utils` 公共基础包的 AI 编码主入口，用于把现有项目规范、工程门禁、安全规范和工具目录串成稳定执行顺序。具体编码细则以 `PROJECT_CODING_SPEC.md`、`SECURITY_CODING_SPEC.md` 和目标 Java 类为准。
 
 ## 1. 项目定位
@@ -45,7 +47,7 @@ AI 修改本项目时，必须先判断能力归属：
 5. 验证和交付
    - 执行本项目构建。
    - 修改公共 API 或基础配置时发布到本地 Maven 并编译消费者项目。
-   - 从 `main` 分支开始提交并推送 Git 仓库时，必须同步执行 `./gradlew publish`，把同版本制品推送到远程私有 Maven 仓库。
+   - 公共包版本变化并从 `main` 发布该确定提交时，必须同步执行 `./gradlew publish`，把同版本制品推送到远程私有 Maven 仓库。
    - 非 `main` 分支或未提交状态默认只执行 `./gradlew publishToMavenLocal` 做消费者本地验证，不推送远程私有 Maven 制品。
    - 输出验证结果、消费者影响、剩余风险和回滚方式。
 
@@ -84,7 +86,7 @@ AI 修改本项目时，必须先判断能力归属：
 bash scripts/check-secrets.sh
 ```
 
-main 分支提交并推送远程 Git 仓库时的发布验证：
+公共包版本变化并从 main 发布该确定提交时的发布验证：
 
 ```bash
 ./gradlew publish
@@ -107,4 +109,4 @@ cd ../user
 - 不绕过公共响应、认证上下文、租户上下文、异常处理和 MyBatis-Plus 安全插件。
 - 每次公共能力改动必须说明消费者影响、验证命令、未验证项和回滚方式。
 - 每次代码或构建改动必须说明本次版本号是否已提升；未提交期间同一批改动只提升一次。
-- 从 `main` 分支提交并推送时，交付说明必须包含远程私有 Maven 制品发布结果。
+- 公共包版本变化并从 `main` 发布时，交付说明必须包含远程私有 Maven 制品发布结果。

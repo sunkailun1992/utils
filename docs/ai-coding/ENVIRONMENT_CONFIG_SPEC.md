@@ -1,6 +1,6 @@
 # GitHub 环境配置入口规范
 
-个人项目与美联公司开发环境分别维护。代码使用 main 和短功能分支；环境由 Spring profile 与独立 Nacos namespace 表达，不沿用公司的 test/preprod 分支流程。
+个人项目与美联公司开发环境分别维护。代码使用 main（正式主干）、test（集成测试）、preprod（发布候选）和短功能分支；Git 阶段不自动切换 Spring profile 或 Nacos namespace，也不代表环境已部署。
 
 | profile | 默认 namespace | Nacos 地址变量 |
 |---|---|---|

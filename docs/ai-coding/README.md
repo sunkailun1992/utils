@@ -47,7 +47,7 @@
 - 分支命名、短分支生命周期、release/hotfix、tag 和分支清理按 `BRANCHING_SPEC.md` 处理。
 - 环境、Nacos namespace、Java profile 和前端/小程序边界按 `ENVIRONMENT_CONFIG_SPEC.md` 处理。
 - 如果修改公共 API、注解、AOP、认证、租户、异常、返回值、MyBatis-Plus 配置，修改后必须执行 `./gradlew clean build -x test` 和 `./gradlew publishToMavenLocal`。
-- 如果从 `main` 分支开始提交并推送 Git 仓库，必须同时执行 `./gradlew publish`，把同版本制品推送到远程私有 Maven 仓库。
+- 公共包版本变化并从 `main` 发布该确定提交时，必须执行 `./gradlew publish`，把同版本制品推送到远程私有 Maven 仓库。
 - 非 `main` 分支或未提交状态默认只做 `./gradlew publishToMavenLocal` 本地验证，不推送远程私有 Maven 制品。
 
 ## 文档维护

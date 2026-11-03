@@ -2,6 +2,14 @@
 
 本文件是 `utils` 公共基础包的 AI 编码入口。AI 修改本项目代码前，必须先阅读本文件，再按影响范围阅读 `docs/ai-coding` 下的规范和目标 Java 类。
 
+## Git 分支、完整交付与清理
+
+- 长期保护 `main`、`test`、`preprod`：分别为正式主干、集成测试、发布候选；禁止 force push 和删除。新任务 fetch 后从最新 `origin/main` 的确定 SHA 建独立短分支，续作可复用已核实归属的本功能分支，保留其他会话与无关 dirty。
+- 完整功能包含必要代码、测试、文档、migration、公共契约和依赖。进入 test/preprod 后保留源分支；候选按最新 main 加完整功能及必需跨仓配套验证，不默认把混合 test 整条合 main，也不逐提交拼装常规交付。
+- 完整功能合入 main、远端 refs 和包含关系核实后，清理本次已结束的本地及远端短分支。只进 test/preprod、未合入、用途不明或被其他 worktree 占用的分支不能删；三条长期分支永久排除在短分支清理外。详情见 `docs/ai-coding/BRANCHING_SPEC.md`。
+- Git 分支不自动切换 profile 或触发部署。现有 APP_ENV=dev、github-dev 与服务根 config/application-dev.properties 模式保持；base application.yml 不改写，未来环境映射和部署另行配置与验收。
+- 按风险执行编译、测试、安全专项检查及必要独立验证；Review 是补充，不新增人工代码审批。只按已有用户授权执行提交、推送、合并、tag、制品和部署；纯规范不升业务版本或重复发布 Maven 制品。
+
 ## 项目定位
 
 - 项目名称：`utils`
@@ -53,7 +61,7 @@
 - AI 不得为了兼容单个消费者而破坏公共包职责或恢复旧 `Json` 响应、旧 token 认证、旧数据源常量、`javax.*` 包名。
 - 只要本次任务修改了生产代码、配置、构建脚本或公共示例，就必须按 `docs/ai-coding/VERSIONING_SPEC.md` 提升一次 `build.gradle` 中的 `version`；如果同一批改动尚未提交，版本号只提升一次，后续继续补代码、补测试、补文档不得重复提升。
 - 文档、注释、README、AI 规范等纯文档改动不强制提升制品版本；如果文档改动伴随代码或构建改动，则按 `docs/ai-coding/VERSIONING_SPEC.md` 提升一次版本。
-- 从 `main` 分支开始执行提交并推送 Git 仓库时，必须同时执行远程私有 Maven 仓库发布，保证 Git 代码和远程 `com:utils:<version>` 制品一致。
+- 公共包版本变化并从 `main` 发布该确定提交时，必须同时执行远程私有 Maven 仓库发布，保证 Git 代码和远程 `com:utils:<version>` 制品一致。
 - 非 `main` 分支或未提交状态默认只允许 `publishToMavenLocal` 做消费者本地验证，不得把试验性 jar 推送到远程私有仓库。
 
 ## 多智能体协作规则
@@ -79,7 +87,7 @@ cd ../user
 ./gradlew clean compileJava -x test
 ```
 
-main 分支提交并推送远程 Git 仓库时，还必须发布远程私有 Maven 制品：
+公共包版本变化并从 main 发布该确定提交时，还必须发布远程私有 Maven 制品：
 
 ```bash
 ./gradlew publish

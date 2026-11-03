@@ -30,6 +30,7 @@
 
 - `com.kellen.security.config.SecurityAuthConfig`：安全认证配置入口。
 - `com.kellen.security.config.SecurityAuthProperties`：认证白名单与请求头配置。
+- `com.kellen.security.config.ActuatorSecurityConfig`：独立 Actuator 安全链，health 公开，其余端点使用外置 `security.actuator.token` 与 `actuatorReq` 校验，缺失时失败关闭。
 - `com.kellen.security.SecurityAuthenticationFilter`：认证过滤器。
 - `com.kellen.security.SecurityUser`：当前登录用户模型。
 - `com.kellen.security.UserContextHolder`：用户上下文 ThreadLocal。
@@ -101,9 +102,8 @@
 - `com.kellen.config.elasticsearch.ElasticsearchConfig`：Elasticsearch 配置。
 - `com.kellen.config.file.MultipartConfig`：文件上传配置。
 - `com.kellen.config.swagger.Swagger`：OpenAPI 配置。
-- `com.kellen.config.actuator.ActuatorInterceptor`：Actuator 拦截器。
+- `com.kellen.config.actuator.ActuatorInterceptor`：deprecated 历史类，未注册且调用时失败关闭；不能替代 Actuator 专用安全链。
 - `com.kellen.config.actuator.ServiceShutDownEndpoint`：服务停机端点。
-- `com.kellen.config.actuator.CustomWebMvcEndpointHandlerMapping`：Web MVC Endpoint 映射适配。
 - `com.kellen.config.actuator.ConfigClientController`：配置客户端控制器。
 - `com.kellen.config.sensitive.SensitiveStrategyConfig`：敏感字段处理配置。
 

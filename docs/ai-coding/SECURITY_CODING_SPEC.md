@@ -102,6 +102,7 @@
 ## 安全配置和供应链
 
 - 公共自动配置必须遵循最小暴露原则，Actuator、OpenAPI、错误详情、静态资源、上传大小、请求体大小等能力不得在生产环境默认开放高风险入口。
+- Actuator 由 `ActuatorSecurityConfig` 的独立 Spring Security 安全链保护：health 公开，其余端点校验 `actuatorReq` 与运行时配置 `security.actuator.token`，缺失时失败关闭。不得改用 MVC 拦截器保护 Actuator，其 HandlerMapping 不受普通 MVC 拦截器覆盖。
 - 新增依赖、插件、镜像、脚本和 Gradle/Maven 仓库时必须说明用途，优先使用可信仓库和稳定版本，避免引入未维护、漏洞严重或来源不明的组件。
 - 依赖升级必须关注安全公告和破坏性变更，不得为了追最新版本跨大版本引入不兼容风险。
 - CI/CD、发布脚本、初始化数据和配置变更必须保持可审计、可回滚，不能在构建脚本中明文写入密钥。

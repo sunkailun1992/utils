@@ -30,3 +30,8 @@ nbdist/
 ### Local system files ###
 .DS_Store
 **/.DS_Store
+
+### Generated artifacts ###
+*.class
+/bin/
+/out/
