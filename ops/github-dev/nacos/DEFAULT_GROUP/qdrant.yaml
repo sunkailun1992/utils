@@ -1,6 +1,6 @@
 # 配置分类：共享基础设施
 # dataId：qdrant.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：Qdrant gRPC 连接；RAG HTTP 客户端另见 rag.yaml。
+# 用途：Qdrant gRPC 连接；RAG HTTP 客户端另见 rag-spring.yaml。
 # 导入服务：ai、ai-memory、rag。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 

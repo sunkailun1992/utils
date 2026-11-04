@@ -1,0 +1,357 @@
+{
+  "namespace": "github-dev",
+  "group": "DEFAULT_GROUP",
+  "entries": [
+    {
+      "dataId": "a2a.yaml",
+      "description": "A2A 租户、提供方及协议入口约定；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享 AI 协议",
+      "consumers": [
+        "ai",
+        "ai-agent",
+        "ai-memory",
+        "mcp",
+        "rag"
+      ]
+    },
+    {
+      "dataId": "actuator.yaml",
+      "description": "管理端点访问令牌、暴露范围与健康详情策略；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "安全与可观测性",
+      "consumers": [
+        "ai",
+        "ai-agent",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "admin.yaml",
+      "description": "Spring Boot Admin 客户端注册开关；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "安全与可观测性",
+      "consumers": [
+        "ai",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "ai-agent-spring.yaml",
+      "description": "Agent 模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "服务配置",
+      "consumers": [
+        "ai-agent"
+      ]
+    },
+    {
+      "dataId": "ai-memory-spring.yaml",
+      "description": "ai-memory 的主/灰度数据源；均引用个人 schema；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "服务配置",
+      "consumers": [
+        "ai-memory"
+      ]
+    },
+    {
+      "dataId": "ai-model-secrets.yaml",
+      "description": "Google GenAI 凭据与模型选择；真实凭据仅在私有渲染结果和 Nacos；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享 AI 模型",
+      "consumers": [
+        "ai-agent",
+        "ai-memory",
+        "rag"
+      ]
+    },
+    {
+      "dataId": "ai-spring.yaml",
+      "description": "AI 主/灰度数据源、演示种子、文件策略、Agent 发现和客户端签名；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "服务配置",
+      "consumers": [
+        "ai"
+      ]
+    },
+    {
+      "dataId": "dubbo.yaml",
+      "description": "Dubbo Triple 协议和个人 namespace/group 隔离；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享基础设施",
+      "consumers": [
+        "ai",
+        "ai-agent",
+        "ai-memory",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "elasticsearch.yaml",
+      "description": "Elasticsearch 连接及个人请求日志索引；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享基础设施",
+      "consumers": [
+        "ai",
+        "ai-memory",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "gateway-spring.yaml",
+      "description": "网关路由、Redis 限流和浏览器 CORS 白名单；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "服务配置",
+      "consumers": [
+        "gateway"
+      ]
+    },
+    {
+      "dataId": "logging.yml",
+      "description": "全局与应用包日志等级；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "安全与可观测性",
+      "consumers": [
+        "ai",
+        "ai-agent",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "mcp-spring.yaml",
+      "description": "MCP 主/灰度数据源、Agent 注册和 OAuth 资源服务器；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "服务配置",
+      "consumers": [
+        "mcp"
+      ]
+    },
+    {
+      "dataId": "message-spring.yaml",
+      "description": "message 的主/灰度数据源；均引用个人 schema；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "服务配置",
+      "consumers": [
+        "message"
+      ]
+    },
+    {
+      "dataId": "mybatis-plus.yaml",
+      "description": "MyBatis-Plus 映射、逻辑删除和 MyBatis-Mate 授权；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享基础设施",
+      "consumers": [
+        "ai",
+        "ai-memory",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "qdrant.yaml",
+      "description": "Qdrant gRPC 连接；RAG HTTP 客户端另见 rag-spring.yaml；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享基础设施",
+      "consumers": [
+        "ai",
+        "ai-memory",
+        "rag"
+      ]
+    },
+    {
+      "dataId": "rabbitmq.yaml",
+      "description": "RabbitMQ 连接、独立 vhost 与消费监听器开关；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享基础设施",
+      "consumers": [
+        "ai",
+        "ai-memory",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "rag-spring.yaml",
+      "description": "RAG 主/灰度数据源、独立向量集合、嵌入模型和解析/检索引擎；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "服务配置",
+      "consumers": [
+        "rag"
+      ]
+    },
+    {
+      "dataId": "redis.yaml",
+      "description": "公共 Redis 缓存和 Spring Data Redis 共用连接；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享基础设施",
+      "consumers": [
+        "ai",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "report-spring.yaml",
+      "description": "report 的主/灰度数据源；均引用个人 schema；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "服务配置",
+      "consumers": [
+        "report"
+      ]
+    },
+    {
+      "dataId": "reuse-configuration.yaml",
+      "description": "跨 dataId 引用的基础设施地址与 RPC 分组；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享变量",
+      "consumers": [
+        "ai",
+        "ai-agent",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "seata.yaml",
+      "description": "Seata 分布式事务启用状态；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享基础设施",
+      "consumers": [
+        "ai",
+        "ai-memory",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "security-auth.yaml",
+      "description": "认证来源、数据权限与租户隔离；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "安全与可观测性",
+      "consumers": [
+        "ai-memory",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "security-jwt.yaml",
+      "description": "人员访问 JWT 的签名密钥与签发方；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "安全与可观测性",
+      "consumers": [
+        "ai",
+        "ai-agent",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "storage.yaml",
+      "description": "X File Storage 统一入口与私有 MinIO 平台；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享基础设施",
+      "consumers": [
+        "ai"
+      ]
+    },
+    {
+      "dataId": "swagger.yaml",
+      "description": "OpenAPI 文档和 Swagger UI 暴露开关；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "安全与可观测性",
+      "consumers": [
+        "ai",
+        "ai-agent",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "traffic-governance.yaml",
+      "description": "灰度治理开关与服务发现泳道元数据；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "安全与可观测性",
+      "consumers": [
+        "ai",
+        "ai-agent",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "user-spring.yaml",
+      "description": "用户服务主/灰度数据源与 OAuth 授权服务器公开入口；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "服务配置",
+      "consumers": [
+        "user"
+      ]
+    },
+    {
+      "dataId": "xxl-job.yaml",
+      "description": "XXL-JOB 执行器启用状态；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "共享基础设施",
+      "consumers": [
+        "ai",
+        "ai-memory",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
+      "dataId": "zipkin.yaml",
+      "description": "Micrometer 链路追踪开关；个人 github-dev 配置，凭据由私有环境注入。",
+      "category": "安全与可观测性",
+      "consumers": [
+        "ai",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    }
+  ]
+}

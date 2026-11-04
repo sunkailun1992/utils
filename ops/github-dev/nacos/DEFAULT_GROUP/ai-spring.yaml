@@ -1,6 +1,6 @@
-# 配置分类：服务框架
+# 配置分类：服务配置
 # dataId：ai-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：ai 的主/灰度数据源；均引用个人 schema。
+# 用途：AI 主/灰度数据源、演示种子、文件策略、Agent 发现和客户端签名。
 # 导入服务：ai。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
@@ -22,3 +22,37 @@ mysql-gray:
   password: ${mysql.password}
   # 灰度数据源复用主数据源的MySQL JDBC 驱动类。
   driverClassName: ${mysql.driverClassName}
+
+# 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
+ai:
+  bootstrap:
+    # 关闭启动演示种子，避免自动创建历史业务数据。
+    seed-demo-content: false
+  oss:
+    # 新上传对象的业务前缀；历史对象按已登记平台和路径读取。
+    base-dir: github/ai
+    # 上传授权有效期，单位秒；300 秒为 5 分钟。
+    upload-expire-seconds: 300
+    # 文件查看签名有效期，单位秒；300 秒为 5 分钟。
+    view-expire-seconds: 300
+    # 单次上传大小上限，单位字节；20971520 字节为 20 MiB。
+    max-upload-bytes: 20971520
+  agent-registry:
+    # 关闭 AI 侧 Agent 注册发现入口；不表示客户端签名关闭。
+    enabled: false
+    # Nacos 应用端连接地址，引用本地引导变量；不使用控制台端口。
+    server-addr: ${custom.nacos-ip}
+    # 引用当前个人命名空间 ID，保持配置、发现和 Registry 隔离一致。
+    namespace: ${custom.namespace}
+    # 连接认证用户名；引用私有环境或同一组件的公共连接配置。
+    username: ${custom.nacos-username:}
+    # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
+    password: ${custom.nacos-password:}
+  agent-client:
+    auth:
+      # 启用 AI 调用 Agent 的服务身份签名；缺凭据时应拒绝调用。
+      enabled: true
+      # AI 调用方身份，需包含在 Agent 的 allowed-client-ids 中。
+      client-id: ${GITHUB_AGENT_CLIENT_ID:github-ai}
+      # 服务调用签名密钥；与人员 JWT 密钥分离，真实值不进 Git。
+      client-secret: ${GITHUB_AGENT_CLIENT_SECRET:}

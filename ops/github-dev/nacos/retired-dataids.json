@@ -1,0 +1,46 @@
+{
+  "namespace": "github-dev",
+  "group": "DEFAULT_GROUP",
+  "retired": [
+    {
+      "dataId": "ai.yaml",
+      "replacement": "ai-spring.yaml",
+      "reason": "无重复参数，原导入相邻，合并到服务统一配置"
+    },
+    {
+      "dataId": "ai-agent.yaml",
+      "replacement": "ai-agent-spring.yaml",
+      "reason": "无重复参数，原导入相邻，合并到服务统一配置"
+    },
+    {
+      "dataId": "mcp.yaml",
+      "replacement": "mcp-spring.yaml",
+      "reason": "无重复参数，原导入相邻，合并到服务统一配置"
+    },
+    {
+      "dataId": "rag.yaml",
+      "replacement": "rag-spring.yaml",
+      "reason": "无重复参数，原导入相邻，合并到服务统一配置"
+    },
+    {
+      "dataId": "user.yaml",
+      "replacement": "user-spring.yaml",
+      "reason": "无重复参数，原导入相邻，合并到服务统一配置"
+    },
+    {
+      "dataId": "ai-memory.yaml",
+      "replacement": null,
+      "reason": "空映射且对应服务已有统一配置，移除空入口及导入"
+    },
+    {
+      "dataId": "message.yaml",
+      "replacement": null,
+      "reason": "空映射且对应服务已有统一配置，移除空入口及导入"
+    },
+    {
+      "dataId": "report.yaml",
+      "replacement": null,
+      "reason": "空映射且对应服务已有统一配置，移除空入口及导入"
+    }
+  ]
+}

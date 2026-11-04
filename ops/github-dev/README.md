@@ -6,7 +6,7 @@
 
 ## 配置与凭据
 
-- `nacos/DEFAULT_GROUP/`：37 个可提交模板，只含公共默认值与 `GITHUB_*` 占位符；职责、消费者与参数注释见 [配置分类索引](nacos/README.md)。新增/修改时必须遵循 [Nacos 注释与归类规范](../../docs/ai-coding/NACOS_COMMENT_SPEC.md)。
+- `nacos/DEFAULT_GROUP/`：29 个可提交模板，只含公共默认值与 `GITHUB_*` 占位符；职责、消费者与参数注释见 [配置分类索引](nacos/README.md)。新增/修改时必须遵循 [Nacos 注释与归类规范](../../docs/ai-coding/NACOS_COMMENT_SPEC.md)。
 - `~/.config/kellen-github/dev.env`：本机私有配置，普通文件、权限 `0600`，不进 Git。
 - 各 Java 服务根目录的 `config/application-dev.properties`：本机私有 Nacos 引导配置，权限 `0600`，已加入对应 `.gitignore`。仅保存 Nacos dev 地址、命名空间、group、username/password 五个连接键；不要复制模型、数据库或业务配置进去。
 - `~/.config/kellen-github/nacos-rendered/DEFAULT_GROUP/`：包含真实连接值及通用模型密钥的私有渲染结果，文件权限 `0600`。禁止复制到仓库或 Wiki。
@@ -62,7 +62,7 @@ python3 ops/github-dev/scripts/sync_nacos.py
 
 `render_nacos.py` 只替换 YAML 标量中的 `GITHUB_*` 占位符，保留注释、分组与 Spring `${custom.*}` 引用，并与原语义渲染结果比较；凭据通过字符串序列化转义，不能拼成额外字段。渲染成功只证明本地产物已生成，发布前仍需读回当前 Nacos 配置。
 
-`sync_nacos.py` 默认只读，使用仓库现有 Gradle 依赖中的官方 Nacos SDK，逐 dataId 读回核对，日志只在私有目录。新建配置需显式 `--publish`；更新已有配置还需 `--previous <已复核的旧配置目录>`，程序比对旧内容并通过 CAS 发布，遇到漂移拒绝覆盖。真实配置只发到固定的 `github-dev/DEFAULT_GROUP`，不写 Nacos 数据库。
+`sync_nacos.py` 默认只读，使用仓库现有 Gradle 依赖中的官方 Nacos SDK，逐 dataId 读回核对，日志只在私有目录。目录结构和说明使用 `nacos/catalog.json`，合并/删除清单见 `nacos/retired-dataids.json`。渲染时使用新的空私有输出目录，避免以前的 8 个旧文件残留被当作候选重复发布；发布前比对输出文件集合与 catalog。新建配置需显式 `--publish`；更新已有配置还需 `--previous <已复核的旧配置目录>`，程序比对旧内容并通过 CAS 发布，遇到漂移拒绝覆盖。真实配置只发到固定的 `github-dev/DEFAULT_GROUP`，不写 Nacos 数据库。
 
 ## 本地启动
 

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """检查 GitHub 环境隔离边界、配置覆盖和代码所需数据表。只读，不连接远端。"""
 import re
+import argparse
+import json
+import subprocess
 from pathlib import Path
 from prepare_databases import prepare
 from render_nacos import yaml_json
@@ -8,6 +11,112 @@ from render_nacos import yaml_json
 ROOT = Path(__file__).resolve().parents[4]
 SERVICES = ("gateway", "user", "message", "report", "ai", "ai-agent", "ai-memory", "rag", "mcp")
 CONFIG = Path(__file__).resolve().parents[1] / "nacos/DEFAULT_GROUP"
+
+
+def import_dataid(item):
+    match = re.fullmatch(r"(?:optional:)?nacos:([^?]+)(?:\?.*)?", item)
+    assert match, "只接受显式 Nacos dataId 导入"
+    return match[1]
+
+
+def check_catalog(config, catalog, retired, consumers):
+    assert catalog["namespace"] == retired["namespace"] == "github-dev"
+    assert catalog["group"] == retired["group"] == "DEFAULT_GROUP"
+    entries = {entry["dataId"]: entry for entry in catalog["entries"]}
+    assert len(entries) == len(catalog["entries"]), "catalog 存在重复 dataId"
+    assert set(entries) == set(config) == set(consumers), "模板、catalog 与实际导入未对齐"
+    old = {entry["dataId"] for entry in retired["retired"]}
+    assert len(old) == len(retired["retired"]) and not old & set(entries), "旧项重复或仍在模板目录"
+    for item in retired["retired"]:
+        assert item["replacement"] is None or item["replacement"] in entries, "旧项替代配置缺失"
+    for name, entry in entries.items():
+        text = config[name]
+        assert set(entry["consumers"]) == consumers[name], name + " 消费者说明未同步"
+        assert entry["description"].strip() and entry["category"].strip(), name + " 缺少分类或说明"
+        assert f"# dataId：{name} | group：DEFAULT_GROUP | namespace：github-dev" in text, name
+        assert f"# 配置分类：{entry['category']}" in text, name
+        purpose = re.search(r"^# 用途：(.+)$", text, re.M)
+        assert purpose and entry["description"].startswith(purpose[1].rstrip("。")), name + " 说明与注释未同步"
+        assert f"# 导入服务：{'、'.join(entry['consumers'])}。" in text, name
+
+
+def check_parameter_comments(source):
+    """通过 YAML 节点定位参数，避免把字符串中的冒号误识别为键。"""
+    result = subprocess.run(["ruby", "-ryaml", "-rjson", "-e", """
+      rows = []
+      visit = lambda do |node|
+        if node.is_a?(Psych::Nodes::Mapping)
+          node.children.each_slice(2) do |key, value|
+            if value.is_a?(Psych::Nodes::Scalar) || value.is_a?(Psych::Nodes::Sequence)
+              rows << key.start_line
+            end
+            visit.call(value)
+          end
+        else
+          (node.children || []).each { |child| visit.call(child) }
+        end
+      end
+      visit.call(Psych.parse_stream(STDIN.read))
+      puts JSON.generate(rows)
+    """], input=source, capture_output=True, text=True)
+    assert result.returncode == 0, "YAML 无法解析；原文不输出"
+    lines = source.splitlines()
+    for line in json.loads(result.stdout):
+        previous = line - 1
+        while previous >= 0 and not lines[previous].strip():
+            previous -= 1
+        assert previous >= 0 and lines[previous].lstrip().startswith("#"), f"参数缺少说明，行 {line + 1}"
+
+
+def effective_configuration(imports, templates):
+    """合并映射并保留列表整体及标量类型，用于核对配置移动前后的有效值。"""
+    def merge(left, right):
+        if not isinstance(left, dict) or not isinstance(right, dict):
+            return right
+        combined = dict(left)
+        for key, value in right.items():
+            combined[key] = merge(combined[key], value) if key in combined else value
+        return combined
+    result = {}
+    for item in imports:
+        result = merge(result, yaml_json(templates[import_dataid(item)]))
+    return result
+
+
+def check_consolidation_baseline(baseline_file):
+    """核对 Git 外的整理前模板快照；不接触真实 Nacos 值，不连接服务。"""
+    before = json.loads(baseline_file.read_text())
+    after = {file.name: file.read_text() for file in CONFIG.iterdir()}
+    retired = json.loads((CONFIG.parent / "retired-dataids.json").read_text())["retired"]
+    removed = {item["dataId"] for item in retired}
+    expected_profiles = {f"{service}/src/main/resources/application-{environment}.yml"
+                         for service in SERVICES for environment in ("dev", "test", "prod")}
+    assert set(before["profiles"]) == expected_profiles, "旧快照必须覆盖全部 27 个 profile"
+    assert set(before["templates"]) == set(after) | removed, "旧快照必须覆盖全部新旧 dataId"
+    for relative, original in before["profiles"].items():
+        old = yaml_json(original)
+        new = yaml_json((ROOT / relative).read_text())
+        old_imports = old["spring"]["config"].pop("import")
+        new_imports = new["spring"]["config"].pop("import")
+        assert json.dumps(old, sort_keys=True) == json.dumps(new, sort_keys=True), relative + " 引导键发生变化"
+        assert new_imports == [item for item in old_imports if import_dataid(item) not in removed], relative + " 导入次序或选项改变"
+        old_ids = [import_dataid(item) for item in old_imports]
+        for entry in retired:
+            if entry["dataId"] not in old_ids:
+                continue
+            if entry["replacement"] is None:
+                assert yaml_json(before["templates"][entry["dataId"]]) == {}, "移除项不是空映射"
+            else:
+                index = old_ids.index(entry["dataId"])
+                assert old_ids[index + 1] == entry["replacement"], "被合并项原先并不相邻"
+                assert old_imports[index].replace(entry["dataId"], entry["replacement"], 1) == old_imports[index + 1], "导入刷新或必需性不同"
+        old_effective = effective_configuration(old_imports, before["templates"])
+        new_effective = effective_configuration(new_imports, after)
+        if "rag-spring.yaml" in [import_dataid(item) for item in new_imports]:
+            hybrid = new_effective["rag"]["vector"].pop("hybrid-write-enabled")
+            assert hybrid == "${GITHUB_RAG_HYBRID_WRITE_ENABLED:false}", "新增混合写入开关必须默认关闭"
+        assert json.dumps(old_effective, sort_keys=True) == json.dumps(new_effective, sort_keys=True), relative + " 有效配置变化"
+    print(f"PASS: {len(before['profiles'])} profile 的参数类型、值、列表及保留导入次序等价；仅新增默认关闭的混合写入开关")
 
 
 def route_destination(path, routes):
@@ -62,6 +171,7 @@ def check_frontend_routes(root, routes):
 
 def check():
     imported = set()
+    consumers = {}
     for service in SERVICES:
         resources = ROOT / service / "src/main/resources"
         main = yaml_json((resources / "application.yml").read_text())
@@ -78,11 +188,20 @@ def check():
             for kind in ("config", "discovery"):
                 assert nacos[kind]["namespace"] == "${custom.namespace}", file
                 assert nacos[kind]["server-addr"] == "${custom.nacos-ip}", file
-            imported.update(re.findall(r"nacos:([^?\"\n]+)", text))
+            imports = value["spring"]["config"]["import"]
+            ids = [import_dataid(item) for item in imports]
+            assert len(ids) == len(set(ids)), file
+            imported.update(ids)
+            for name in ids:
+                consumers.setdefault(name, set()).add(service)
     assert imported == {file.name for file in CONFIG.iterdir()}, imported
     for file in CONFIG.iterdir():
         yaml_json(file.read_text())
+        check_parameter_comments(file.read_text())
         assert not re.search(r"cfbf4c42-|meilianshuke\.com|hz2y\.com", file.read_text()), file
+    check_catalog({file.name: file.read_text() for file in CONFIG.iterdir()},
+                  json.loads((CONFIG.parent / "catalog.json").read_text()),
+                  json.loads((CONFIG.parent / "retired-dataids.json").read_text()), consumers)
     gateway = yaml_json((CONFIG / "gateway-spring.yaml").read_text())
     routes = gateway["spring"]["cloud"]["gateway"]["server"]["webflux"]["routes"]
     frontend_paths = check_frontend_routes(ROOT, routes)
@@ -109,4 +228,9 @@ def check():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--baseline", type=Path, help="Git 外的整理前模板/profile JSON 快照")
+    args = parser.parse_args()
     check()
+    if args.baseline:
+        check_consolidation_baseline(args.baseline)

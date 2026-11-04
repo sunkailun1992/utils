@@ -1,4 +1,4 @@
-# 配置分类：服务框架
+# 配置分类：服务配置
 # dataId：gateway-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：网关路由、Redis 限流和浏览器 CORS 白名单。
 # 导入服务：gateway。
@@ -9,6 +9,7 @@ spring:
     gateway:
       server:
         webflux:
+          # 按列表顺序应用于全部路由；限流参数调整需核对 Redis 可用性与客户端突发需求。
           default-filters:
             # 全局 Redis 令牌桶限流过滤器，对所有路由生效。
             - name: RequestRateLimiter
@@ -21,6 +22,7 @@ spring:
                 redis-rate-limiter.requestedTokens: 1
                 # 使用网关已有的 IP key resolver；不直接信任任意代理头。
                 key-resolver: '#{@ipKeyResolver}'
+          # 按 order 升序匹配，数值相同时保留列表顺序；专属路径在 /api/** 兜底前。
           routes:
             # 路由唯一标识，便于诊断匹配结果。
             - id: github-user
@@ -28,6 +30,7 @@ spring:
               uri: lb://user
               # 路由匹配优先级，数值越小越先匹配；通配 AI 路由必须排在专属路由之后。
               order: 0
+              # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/auth/**,/oauth2/**,/.well-known/oauth-authorization-server,/.well-known/openid-configuration
@@ -37,9 +40,11 @@ spring:
               uri: lb://user
               # 路由匹配优先级，数值越小越先匹配；通配 AI 路由必须排在专属路由之后。
               order: 1
+              # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/user/**
+              # 按列表顺序变换请求路径；此处只去掉网关兼容前缀，不改写 Controller 原生路径。
               filters:
                 # 剥离一个外层服务前缀；下游 Controller 路径本身保持不变。
                 - StripPrefix=1
@@ -49,9 +54,11 @@ spring:
               uri: lb://message
               # 路由匹配优先级，数值越小越先匹配；通配 AI 路由必须排在专属路由之后。
               order: 2
+              # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/message/**
+              # 按列表顺序变换请求路径；此处只去掉网关兼容前缀，不改写 Controller 原生路径。
               filters:
                 # 剥离一个外层服务前缀；下游 Controller 路径本身保持不变。
                 - StripPrefix=1
@@ -61,9 +68,11 @@ spring:
               uri: lb://report
               # 路由匹配优先级，数值越小越先匹配；通配 AI 路由必须排在专属路由之后。
               order: 3
+              # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/report/**
+              # 按列表顺序变换请求路径；此处只去掉网关兼容前缀，不改写 Controller 原生路径。
               filters:
                 # 剥离一个外层服务前缀；下游 Controller 路径本身保持不变。
                 - StripPrefix=1
@@ -73,6 +82,7 @@ spring:
               uri: lb://mcp
               # 路由匹配优先级，数值越小越先匹配；通配 AI 路由必须排在专属路由之后。
               order: 4
+              # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/api/mcp/**,/.well-known/oauth-protected-resource/**
@@ -82,6 +92,7 @@ spring:
               uri: lb://ai-agent
               # 路由匹配优先级，数值越小越先匹配；通配 AI 路由必须排在专属路由之后。
               order: 5
+              # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/api/agents/**
@@ -91,6 +102,7 @@ spring:
               uri: lb://ai-memory
               # 路由匹配优先级，数值越小越先匹配；通配 AI 路由必须排在专属路由之后。
               order: 6
+              # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/api/ai-memory/**
@@ -100,6 +112,7 @@ spring:
               uri: lb://rag
               # 路由匹配优先级，数值越小越先匹配；通配 AI 路由必须排在专属路由之后。
               order: 7
+              # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/api/rag/**
@@ -109,11 +122,13 @@ spring:
               uri: lb://ai
               # 路由匹配优先级，数值越小越先匹配；通配 AI 路由必须排在专属路由之后。
               order: 8
+              # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/api/**
 gateway:
   cors:
+    # 浏览器跨域来源白名单；携带认证时必须使用精确 Origin，不能改成通配符。
     allowed-origins:
       # 允许携带凭据的浏览器 Origin，必须精确匹配协议、主机、端口，不使用 *。
       - http://localhost:8000

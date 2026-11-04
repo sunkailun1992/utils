@@ -1,7 +1,0 @@
-# 配置分类：服务专属
-# dataId：message.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：message 当前无专属业务配置，保留空映射供既有 import 使用。
-# 导入服务：message。
-# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
-
-{}

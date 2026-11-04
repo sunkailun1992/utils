@@ -1,4 +1,4 @@
-# 配置分类：服务框架
+# 配置分类：服务配置
 # dataId：report-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：report 的主/灰度数据源；均引用个人 schema。
 # 导入服务：report。

@@ -1,6 +1,6 @@
-# 配置分类：服务框架
+# 配置分类：服务配置
 # dataId：user-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：user 的主/灰度数据源；均引用个人 schema。
+# 用途：用户服务主/灰度数据源与 OAuth 授权服务器公开入口。
 # 导入服务：user。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
@@ -22,3 +22,9 @@ mysql-gray:
   password: ${mysql.password}
   # 灰度数据源复用主数据源的MySQL JDBC 驱动类。
   driverClassName: ${mysql.driverClassName}
+
+# 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
+oauth:
+  authorization-server:
+    # OAuth 对外公开入口，用于授权服务器元数据；通过网关访问时保持一致。
+    external-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}

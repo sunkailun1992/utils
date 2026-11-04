@@ -9,6 +9,7 @@ dromara:
   x-file-storage:
     # 新文件默认存储平台；必须匹配下面的 platform，历史文件按记录的平台读取。
     default-platform: minio-private
+    # MinIO 平台实例列表；每个 platform 唯一，增加实例不会自动迁移历史文件。
     minio:
       # MinIO 平台唯一标识，与默认平台及数据库 storage_platform 对应。
       - platform: minio-private
