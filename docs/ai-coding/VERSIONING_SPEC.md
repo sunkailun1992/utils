@@ -8,7 +8,7 @@ Java / Spring / Gradle 新项目默认使用以下基础坐标：
 
 ```groovy
 group = 'com'
-version = '1.5.1'
+version = '1.5.2'
 ```
 
 - 个人 GitHub 公共包统一使用 `com:utils` 和 `com:rpc-api`；美联使用 `com.kellen:utils` 和 `com.kellen:rpc-api`。同一个阿里云 Maven 仓库按 group 隔离制品路径，两边独立递增版本。不得把公司同步过来的 `com.kellen` group 或依赖坐标带入个人项目。

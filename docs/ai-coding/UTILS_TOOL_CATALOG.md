@@ -85,6 +85,7 @@
 - `com.kellen.utils.methods.MethodsParam`：方法参数模型。
 - `com.kellen.utils.methods.MethodsBean`：方法校验配置模型。
 - `com.kellen.log.*`：请求日志、RPC 日志、Elasticsearch 日志相关实体、Mapper、Service。
+- ES 请求日志索引由 `elasticsearch.request-log-index` 指定，未配置时保留 `request_log`；个人开发环境使用 `github_dev_request_log`，不能仅依赖 Nacos namespace 隔离共享 ES 数据。
 
 使用原则：
 

@@ -37,5 +37,8 @@ jobs:
       - name: Test
         run: ./gradlew test
 
+      - name: Migration route contract tests
+        run: python3 -m unittest discover -s ops/github-dev/tests -v
+
       - name: Secret warning scan
         run: bash scripts/check-secrets.sh

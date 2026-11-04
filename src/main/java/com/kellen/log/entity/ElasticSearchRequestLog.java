@@ -13,12 +13,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDateTime;
 
 /**
- *
- * @author 孙凯伦
- * 
+ * 请求审计日志；共享 ES 的环境通过配置选择独立索引。
+ * 未配置覆盖值时保留既有消费者的 request_log，不迁移或删除历史日志。
  */
 @Data
-@Document(indexName = "request_log")
+@Document(indexName = "#{@environment.getProperty('elasticsearch.request-log-index', 'request_log')}")
 public class ElasticSearchRequestLog {
     @Id
     private String id;
