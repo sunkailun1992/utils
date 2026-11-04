@@ -1,6 +1,17 @@
+# 配置分类：共享变量
+# dataId：reuse-configuration.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：跨 dataId 引用的基础设施地址与 RPC 分组。
+# 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 custom:
+  # 开发 MySQL 主机；具体个人 schema 在各服务 -spring.yaml 中声明。
   infra-mysql-host: ${GITHUB_MYSQL_HOST}
+  # MySQL TCP 端口，默认 3306。
   infra-mysql-port: ${GITHUB_MYSQL_PORT:3306}
+  # 开发 Redis 主机；个人逻辑库在 redis.yaml 中声明。
   infra-redis-host: ${GITHUB_REDIS_HOST}
+  # Redis TCP 端口，默认 6379。
   infra-redis-port: ${GITHUB_REDIS_PORT:6379}
+  # 个人 RPC 分组，所有 provider/consumer 必须使用同一值。
   dubbo-group: GITHUB_DEV_DUBBO

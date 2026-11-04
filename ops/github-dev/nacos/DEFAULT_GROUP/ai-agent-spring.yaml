@@ -1,4 +1,11 @@
+# 配置分类：服务框架
+# dataId：ai-agent-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：ai-agent 的 Spring AI 模型实现选择。
+# 导入服务：ai-agent。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 spring:
   ai:
     model:
+      # Spring AI 聊天模型实现；具体模型与凭据见 ai-model-secrets.yaml。
       chat: google-genai

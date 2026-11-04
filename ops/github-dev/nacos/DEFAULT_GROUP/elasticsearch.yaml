@@ -1,10 +1,23 @@
+# 配置分类：共享基础设施
+# dataId：elasticsearch.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：Elasticsearch 连接及个人请求日志索引。
+# 导入服务：ai、ai-memory、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 elasticsearch:
+  # 个人请求日志索引名，隔离共用 ES 集群中的公司日志。
   request-log-index: github_dev_request_log
+  # ES HTTP 地址 host:port，不含协议；需与服务器版本、认证方式配套。
   url: ${GITHUB_ELASTICSEARCH_ADDRESS:localhost:9200}
+  # 连接认证用户名；引用私有环境或同一组件的公共连接配置。
   username: ${GITHUB_ELASTICSEARCH_USERNAME:}
+  # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
   password: ${GITHUB_ELASTICSEARCH_PASSWORD:}
 spring:
   elasticsearch:
+    # Spring ES 客户端地址，复用公共连接并补 http:// 协议。
     uris: http://${elasticsearch.url}
+    # 连接认证用户名；引用私有环境或同一组件的公共连接配置。
     username: ${elasticsearch.username}
+    # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
     password: ${elasticsearch.password}

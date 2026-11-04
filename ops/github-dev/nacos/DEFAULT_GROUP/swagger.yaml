@@ -1,8 +1,18 @@
+# 配置分类：安全与可观测性
+# dataId：swagger.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：OpenAPI 文档和 Swagger UI 暴露开关。
+# 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 swagger:
+  # 公共 Swagger 能力开关；默认关闭，开启前核对文档访问保护。
   enable: ${GITHUB_SWAGGER_ENABLED:false}
+  # 文档显示名默认使用当前 Spring 服务名。
   name: ${spring.application.name}
 springdoc:
   api-docs:
+    # Springdoc OpenAPI JSON 开关，与公共 Swagger 开关保持同源。
     enabled: ${GITHUB_SWAGGER_ENABLED:false}
   swagger-ui:
+    # Swagger UI 页面开关；关闭 UI 不可替代关闭 API 文档接口。
     enabled: ${GITHUB_SWAGGER_ENABLED:false}

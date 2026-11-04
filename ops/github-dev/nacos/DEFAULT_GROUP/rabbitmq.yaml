@@ -1,12 +1,25 @@
+# 配置分类：共享基础设施
+# dataId：rabbitmq.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：RabbitMQ 连接、独立 vhost 与消费监听器开关。
+# 导入服务：ai、ai-memory、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 spring:
   rabbitmq:
+    # RabbitMQ 主机，不带协议。
     host: ${GITHUB_RABBITMQ_HOST:localhost}
+    # AMQP 连接端口，默认 5672；不是 Web 管理端口。
     port: ${GITHUB_RABBITMQ_PORT:5672}
+    # 连接认证用户名；引用私有环境或同一组件的公共连接配置。
     username: ${GITHUB_RABBITMQ_USERNAME:}
+    # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
     password: ${GITHUB_RABBITMQ_PASSWORD:}
+    # 个人隔离 vhost，账号需具有该 vhost 的权限。
     virtual-host: ${GITHUB_RABBITMQ_VHOST:/github-dev}
     listener:
       simple:
+        # 关闭 Simple 消费监听器的自动启动，避免在开发环境意外消费消息。
         auto-startup: false
       direct:
+        # 关闭 Direct 消费监听器的自动启动；生产策略另行配置。
         auto-startup: false

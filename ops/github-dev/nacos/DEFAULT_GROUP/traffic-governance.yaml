@@ -1,9 +1,17 @@
+# 配置分类：安全与可观测性
+# dataId：traffic-governance.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：灰度治理开关与服务发现泳道元数据。
+# 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 traffic:
   governance:
+    # 关闭流量灰度治理；仍保留 discovery 泳道元数据供识别。
     enabled: false
 spring:
   cloud:
     nacos:
       discovery:
         metadata:
+          # 服务实例的个人开发泳道标签，不接受公网请求随意指定实例权重。
           traffic.lane: github-dev

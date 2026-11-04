@@ -1,4 +1,13 @@
+# 配置分类：共享 AI 协议
+# dataId：a2a.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：A2A 租户、提供方及协议入口约定。
+# 导入服务：ai、ai-agent、ai-memory、mcp、rag。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 custom:
+  # A2A 协议租户标识；仅供协议参与方使用，不等同于数据库租户编码。
   a2a-tenant: github-dev
+  # Agent 提供方组织标识，供参与方保持注册契约一致。
   a2a-provider-org: github-personal
+  # A2A 协议 URL 前缀；变更时需同时核对服务端与调用方。
   a2a-context-path: /a2a

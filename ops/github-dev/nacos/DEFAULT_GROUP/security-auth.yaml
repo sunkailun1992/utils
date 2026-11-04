@@ -1,22 +1,42 @@
+# 配置分类：安全与可观测性
+# dataId：security-auth.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：认证来源、数据权限与租户隔离。
+# 导入服务：ai-memory、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 security:
   auth:
+    # 启用公共认证上下文处理；不替代各接口的权限判断。
     enabled: true
+    # 关闭从普通请求头直接构造身份，避免伪造身份头。
     header-enabled: false
+    # 启用 JWT 身份解析，密钥和 issuer 见 security-jwt.yaml。
     jwt-enabled: true
   data-permission:
+    # 启用数据权限拦截；具体用户、部门列需与各实体表一致。
     enabled: true
+    # 未单独声明表规则时使用的用户归属列。
     default-user-column: owner_user_id
+    # 未单独声明表规则时使用的部门归属列。
     default-dept-column: dept_id
     table-rules:
       auth_user:
+        # 该表数据权限使用的用户归属列；必须与实际表结构一致。
         user-column: id
+        # 该表数据权限使用的部门归属列；必须与实际表结构一致。
         dept-column: dept_id
       auth_dept:
+        # 该表数据权限使用的用户归属列；必须与实际表结构一致。
         user-column: owner_user_id
+        # 该表数据权限使用的部门归属列；必须与实际表结构一致。
         dept-column: id
       auth_role:
+        # 该表数据权限使用的用户归属列；必须与实际表结构一致。
         user-column: owner_user_id
+        # 该表数据权限使用的部门归属列；必须与实际表结构一致。
         dept-column: dept_id
 tenant:
+  # 启用租户隔离，租户上下文由可信认证链提供。
   enabled: true
+  # 缺少租户上下文时不得自动忽略租户隔离。
   ignore-without-tenant: false

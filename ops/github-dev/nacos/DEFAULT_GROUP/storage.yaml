@@ -1,13 +1,28 @@
+# 配置分类：共享基础设施
+# dataId：storage.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：X File Storage 统一入口与私有 MinIO 平台。
+# 导入服务：ai。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 # X File Storage is the only new-file storage entry. The bucket remains private.
 dromara:
   x-file-storage:
+    # 新文件默认存储平台；必须匹配下面的 platform，历史文件按记录的平台读取。
     default-platform: minio-private
     minio:
+      # MinIO 平台唯一标识，与默认平台及数据库 storage_platform 对应。
       - platform: minio-private
+        # 启用此平台实例；并不改变 bucket 的公开/私有访问策略。
         enable-storage: true
+        # MinIO S3 API 基址，包含协议和 API 端口，不使用管理控制台地址。
         end-point: ${GITHUB_MINIO_ENDPOINT}
+        # MinIO 访问标识，由私有环境注入；需要目标 bucket 的必要权限。
         access-key: ${GITHUB_MINIO_ACCESS_KEY}
+        # MinIO 访问密钥，由私有环境注入，不返回给前端。
         secret-key: ${GITHUB_MINIO_SECRET_KEY}
+        # 个人私有 bucket，需预先创建并授权；不能指向公司历史对象库。
         bucket-name: ${GITHUB_MINIO_BUCKET:kellen-github-dev}
+        # 平台级对象路径前缀；空值不额外加前缀，AI 业务前缀见 ai.oss.base-dir。
         base-path: ''
+        # 自定义文件访问域名；私有 bucket 保持空值，通过授权或短时签名读取。
         domain: ''

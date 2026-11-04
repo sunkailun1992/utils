@@ -1,4 +1,13 @@
+# 配置分类：共享基础设施
+# dataId：qdrant.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：Qdrant gRPC 连接；RAG HTTP 客户端另见 rag.yaml。
+# 导入服务：ai、ai-memory、rag。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 qdrant:
+  # Qdrant 服务主机，不带协议和路径。
   host: ${GITHUB_QDRANT_HOST:localhost}
+  # Qdrant gRPC 端口，默认 6334；HTTP REST 通常使用 6333。
   port: ${GITHUB_QDRANT_GRPC_PORT:6334}
+  # 模型或服务访问密钥；仅由私有环境注入，空占位不表示已完成接入。
   api-key: ${GITHUB_QDRANT_API_KEY:}

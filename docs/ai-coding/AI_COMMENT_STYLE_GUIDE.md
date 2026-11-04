@@ -31,7 +31,7 @@
 
 - Gradle 注释解释插件、依赖、版本、发布任务和消费者兼容原因，不解释 DSL 语法。
 - Shell 注释解释安全边界、错误处理、密钥脱敏、退出码和幂等策略，不解释普通命令。
-- Properties 生成类配置一般不加注释；确需修改时说明版本、安全和构建兼容影响。
+- 非 Nacos 的 Properties 生成类配置一般不加注释；确需修改时说明版本、安全和构建兼容影响。
 - Markdown 文档把关键规则写成可见正文，不用隐藏注释承载规范。
 - 发现 Maven 仓库凭据、SDK 凭证、生产配置或个人路径时，只报告文件行号和风险，不自动替换、删除或移动。
 
@@ -59,3 +59,7 @@
 - [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html)
 - [CommonMark Specification](https://spec.commonmark.org/current/)
 - Robert C. Martin《Clean Code》第 4 章 Comments：注释是次优手段，优先让代码自解释；注释掉的代码应删除。
+
+## Nacos 配置注释
+
+Nacos 配置、模板和私有渲染结果必须按 [Nacos 注释与归类规范](NACOS_COMMENT_SPEC.md) 写明文件职责和每个可调参数的用途、单位、空值/开关影响；不适用“生成类配置一般不加注释”的例外。整理必须保值，并验证渲染与发布读回仍保留注释。

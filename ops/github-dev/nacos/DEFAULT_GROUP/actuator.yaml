@@ -1,11 +1,20 @@
+# 配置分类：安全与可观测性
+# dataId：actuator.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：管理端点访问令牌、暴露范围与健康详情策略。
+# 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 security:
   actuator:
+    # 管理端点的受控访问令牌；空值不是放行授权，真实值由私有环境注入。
     token: ${GITHUB_ACTUATOR_TOKEN:}
 management:
   endpoints:
     web:
       exposure:
+        # 允许通过 HTTP 暴露的 Actuator 端点列表；不开放 env/configprops 等敏感端点。
         include: health,info
   endpoint:
     health:
+      # 健康检查详情展示策略；never 不向请求方返回组件连接细节。
       show-details: never

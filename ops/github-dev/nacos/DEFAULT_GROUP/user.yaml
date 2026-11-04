@@ -1,3 +1,10 @@
+# 配置分类：服务专属
+# dataId：user.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：OAuth 授权服务器面向客户端的公开入口。
+# 导入服务：user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 oauth:
   authorization-server:
+    # OAuth 对外公开入口，用于授权服务器元数据；通过网关访问时保持一致。
     external-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}

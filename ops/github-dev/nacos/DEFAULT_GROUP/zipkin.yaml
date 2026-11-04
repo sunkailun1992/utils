@@ -1,3 +1,10 @@
+# 配置分类：安全与可观测性
+# dataId：zipkin.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：Micrometer 链路追踪开关。
+# 导入服务：ai、ai-memory、gateway、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 management:
   tracing:
+    # 关闭链路追踪；启用前配套采样和导出端点。
     enabled: false

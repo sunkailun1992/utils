@@ -1,4 +1,12 @@
+# 配置分类：安全与可观测性
+# dataId：logging.yml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：全局与应用包日志等级。
+# 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 logging:
   level:
+    # 默认日志级别；提高到 DEBUG/TRACE 前评估日志量与敏感信息泄露。
     root: INFO
+    # 应用 Java 包日志级别；包名与 Maven group 的环境隔离无关。
     com.kellen: INFO

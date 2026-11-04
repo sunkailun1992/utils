@@ -1,7 +1,18 @@
+# 配置分类：服务专属
+# dataId：rag.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：RAG 向量库隔离和嵌入模型连接。
+# 导入服务：rag。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 rag:
   vector:
+    # 启用 RAG 向量能力；实际检索和嵌入仍需 Qdrant 与模型服务可用。
     enabled: true
+    # RAG 使用 Qdrant HTTP REST 入口 6333，与共享 gRPC 6334 区分。
     qdrant-url: http://${GITHUB_QDRANT_HOST}:6333
+    # 个人文档向量集合名，避免读取或覆盖公司集合。
     collection-name: github_dev_rag
+    # 嵌入模型的 OpenAI 兼容 API 基址；保留 /v1 路径契约。
     qwen-base-url: ${GITHUB_RAG_QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    # RAG 嵌入模型密钥；真实值由私有环境注入，不写入 Git。
     qwen-api-key: ${GITHUB_RAG_QWEN_API_KEY}

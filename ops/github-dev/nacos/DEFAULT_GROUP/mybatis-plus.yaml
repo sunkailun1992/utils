@@ -1,13 +1,26 @@
+# 配置分类：共享基础设施
+# dataId：mybatis-plus.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 用途：MyBatis-Plus 映射、逻辑删除和 MyBatis-Mate 授权。
+# 导入服务：ai、ai-memory、mcp、message、rag、report、user。
+# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+
 ---
 mybatis-plus:
+  # 枚举扫描配置；保留既有键，升级 MyBatis-Plus 时需核对版本是否仍消费此键。
   typeEnumsPackage: com.kellen.*.entity.enums
+  # 实体类型别名扫描包，供 MyBatis 映射解析。
   type-aliases-package: com.kellen.*.entity
   global-config:
+    # 历史字段策略键；保值保留，是否生效须以当前框架绑定结果为准。
     field-strategy: 1
     db-config:
+      # 逻辑删除标记值；1 表示已删除，需与实体和数据库约定一致。
       logic-delete-value: 1
+      # 逻辑未删除标记值；0 表示正常记录。
       logic-not-delete-value: 0
 mybatis-mate:
   cert:
+    # MyBatis-Mate 授权 grant；仅通过私有环境注入，禁止写入注释和日志。
     grant: "${GITHUB_MYBATIS_GRANT}"
+    # MyBatis-Mate license；与 grant 配套，禁止提交真实授权内容。
     license: "${GITHUB_MYBATIS_LICENSE}"
