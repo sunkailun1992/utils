@@ -1,10 +1,12 @@
 """验证原生回放输入/断言器；本单测不冒充 Collector 已运行。"""
 import copy
+import io
 import json
 import os
 from pathlib import Path
 import stat
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -12,6 +14,27 @@ import verify_collector_native as native
 
 
 class NativeFixtureContractTest(unittest.TestCase):
+    def test_nested_attributes_use_otlp_anyvalue_kvlist_encoding(self):
+        # OTLP AnyValue 的 map 字段名是 kvlistValue；未知 mapValue 会被 receiver 读成 Empty。
+        encoded = native.value({'service': {'name': 'fixture-java'}})
+        self.assertEqual(encoded, {'kvlistValue': {'values': [{
+            'key': 'service', 'value': {'kvlistValue': {'values': [{
+                'key': 'name', 'value': {'stringValue': 'fixture-java'}}]}}}]}})
+
+    def test_timeout_keeps_collector_diagnostics_after_clean_shutdown(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = native.prepare(temporary)
+            process = SimpleNamespace(poll=lambda: None, returncode=0,
+                                      communicate=lambda timeout=None: ('synthetic processor failure\n', None))
+            output = io.StringIO()
+            with patch.object(native.subprocess, 'Popen', return_value=process), \
+                    patch.object(native.subprocess, 'run'), \
+                    patch.object(native.time, 'monotonic', side_effect=[0, 31]), \
+                    patch('sys.stdout', output):
+                with self.assertRaisesRegex(AssertionError, 'produced no valid output'):
+                    native.native_case(root, 'timeout', 'collector-agent.yaml', {}, native.assert_logs)
+            self.assertIn('synthetic processor failure', output.getvalue())
+
     def test_synthetic_inputs_allow_non_owner_read_under_private_umask_without_widening_siblings(self):
         with tempfile.TemporaryDirectory() as temporary:
             parent = Path(temporary)

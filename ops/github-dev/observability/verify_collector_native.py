@@ -37,7 +37,7 @@ TRACE_EXPECTED = {
 
 def value(item):
     if isinstance(item, dict):
-        return {'mapValue': {'values': attributes(item)}}
+        return {'kvlistValue': {'values': attributes(item)}}
     if isinstance(item, int):
         return {'intValue': str(item)}
     return {'stringValue': item}
@@ -187,6 +187,7 @@ def native_case(directory, case, base, overlay, assertion):
     command = common + [IMAGE, '--config=/config/' + base, '--config=/fixture/' + overlay_path.name]
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     deadline = time.monotonic() + 30
+    failed = False
     try:
         while time.monotonic() < deadline:
             if process.poll() is not None:
@@ -198,6 +199,9 @@ def native_case(directory, case, base, overlay, assertion):
             except (FileNotFoundError, json.JSONDecodeError, AssertionError):
                 time.sleep(0.1)
         raise AssertionError(f'Collector fixture {case} produced no valid output')
+    except Exception:
+        failed = True
+        raise
     finally:
         subprocess.run(['docker', 'stop', '--time', '3', name], capture_output=True, timeout=10)
         try:
@@ -205,7 +209,8 @@ def native_case(directory, case, base, overlay, assertion):
         except subprocess.TimeoutExpired:
             process.kill()
             logs, _ = process.communicate()
-        if process.returncode not in (0, None):
+        # 回放失败后主动停止可能正常退出，仍需保留合成 fixture 的 processor 诊断。
+        if failed or process.returncode not in (0, None):
             print(logs)
 
 
