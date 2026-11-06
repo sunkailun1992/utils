@@ -24,11 +24,14 @@ services:
   jaeger:
     image: ${JAEGER_IMAGE:-jaegertracing/jaeger:2.23.0}
     command: ["--config=/etc/jaeger/config.yaml"]
+    ports:
+      # 原生 UI 提供完整搜索；默认仅本机，远程访问须显式绑定已核私网并限制来源。
+      - "${OBS_BIND_IP:-127.0.0.1}:${JAEGER_UI_PORT:-16686}:16686"
     volumes:
       - ./jaeger.yaml:/etc/jaeger/config.yaml:ro
       # 官方镜像以10001运行且/tmp可写；挂官方VOLUME避免新目录root属主造成Badger拒绝。
       - jaeger-data:/tmp
-    # 不映射 OTLP/query 到宿主；Grafana 通过编排网络查询。
+    # OTLP 仅在编排网络接收；Grafana 仍通过内部 query 地址查询。
     mem_limit: 768m
     cpus: 0.5
     read_only: true
@@ -66,6 +69,8 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      # 官方插件的 v3 兼容入口仅覆盖健康/列表/Trace ID；完整搜索走原生 Jaeger UI。
+      GF_FEATURE_TOGGLES_ENABLE: jaegerEnableGrpcEndpoint
       # URL/凭据只从目标私有环境注入；默认 ES 仅是显式部署占位。
       GITHUB_ES_URL: ${GITHUB_ES_URL:?Set the existing private ES endpoint}
       # ES 查询专用 Authorization（如 ApiKey 编码值）；只注入 Grafana，与 Collector 写入 key 隔离。

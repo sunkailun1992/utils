@@ -49,6 +49,8 @@ exporters:
       block_on_overflow: false
     retry_on_failure:
       enabled: true
+      # 默认 max_interval=30s 超过本机15s重试预算，显式收紧以通过原生校验。
+      max_interval: 5s
       max_elapsed_time: 15s
 service:
   pipelines:

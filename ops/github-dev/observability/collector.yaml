@@ -47,9 +47,9 @@ exporters:
     endpoints: ["${env:GITHUB_ES_URL}"]
     api_key: ${env:GITHUB_ES_API_KEY}
     logs_index: github_dev_runtime_log
-    # 固定 raw 映射兼容已有 ES7.17；不是要求8.12+的默认otel/ecs映射。
+    # 0.164 已忽略 mapping.mode；只允许 raw 才能固定默认映射和普通索引合同。
     mapping:
-      mode: raw
+      allowed_modes: [raw]
     timeout: 2s
     sending_queue:
       enabled: true

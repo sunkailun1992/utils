@@ -2,7 +2,7 @@
   "uid": "github-dev-fleet",
   "title": "个人 Java 微服务总览",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "refresh": "15s",
   "time": {
     "from": "now-1h",
@@ -95,7 +95,7 @@
     },
     {
       "id": 5,
-      "title": "Collector导出失败",
+      "title": "Collector导出失败（含ES逐文档）",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -110,7 +110,13 @@
       "targets": [
         {
           "expr": "rate(otelcol_exporter_send_failed_spans[5m])",
-          "legendFormat": "{{exporter}}"
+          "legendFormat": "{{exporter}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by(outcome,error_type)(rate(otelcol_elasticsearch_docs_processed{outcome!=\"success\"}[5m]))",
+          "legendFormat": "ES {{outcome}} {{error_type}}",
+          "refId": "B"
         }
       ]
     },
@@ -197,6 +203,43 @@
           "legendFormat": "{{stage}}"
         }
       ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "jaeger_ui_url",
+        "type": "textbox",
+        "label": "Jaeger搜索地址",
+        "description": "浏览器可达的原生Jaeger地址；远程部署填写已核私网或受保护入口",
+        "query": "http://localhost:16686",
+        "current": {
+          "text": "http://localhost:16686",
+          "value": "http://localhost:16686"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "http://localhost:16686",
+            "value": "http://localhost:16686"
+          }
+        ],
+        "hide": 0,
+        "skipUrlSync": false
+      }
+    ]
+  },
+  "links": [
+    {
+      "type": "link",
+      "title": "完整链路搜索（Jaeger）",
+      "url": "${jaeger_ui_url:raw}/search",
+      "targetBlank": true,
+      "includeVars": false,
+      "keepTime": false,
+      "asDropdown": false,
+      "tags": [],
+      "tooltip": "按服务、标签和时间搜索；Grafana Jaeger数据源用于Trace ID查询"
     }
   ]
 }

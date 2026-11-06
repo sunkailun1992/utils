@@ -45,7 +45,17 @@ docker compose run --rm --no-deps jaeger validate --config=/etc/jaeger/config.ya
 
 原生component校验在目标镜像中执行，YAML可解析不能替代它。
 
-启动仅此独立项目：`docker compose up -d`。不要运行`down -v`，不要覆盖业务编排。Grafana默认宿主13000、Collector默认14318，仅loopback绑定；跨主机必须显式私网绑定和网络访问源限制。Jaeger、Prometheus不映射宿主端口，Grafana走内部网络。
+启动仅此独立项目：`docker compose up -d`。不要运行`down -v`，不要覆盖业务编排。Grafana默认宿主13000、Collector默认14318、Jaeger原生UI默认16686，均仅loopback绑定；跨主机必须显式私网绑定和网络访问源限制。`JAEGER_UI_PORT`可覆盖UI宿主端口；Prometheus和Jaeger OTLP不映射宿主端口，Grafana仍走内部网络查询。
+
+## Jaeger兼容与完整链路搜索
+
+当前固定Jaeger 2.23.0已移除旧的服务列表与条件搜索HTTP接口；Grafana 13.3.0附带的官方Jaeger插件13.0.5仍有调用旧接口的路径。Compose通过`GF_FEATURE_TOGGLES_ENABLE=jaegerEnableGrpcEndpoint`启用官方实验性v3兼容入口，使数据源健康检查、服务/操作列表和Trace ID查询使用v3。数据源URL保持内部地址`http://jaeger:16686`，不能追加`/api/v3`。
+
+该开关没有迁移插件的`Search`和依赖图查询路径，不能据健康检查成功宣称Grafana内完整条件搜索已支持。按服务、标签、耗时和时间范围搜索请使用看板顶部的“完整链路搜索（Jaeger）”，进入Jaeger原生UI；Grafana Explore用于输入已知Trace ID查看链路。保留当前Jaeger版本和数据卷，无需降级或迁移既有trace。兼容范围依据[官方插件13.0.5查询实现](https://github.com/grafana/grafana-jaeger-datasource/blob/v13.0.5/pkg/jaeger/querydata.go)与[服务/操作列表路由](https://github.com/grafana/grafana-jaeger-datasource/blob/v13.0.5/pkg/jaeger/callresource.go)。
+
+看板的“Jaeger搜索地址”文本变量默认`http://localhost:16686`，这是打开看板的浏览器所在主机。浏览器与观测服务不在同一主机时，填写浏览器可达的已核私网地址或已有受保护入口；改变`JAEGER_UI_PORT`后也要同步填写对应端口。这里不自动读取Compose环境，不在公共模板中保存真实私网地址。Jaeger原生UI默认没有登录保护，保持loopback，或仅向受信私网来源开放；本模板不创建公网入口或新增反向代理。
+
+现场验收需经受认证Collector送入一条仅含有限元数据的合成span，再通过Grafana数据源实际查回同一Trace ID，并验证服务/操作列表及原生UI条件搜索命中；还要核对运行日志到ES的同trace关联。配置检查与HTTP健康成功各自只证明对应阶段，不能替代这组读回。
 
 ## Java与Python接入
 
@@ -71,7 +81,9 @@ Java文件输出需在运行环境显式设置`LOGGING_FILE_NAME`到本机安全
 
 `collector-agent.yaml`读取`FLEET_LOG_DIR/*.json`/`*.jsonl`，`elapsed_ms/result`映射为`duration_ms/outcome`。从每条 Java/Python 嵌套 `service` 中只提取名称、版本、环境到 record attributes，再由 `groupbyattrs` 按三字段关联到各自 resource，随后 batch；不能在逐条转换时改同批共享 resource。没有活动 trace 的启动/后台日志也保留这三字段，缺 trace 不补造。通过独立OTLP凭据送中心。当前模板为短时有界内存队列；进程重启/队列满可丢遥测，不能宣称零丢失。部署前核文件权限、轮转行为和offset持久化需求，禁止同一日志从stdout和文件重复采集。
 
-中央ES exporter固定`raw`映射兼容ES7.17/8/9，不使用要求8.12+的默认otel/ecs映射。实际版本、认证、索引模板/生命周期先核；不为了监控强升ES。导出schema的`@timestamp`、`TraceId/SpanId/SeverityText`与白名单自定义`trace_id/span_id/event`分清，Grafana使用实际字段。
+中央ES exporter通过`mapping.allowed_modes: [raw]`限定唯一映射，兼容ES7.17/8/9，并保留普通静态索引`github_dev_runtime_log`。固定Collector 0.164.0已忽略`mapping.mode`，仅写`mode: raw`会继续默认使用`otel`，可能要求data stream而导致逐文档拒绝；不能靠配置可解析推定raw已生效。不要放开其他mapping模式改变已审计输出合同，也不为观测新建data stream或升级既有ES。实际版本、认证、索引模板/生命周期先核。导出schema的`@timestamp`、`TraceId/SpanId/SeverityText`与白名单自定义`trace_id/span_id/event`分清，Grafana使用实际字段。[官方0.164映射配置](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.164.0/exporter/elasticsearchexporter/README.md#elasticsearch-document-mapping)
+
+验收以真实索引读回及`otelcol_elasticsearch_docs_processed`的逐文档`outcome`为准。Bulk HTTP 200仍可能逐条拒绝，此时通用`sent_log_records`增长、`send_failed`为零不代表已入库；检查`outcome`、`http_response_status_code`、`error_type`，要求安全合成日志成功写入精确索引，并通过ES与Grafana读回同一trace。既有“Collector导出失败（含ES逐文档）”面板同时展示trace导出失败与ES文档非success速率。诊断只读取指标和错误元数据，保持请求/响应正文、失败文档输入日志关闭；没有真实文档命中不能宣称日志链路已验收。[官方bulk逐文档处理](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.164.0/exporter/elasticsearchexporter/bulkindexer.go)
 
 部署前先按 [ES mapping 准备步骤](es/README.md) 只读核现有审计索引。实体 Keyword 注解和应用重启不会自动给已存在索引补字段；本仓只提供 additive mapping JSON 与新运行日志索引模板，不执行 ES 写入。
 
