@@ -95,3 +95,38 @@ class NativeFixtureContractTest(unittest.TestCase):
                 output.write_text(json.dumps(mutated) + '\n')
                 with self.assertRaises(AssertionError):
                     native.assert_logs(output)
+
+    def test_central_allowlist_preserves_actual_engine_result_contract(self):
+        collector = (native.ROOT / 'collector.yaml').read_text()
+        self.assertIn('"rag.result"', collector)
+        self.assertNotIn('"rag.outcome"', collector)
+
+    def test_trace_assertion_rejects_missing_python_results_secrets_and_resource_crossing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = native.prepare(temporary)
+            payload = json.loads((root / 'traces.jsonl').read_text())
+            for resource in payload['resourceSpans']:
+                resource['resource']['attributes'] = [field for field in resource['resource']['attributes']
+                                                       if field['key'] != 'private']
+                for scope in resource['scopeSpans']:
+                    for span in scope['spans']:
+                        span['attributes'] = [field for field in span['attributes']
+                                              if field['key'] not in {'private', 'url.full'}]
+                        span.get('status', {}).pop('message', None)
+                        span['events'] = []
+            output = root / 'sanitized.jsonl'
+            output.write_text(json.dumps(payload) + '\n')
+            native.assert_traces(output)
+            for mutation in ('result', 'secret', 'resource'):
+                candidate = copy.deepcopy(payload)
+                python = candidate['resourceSpans'][1]
+                span = python['scopeSpans'][0]['spans'][0]
+                if mutation == 'result':
+                    span['attributes'] = [field for field in span['attributes'] if field['key'] != 'rag.result']
+                elif mutation == 'secret':
+                    span['attributes'] += native.attributes({'url.full': native.SECRET})
+                else:
+                    python['resource']['attributes'] = candidate['resourceSpans'][0]['resource']['attributes']
+                output.write_text(json.dumps(candidate) + '\n')
+                with self.subTest(mutation=mutation), self.assertRaises(AssertionError):
+                    native.assert_traces(output)

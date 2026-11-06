@@ -89,3 +89,18 @@ class StructuredLoggingBaselineTests(unittest.TestCase):
         for mutation in mutations:
             with self.subTest(path=mutation[0]), self.assertRaisesRegex(AssertionError, "structured logging"):
                 self.verify(mutation)
+
+    def test_histogram_guard_accepts_only_exact_approved_leaf_and_type(self):
+        path = self.config / 'actuator.yaml'
+        original = verifier.yaml_json(path.read_text())
+        for distribution in (
+                {'percentiles-histogram': {'http.server.requests': False}},
+                {'percentiles-histogram': {'http.server.requests': 'true'}},
+                {'percentiles-histogram': {'http.server.requests': 1}},
+                {'percentiles-histogram': {'http.server.requests': True, 'all': True}},
+                {'percentiles-histogram': {'http.server.requests': True}, 'percentiles': {'all': 0.95}}):
+            candidate = copy.deepcopy(original)
+            candidate['management']['metrics']['distribution'] = distribution
+            path.write_text(json.dumps(candidate))
+            with self.subTest(distribution=distribution), self.assertRaises(AssertionError):
+                self.verify()

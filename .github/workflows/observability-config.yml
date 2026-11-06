@@ -52,3 +52,25 @@ jobs:
       - name: Replay privacy and service grouping through pinned Collector
         working-directory: ops/github-dev/observability
         run: python3 verify_collector_native.py
+
+  java-privacy:
+    name: Actual Java agent egress privacy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Test pinned agent, API bridge and pre-Collector OTLP bytes
+        run: ./gradlew -p ops/github-dev/observability/agent-extension clean test runtimeChecksums --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: java-privacy-egress-evidence
+          path: |
+            ops/github-dev/observability/agent-extension/build/test-results/test/
+            ops/github-dev/observability/agent-extension/build/egress-evidence/
+            ops/github-dev/observability/agent-extension/build/runtime/SHA256SUMS

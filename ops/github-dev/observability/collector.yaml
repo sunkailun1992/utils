@@ -23,7 +23,7 @@ processors:
       - context: span
         statements:
           # 丢弃自动埋点可能附带的 URL/query、SQL、prompt、身份与原始异常。
-          - keep_keys(attributes, ["http.request.method", "http.response.status_code", "http.route", "rpc.system", "rpc.service", "rpc.method", "db.system.name", "error.type", "rag.stage", "rag.mode", "rag.outcome", "rag.degraded", "rag.graph_augmented", "rag.graph_degraded", "rag.hit_count", "business.outcome", "outcome", "operation"])
+          - keep_keys(attributes, ["http.request.method", "http.response.status_code", "http.route", "rpc.system", "rpc.service", "rpc.method", "db.system.name", "error.type", "rag.stage", "rag.mode", "rag.result", "rag.degraded", "rag.graph_augmented", "rag.graph_degraded", "rag.hit_count", "business.outcome", "outcome", "operation"])
           - set(status.message, "")
       - context: spanevent
         statements:

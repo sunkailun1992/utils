@@ -129,7 +129,12 @@ def check_consolidation_baseline(baseline_file):
         new_management = new_effective.get("management", {})
         assert new_management["endpoints"]["web"]["exposure"]["include"] == "health,info,prometheus"
         new_management["endpoints"]["web"]["exposure"]["include"] = "health,info"
-        assert new_management.pop("metrics") == {"tags": {"application": "${spring.application.name}", "environment": "github-dev"}}
+        approved_metrics = {
+            "tags": {"application": "${spring.application.name}", "environment": "github-dev"},
+            "distribution": {"percentiles-histogram": {"http.server.requests": True}},
+        }
+        # 精确叶子与 JSON 类型匹配：拒绝全局 histogram、其它 meter 和 1/字符串冒充布尔值。
+        assert json.dumps(new_management.pop("metrics"), sort_keys=True) == json.dumps(approved_metrics, sort_keys=True), "metrics 存在未经核准的键、类型或值"
         for logger in ("org.springframework.ai.chat.model.MessageAggregator",
                        "org.springframework.ai.model.observation.ErrorLoggingObservationHandler"):
             assert new_effective["logging"]["level"].pop(logger) == "OFF", "Spring AI敏感异常日志必须关闭"

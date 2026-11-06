@@ -22,6 +22,8 @@ class ObservabilityConfigurationTests(unittest.TestCase):
         actuator = yaml_json((config / 'actuator.yaml').read_text())
         self.assertEqual(actuator['management']['endpoints']['web']['exposure']['include'], 'health,info,prometheus')
         self.assertEqual(actuator['security']['actuator']['token'], '${GITHUB_ACTUATOR_TOKEN:}')
+        self.assertEqual(actuator['management']['metrics']['distribution']['percentiles-histogram'],
+                         {'http.server.requests': True})
         complete_logging = yaml_json((config / 'logging.yml').read_text())['logging']
         for logger in ('org.springframework.ai.chat.model.MessageAggregator',
                        'org.springframework.ai.model.observation.ErrorLoggingObservationHandler'):

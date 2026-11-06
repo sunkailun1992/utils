@@ -18,6 +18,22 @@ EXPECTED = {
     'java-startup': ('fixture-java', '1.2.3', False),
 }
 
+# 与 rag_engine.observability 的 ObservationBoundary/operation 一致；名称和结果只取生产有限集合。
+PYTHON_CASES = [
+    ('POST /v1/retrievals', {'http.route': '/v1/retrievals', 'http.request.method': 'POST',
+                            'http.response.status_code': 200, 'rag.result': result})
+    for result in ('success', 'empty', 'degraded')
+] + [
+    ('rag.' + stage, {'rag.stage': stage, 'rag.result': result})
+    for stage in ('retrieval', 'graph_build')
+    for result in ('success', 'empty', 'degraded', 'cancelled', 'timeout', 'failed')
+]
+TRACE_EXPECTED = {
+    ('fixture-java', 'rag.retrieve', ''): {'business.outcome': 'matched'},
+    ('fixture-java', 'mcp.protocol', ''): {'business.outcome': 'protocol_error'},
+    **{('fixture-python', name, fields['rag.result']): fields for name, fields in PYTHON_CASES},
+}
+
 
 def value(item):
     if isinstance(item, dict):
@@ -77,6 +93,17 @@ def prepare(directory):
         'service.name': 'fixture-java', 'service.version': '1.2.3',
         'deployment.environment.name': 'github-dev', 'private': SECRET})},
         'scopeSpans': [{'spans': spans}]}]}
+    python_spans = []
+    for name, fields in PYTHON_CASES:
+        python_spans.append({'traceId': TRACE, 'spanId': SPAN, 'name': name,
+                             'startTimeUnixNano': '1793923200000000000',
+                             'endTimeUnixNano': '1793923200007000000',
+                             'attributes': attributes({**fields, 'private': SECRET, 'url.full': SECRET}),
+                             'status': {'code': 2 if fields['rag.result'] in {'failed', 'timeout'} else 0}})
+    traces['resourceSpans'].append({'resource': {'attributes': attributes({
+        'service.name': 'fixture-python', 'service.version': '0.2.4',
+        'deployment.environment.name': 'github-dev', 'private': SECRET})},
+        'scopeSpans': [{'spans': python_spans}]})
     (directory / 'traces.jsonl').write_text(json.dumps(traces) + '\n')
     (directory / 'otlp_token').write_text('synthetic-fixture-only')
     for path in (logs / 'runtime.jsonl', directory / 'grouping.jsonl',
@@ -119,17 +146,25 @@ def assert_traces(path):
     seen = {}
     for batch in batches:
         for resource in batch.get('resourceSpans', []):
-            assert decoded(resource['resource']['attributes']) == {
-                'service.name': 'fixture-java', 'service.version': '1.2.3',
-                'deployment.environment.name': 'github-dev'}
+            metadata = decoded(resource['resource']['attributes'])
+            service = metadata['service.name']
+            assert service in {'fixture-java', 'fixture-python'}
+            assert metadata == {'service.name': service,
+                                'service.version': '1.2.3' if service == 'fixture-java' else '0.2.4',
+                                'deployment.environment.name': 'github-dev'}
             for scope in resource.get('scopeSpans', []):
                 for span in scope.get('spans', []):
-                    seen[span['name']] = decoded(span.get('attributes', []))
+                    fields = decoded(span.get('attributes', []))
+                    # OTLP JSON 的 intValue 是字符串；保持整数比较明确。
+                    if 'http.response.status_code' in fields:
+                        fields['http.response.status_code'] = int(fields['http.response.status_code'])
+                    key = (service, span['name'], fields.get('rag.result', ''))
+                    assert key not in seen, 'duplicate fixture span'
+                    seen[key] = fields
                     assert span.get('status', {}).get('message', '') == ''
                     assert all(event['name'] == 'event' and not event.get('attributes')
                                for event in span.get('events', []))
-    assert seen == {'rag.retrieve': {'business.outcome': 'matched'},
-                    'mcp.protocol': {'business.outcome': 'protocol_error'}}, seen
+    assert seen == TRACE_EXPECTED, seen
 
 
 def native_case(directory, case, base, overlay, assertion):

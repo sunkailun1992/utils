@@ -23,6 +23,7 @@ datasources:
       # 新运行日志索引与原请求审计分离；先核mapping/权限再接入。
       index: github_dev_runtime_log
       timeField: '@timestamp'
+      httpHeaderName1: Authorization
       logMessageField: event
       # Collector raw映射使用官方固定字段；事件名来自白名单属性event。
       logLevelField: SeverityText
@@ -31,3 +32,6 @@ datasources:
           url: '$${__value.raw}'
           datasourceUid: fleet-jaeger
           title: 查看链路
+    secureJsonData:
+      # 私有环境注入完整 Authorization；空值兼容未启用认证的 ES，不提交实际密钥。
+      httpHeaderValue1: $GITHUB_ES_READ_AUTHORIZATION

@@ -19,6 +19,10 @@ management:
       # 健康检查详情展示策略；never 不向请求方返回组件连接细节。
       show-details: never
   metrics:
+    distribution:
+      percentiles-histogram:
+        # 仅为 HTTP 请求耗时输出固定 histogram buckets，供 P95 看板聚合；false 会使面板无分桶数据。
+        http.server.requests: true
     tags:
       # 固定应用标识，禁止使用用户、租户或业务 ID。
       application: ${spring.application.name}

@@ -49,13 +49,15 @@ docker compose run --rm --no-deps jaeger validate --config=/etc/jaeger/config.ya
 
 ## Java与Python接入
 
-`kellen-workspace/scripts/run-observed.py`只给选定服务bootRun JVM挂agent，先校验官方SHA-256；Gradle daemon、编译器与测试JVM不受影响。Jar/IDE直接运行时把相同agent参数配置到服务JVM，不能只修改应用启动后才加载的Nacos。
+`kellen-workspace/scripts/run-observed.py`只给选定服务bootRun JVM挂agent，先校验固定官方 agent 与本地构建隐私扩展两个 SHA-256；Gradle daemon、编译器与测试JVM不受影响。缺隐私扩展或任一摘要/版本不匹配均拒绝启用。Jar/IDE直接运行时把相同 agent 和扩展参数配置到服务JVM，不能只修改应用启动后才加载的Nacos。
 
-- 固定Java agent v2.33.1，OTel API/context/common由BOM1.59.0对齐；应用不创建第二个tracing SDK。
+- 固定 Java agent v2.33.1 内置 SDK 1.67.0，独立 `agent-extension/` 仅以 compileOnly SDK 1.67.0 编译，薄 Jar 版本 0.1.0；应用 API/context/common 继续由 BOM 1.59.0 对齐，不创建第二个 tracing SDK。
+- Java 出站前必须加载 privacy extension：强制 `otel.span.event.count.limit=0`，原始异常 events 不进入 batch 队列；exporter 包装器清理 attributes/events/status description/resource/link attributes/scope/tracestate，只保留 trace/span/parent IDs、时间、状态码和有限业务元数据。动态 URL/query、SQL、headers、prompt/body 以及未知字段不出站。自动 span 名称归一成固定 kind 操作名，仅固定业务名称原样保留；动态 route/RPC 名称不保留。中央 Collector 仍是第二道清理。
+- 扩展保留实际 Java `business.outcome`、ai-agent `outcome/operation` 和 Python `rag.result` 的有限值合同；中央 native fixture 同时覆盖 Python 请求、retrieval 与 graph_build 的结果及两种 service resource，不能只用 Java span 推定跨语言合同。
 - `OTEL_SERVICE_NAME`、版本与`deployment.environment.name=github-dev`保持一致。workspace 的服务 JVM 同时从 `project.version` 设置 `SPRING_APPLICATION_VERSION`，供 Boot ECS 输出 `service.version`；共享 `logging.yml` 显式输出环境 `github-dev`。
 - Jar/IDE/其它部署入口也必须将确定的制品版本注入 `SPRING_APPLICATION_VERSION`（或 `spring.application.version`），并在 OTel resource 的 `service.version` 中使用同一值。缺版本时 ECS 明确输出 `unknown`，不能把它当作已核部署版本；名称取 `spring.application.name`，缺名称同样输出 `unknown`。
 - `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`；endpoint与Authorization由私有环境注入。
-- `OTEL_METRICS_EXPORTER=none`、`OTEL_LOGS_EXPORTER=none`、`OTEL_PROPAGATORS=tracecontext`。
+- `OTEL_METRICS_EXPORTER=none`、`OTEL_LOGS_EXPORTER=none`、`OTEL_PROPAGATORS=tracecontext`、`OTEL_SPAN_EVENT_COUNT_LIMIT=0`。扩展还会强制关闭 events 与两种 exporter，不能由环境重新打开。
 - 初期内部parent-based 10%采样，公网gateway按自身概率采样，避免调用方sampled标志强制全采。短时验收可显式100%，之后按容量恢复。
 - graph build为独立trace并link提交请求，排队过期/取消/超时/worker kill由父进程保留终态；不往worker stdout写观测输出。
 
@@ -73,11 +75,11 @@ Java文件输出需在运行环境显式设置`LOGGING_FILE_NAME`到本机安全
 
 部署前先按 [ES mapping 准备步骤](es/README.md) 只读核现有审计索引。实体 Keyword 注解和应用重启不会自动给已存在索引补字段；本仓只提供 additive mapping JSON 与新运行日志索引模板，不执行 ES 写入。
 
-Grafana的ES数据源默认未附认证配置；若ES启用认证，在私有provisioning或UI中配置受限凭据，不提交秘密。先发送一条安全合成事件，证实应用→采集→ES→Grafana→同一Jaeger trace。反向trace→ES日志需独立配置correlation与时间窗口并实际验收，不把默认Jaeger数据源当成已开箱双向。
+Grafana 的 ES 数据源通过私有 `GITHUB_ES_READ_AUTHORIZATION` 提供完整 Authorization 字符串（例如 `ApiKey <编码值>`），provisioning 以 `secureJsonData.httpHeaderValue1` 引用，容器环境只注入 Grafana。权限限运行日志索引的读取，并与 Collector 的 `GITHUB_ES_API_KEY` 写入凭据分开；默认空值兼容未启用认证的 ES。数据源 `editable: false`，请改私有环境后重建 Grafana 使 provisioning 生效，不能靠 UI 临时输入覆盖模板。已开启 ES 安全的目标必须配置此值并验实际查询；本仓不生成真实凭据、不读写 ES。先发送一条安全合成事件，证实应用→采集→ES→Grafana→同一Jaeger trace。反向trace→ES日志需独立配置correlation与时间窗口并实际验收，不把默认Jaeger数据源当成已开箱双向。
 
 ## 看板、告警与故障验收
 
-自带全9服务+Engine采集状态、HTTP请求率/P95、JVM堆与Collector错误看板。公共Actuator配置需要为`http.server.requests`开启histogram才能展示P95；业务指标按固定结果枚举聚合，不加tenant/KB/业务ID/hash标签。
+自带全9服务+Engine采集状态、HTTP请求率/P95、JVM堆与Collector错误看板。公共 Actuator 模板已仅为 `http.server.requests` 开启 histogram；P95 仍需模板实际发布、服务加载且真实 scrape 出现 buckets；业务指标按固定结果枚举聚合，不加tenant/KB/业务ID/hash标签。
 
 业务结果面板同时消费 `ai_agent_model_call_seconds_count`，这是 ai-agent 的 `ai.agent.model.call` Timer 导出的计数序列；实际结果标签为 `outcome`，包括 `success/failure/cancelled`，与其他业务 counter 按 `application/outcome` 聚合。Java RAG/MCP 的有限结果保留在 span 的 `business.outcome` 中。
 

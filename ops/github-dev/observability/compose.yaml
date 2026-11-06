@@ -68,6 +68,8 @@ services:
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       # URL/凭据只从目标私有环境注入；默认 ES 仅是显式部署占位。
       GITHUB_ES_URL: ${GITHUB_ES_URL:?Set the existing private ES endpoint}
+      # ES 查询专用 Authorization（如 ApiKey 编码值）；只注入 Grafana，与 Collector 写入 key 隔离。
+      GITHUB_ES_READ_AUTHORIZATION: ${GITHUB_ES_READ_AUTHORIZATION:-}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro

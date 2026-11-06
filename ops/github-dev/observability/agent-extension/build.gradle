@@ -1,0 +1,61 @@
+plugins { id 'java' }
+group = 'com.kellen.observability'
+version = '0.1.0'
+repositories { mavenCentral() }
+java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
+// 只给 agent 扩展编译提供 SDK；薄 Jar 不携带 SDK，也不进入应用依赖。
+configurations { agentRuntime }
+sourceSets { probe; verifier }
+dependencies {
+    compileOnly 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.67.0'
+    probeImplementation 'io.opentelemetry:opentelemetry-api:1.59.0'
+    verifierCompileOnly 'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.67.0'
+    agentRuntime 'io.opentelemetry.javaagent:opentelemetry-javaagent:2.33.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.12.2'
+    testImplementation 'io.opentelemetry.proto:opentelemetry-proto:1.11.1-alpha'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.2'
+}
+jar {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+    manifest { attributes('Implementation-Version': project.version, 'Fleet-Agent-Version': '2.33.1') }
+}
+tasks.register('verifierJar', Jar) {
+    archiveClassifier = 'test-verifier'
+    from sourceSets.verifier.output
+}
+test {
+    useJUnitPlatform()
+    dependsOn jar, probeClasses, verifierJar
+    systemProperty 'verifier.jar', tasks.verifierJar.archiveFile.get().asFile.absolutePath
+    systemProperty 'evidence.dir', layout.buildDirectory.dir('egress-evidence').get().asFile.absolutePath
+    systemProperty 'privacy.jar', tasks.jar.archiveFile.get().asFile.absolutePath
+    systemProperty 'agent.jar', configurations.agentRuntime.singleFile.absolutePath
+    systemProperty 'probe.classpath', sourceSets.probe.runtimeClasspath.asPath
+    systemProperty 'java.bin', javaToolchains.launcherFor(java.toolchain).get().executablePath.asFile.absolutePath
+    testLogging { events 'passed', 'failed', 'skipped'; showStandardStreams = true }
+}
+
+// 只打包正式薄扩展与官方 agent；测试 verifier 不进入运行目录。
+tasks.register('runtimeBundle', Sync) {
+    dependsOn jar
+    from tasks.jar
+    from configurations.agentRuntime
+    into layout.buildDirectory.dir('runtime')
+}
+tasks.register('runtimeChecksums') {
+    dependsOn runtimeBundle
+    doLast {
+        def runtime = layout.buildDirectory.dir('runtime').get().asFile
+        def rows = runtime.listFiles().findAll { it.name.endsWith('.jar') }.sort { it.name }.collect { file ->
+            def sha = java.security.MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()
+            if (file.name == 'opentelemetry-javaagent-2.33.1.jar' && sha !=
+                    'e43a270df53c6f423e0ab157be9c27ccc01d5dc3232e162fe54777573db2f149') {
+                throw new GradleException('官方 agent SHA-256 不匹配')
+            }
+            "${sha}  ${file.name}"
+        }
+        new File(runtime, 'SHA256SUMS').text = rows.join('\n') + '\n'
+        println 'Verified pinned official agent; runtime/SHA256SUMS records both runtime artifacts.'
+    }
+}
