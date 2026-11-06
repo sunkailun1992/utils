@@ -9,6 +9,17 @@ from render_nacos import yaml_json
 
 
 class GrafanaReadAuthorizationTest(unittest.TestCase):
+    def test_tmpfs_options_cannot_be_parsed_as_another_mount(self):
+        services = yaml_json((ROOT / 'compose.yaml').read_text())['services']
+        for name, service in services.items():
+            for mount in service.get('tmpfs', []):
+                with self.subTest(service=name, mount=mount):
+                    target, _, options = mount.partition(':')
+                    self.assertTrue(target.startswith('/'), 'tmpfs target must be an absolute path')
+                    if name == 'grafana' and target == '/tmp':
+                        self.assertIn('size=32m', options.split(','))
+                        self.assertIn('mode=1777', options.split(','))
+
     def test_read_authorization_is_private_provisioning_and_separate_from_writer(self):
         compose = yaml_json((ROOT / 'compose.yaml').read_text())
         services = compose['services']
