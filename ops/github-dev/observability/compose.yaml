@@ -42,7 +42,7 @@ services:
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=7d
       - --storage.tsdb.retention.size=2GB
-      - --web.enable-lifecycle=false
+      # 生命周期管理接口默认关闭；此布尔开关不能使用 =false 语法。
     volumes:
       # render.py 生成完整目标配置，缺少任一服务时拒绝生成。
       - ./generated/prometheus.json:/etc/prometheus/prometheus.json:ro
