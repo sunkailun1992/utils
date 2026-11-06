@@ -12,7 +12,7 @@ plugins {
 group = 'com'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.5.2'
+version = '1.5.3'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -162,6 +162,8 @@ dependencyManagement {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
         // Spring Cloud Alibaba BOM 管理 Nacos、Seata Alibaba 组件版本。
         mavenBom "com.alibaba.cloud:spring-cloud-alibaba-dependencies:${springCloudAlibabaVersion}"
+        // API/context/common 必须同版；覆盖 Boot BOM 的旧 OTel 版本，避免 API 混装。
+        mavenBom 'io.opentelemetry:opentelemetry-bom:1.59.0'
     }
 }
 
@@ -197,6 +199,9 @@ dependencies {
     api 'org.springframework.boot:spring-boot-starter-jackson'
     // Spring Actuator：提供自定义管理端点和 WebEndpointHandlerMapping 支持。
     api 'org.springframework.boot:spring-boot-starter-actuator'
+    // Prometheus 是公共指标唯一出口；OTel 仅使用 API，SDK 由服务启动时的 agent 提供。
+    api 'io.micrometer:micrometer-registry-prometheus'
+    api 'io.opentelemetry:opentelemetry-api:1.59.0'
     // Spring AspectJ：提供切面、请求日志、参数校验和幂等拦截能力。
     api 'org.springframework.boot:spring-boot-starter-aspectj'
     // Spring Security：提供认证过滤器、安全上下文和权限模型支持。

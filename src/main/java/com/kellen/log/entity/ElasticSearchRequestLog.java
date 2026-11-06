@@ -19,6 +19,14 @@ import java.time.LocalDateTime;
 @Data
 @Document(indexName = "#{@environment.getProperty('elasticsearch.request-log-index', 'request_log')}")
 public class ElasticSearchRequestLog {
+    @Schema(description = "在原请求线程捕获的真实 OTel trace ID")
+    @Field(type = FieldType.Keyword, name = "trace_id")
+    private String traceId;
+
+    @Schema(description = "在原请求线程捕获的真实 OTel span ID")
+    @Field(type = FieldType.Keyword, name = "span_id")
+    private String spanId;
+
     @Id
     private String id;
 

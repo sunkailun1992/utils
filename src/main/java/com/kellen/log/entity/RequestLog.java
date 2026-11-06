@@ -17,6 +17,12 @@ import java.time.LocalDateTime;
 @Data
 @Schema(description = "日志实体类")
 public class RequestLog implements Serializable {
+    @Schema(description = "真实 OTel trace ID；无活动链路时为空")
+    private String traceId;
+
+    @Schema(description = "真实 OTel span ID；与业务会话 ID 分离")
+    private String spanId;
+
     @Schema(name = "userId", description = "用户id")
     private Long userId;
 

@@ -291,7 +291,7 @@ def maintain(client, descriptions, replacements, directory, backup_directory,
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, epilog="删除不是回收站操作；恢复旧配置需要使用 Git 外快照重新发布。接口不提供原子 CAS，维护期间避免其他写入。")
     parser.add_argument("--env-file", type=Path, default=Path.home() / ".config/kellen-github/dev.env")
-    parser.add_argument("--directory", type=Path, required=True, help="已发布并读回的 29 项私有候选目录")
+    parser.add_argument("--directory", type=Path, required=True, help="已发布并读回的 27 项私有候选目录")
     parser.add_argument("--backup-directory", type=Path, required=True, help="Git 外 0700 备份根目录，每次新建独立快照子目录")
     parser.add_argument("--previous", type=Path, help="旧 dataId 原始内容快照目录，文件名与 dataId 相同")
     parser.add_argument("--apply", action="store_true", help="实际更新描述；未指定时只预演并备份")

@@ -1,0 +1,32 @@
+{
+  "index_patterns": ["github_dev_runtime_log"],
+  "priority": 100,
+  "template": {
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "@timestamp": {"type": "date_nanos"},
+        "TraceId": {"type": "keyword"},
+        "SpanId": {"type": "keyword"},
+        "SeverityText": {"type": "keyword"},
+        "Resource": {
+          "properties": {
+            "service.name": {"type": "keyword"},
+            "service.version": {"type": "keyword"},
+            "deployment.environment.name": {"type": "keyword"}
+          }
+        },
+        "trace_id": {"type": "keyword"},
+        "span_id": {"type": "keyword"},
+        "event": {"type": "keyword"},
+        "stage": {"type": "keyword"},
+        "outcome": {"type": "keyword"},
+        "error_code": {"type": "keyword"},
+        "duration_ms": {"type": "double"}
+      }
+    }
+  },
+  "_meta": {
+    "purpose": "New metadata-only runtime log index; never apply to request audit or historical indices"
+  }
+}

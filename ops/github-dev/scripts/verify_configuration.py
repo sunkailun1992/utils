@@ -92,7 +92,7 @@ def check_consolidation_baseline(baseline_file):
     expected_profiles = {f"{service}/src/main/resources/application-{environment}.yml"
                          for service in SERVICES for environment in ("dev", "test", "prod")}
     assert set(before["profiles"]) == expected_profiles, "旧快照必须覆盖全部 27 个 profile"
-    assert set(before["templates"]) == set(after) | removed, "旧快照必须覆盖全部新旧 dataId"
+    assert set(after) <= set(before["templates"]) and set(before["templates"]) - set(after) <= removed, "旧快照包含缺失或未经登记的 dataId"
     for relative, original in before["profiles"].items():
         old = yaml_json(original)
         new = yaml_json((ROOT / relative).read_text())
@@ -104,6 +104,8 @@ def check_consolidation_baseline(baseline_file):
         for entry in retired:
             if entry["dataId"] not in old_ids:
                 continue
+            if entry.get("kind") == "monitoring-retirement":
+                continue
             if entry["replacement"] is None:
                 assert yaml_json(before["templates"][entry["dataId"]]) == {}, "移除项不是空映射"
             else:
@@ -113,10 +115,39 @@ def check_consolidation_baseline(baseline_file):
         old_effective = effective_configuration(old_imports, before["templates"])
         new_effective = effective_configuration(new_imports, after)
         if "rag-spring.yaml" in [import_dataid(item) for item in new_imports]:
-            hybrid = new_effective["rag"]["vector"].pop("hybrid-write-enabled")
+            hybrid = new_effective["rag"]["vector"].get("hybrid-write-enabled")
+            if "hybrid-write-enabled" not in old_effective.get("rag", {}).get("vector", {}):
+                new_effective["rag"]["vector"].pop("hybrid-write-enabled")
             assert hybrid == "${GITHUB_RAG_HYBRID_WRITE_ENABLED:false}", "新增混合写入开关必须默认关闭"
-        assert json.dumps(old_effective, sort_keys=True) == json.dumps(new_effective, sort_keys=True), relative + " 有效配置变化"
-    print(f"PASS: {len(before['profiles'])} profile 的参数类型、值、列表及保留导入次序等价；仅新增默认关闭的混合写入开关")
+        # 本批明确退役的配置可变化；其余仍按逐键/类型/列表顺序比较。
+        old_management = old_effective.get("management", {})
+        if "tracing" in old_management:
+            assert old_management.pop("tracing") == {"enabled": False}, "旧 tracing 配置不是已知关闭值"
+        old_spring = old_effective.get("spring", {})
+        if "boot" in old_spring:
+            assert old_spring.pop("boot") == {"admin": {"client": {"enabled": False}}}, "旧 Admin 配置不是已知关闭值"
+        new_management = new_effective.get("management", {})
+        assert new_management["endpoints"]["web"]["exposure"]["include"] == "health,info,prometheus"
+        new_management["endpoints"]["web"]["exposure"]["include"] = "health,info"
+        assert new_management.pop("metrics") == {"tags": {"application": "${spring.application.name}", "environment": "github-dev"}}
+        for logger in ("org.springframework.ai.chat.model.MessageAggregator",
+                       "org.springframework.ai.model.observation.ErrorLoggingObservationHandler"):
+            assert new_effective["logging"]["level"].pop(logger) == "OFF", "Spring AI敏感异常日志必须关闭"
+        logging = new_effective["logging"].pop("structured")
+        approved_logging = {
+            "ecs": {"service": {"name": "${spring.application.name:unknown}",
+                                  "version": "${spring.application.version:unknown}",
+                                  "environment": "github-dev"}},
+            "format": {"console": "ecs"},
+            "json": {"include": "@timestamp,log,log.level,service,service.name,service.version,service.environment,event,event.action,duration_ms,error_code,trace_id,span_id"},
+        }
+        # 只豁免完整匹配的新增树；额外输出、JSON规则、键和类型变化都必须失败。
+        assert json.dumps(logging, sort_keys=True) == json.dumps(approved_logging, sort_keys=True), "structured logging 存在未经核准的键、类型或值"
+        if "rag" in old_effective:
+            for key in ("retrieval-enabled", "graph-enabled"):
+                assert old_effective["rag"]["engine"].pop(key, False) is False, "旧 Engine 开关不是已知关闭值"
+        assert json.dumps(old_effective, sort_keys=True) == json.dumps(new_effective, sort_keys=True), relative + " 未授权有效配置变化"
+    print(f"PASS: {len(before['profiles'])} profile 的参数类型、值、列表及保留导入次序等价；仅允许已核混合写入与观测/旧RAG退役差异")
 
 
 def route_destination(path, routes):

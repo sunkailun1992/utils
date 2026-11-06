@@ -28,16 +28,11 @@ rag:
   engine:
     # PDF/PNG/JPEG 解析开关；false 保留 Office 上传，扫描件另需配置 OCR 服务。
     parse-enabled: false
-    # 检索切换开关；false 使用原有 Java 链路，true 使用 Python dense 引擎；尚未启用混合检索。
-    retrieval-enabled: false
-    # 语义图谱开关；false 使用 MySQL 结构投影，true 经 Python 异步抽取并读取 Neo4j。
-    # 启用前先部署配套引擎并验证 Neo4j/APOC、模型与来源隔离；任务接收不表示构建完成。
-    graph-enabled: false
     # 图构建提交、图查询及删除屏障的 HTTP 总超时，毫秒；独立于异步构建总预算和检索预算。
     graph-timeout-millis: 10000
     # 异步图构建状态查询 HTTP 总超时，毫秒；失败由前端明确显示，不解释为构建完成。
     graph-status-timeout-millis: 3500
-    # Python 引擎根地址，格式 http(s)://host:port，不含路径；关闭全部三个开关时允许为空。
+    # Python 引擎根地址，格式 http(s)://host:port，不含路径；检索与图谱必须配置此地址，空值将明确降级/报错，不转回旧实现。
     base-url: ${GITHUB_RAG_ENGINE_URL:}
     # Java 与 Python 一致的内部服务密钥，至少 32 字符；不使用浏览器 JWT，禁止提交真实值。
     api-key: ${GITHUB_RAG_ENGINE_API_KEY:}

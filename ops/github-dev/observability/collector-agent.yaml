@@ -1,0 +1,61 @@
+# 部署在实际Java/Python运行主机；只读本机安全JSON日志，不把整个Docker socket挂入。
+# 同宿主时可复用中央Collector并合入filelog pipeline；跨主机则需要独立轻量采集进程。
+receivers:
+  filelog/runtime:
+    include: ["${env:FLEET_LOG_DIR}/*.json", "${env:FLEET_LOG_DIR}/*.jsonl"]
+    start_at: end
+    include_file_path: false
+    operators:
+      - type: json_parser
+        parse_to: attributes
+        timestamp:
+          parse_from: attributes["@timestamp"]
+          layout_type: gotime
+          layout: '2006-01-02T15:04:05.999999999Z07:00'
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 96
+    spike_limit_mib: 24
+  transform/privacy:
+    error_mode: propagate
+    log_statements:
+      - context: log
+        statements:
+          # 应用文件先受白名单，发出前再次移除body/未知属性，禁止出站原始日志。
+          # 先逐条提取，再分组为 resource，不能直接改同批日志共享的 resource。
+          - set(attributes["service.name"], attributes["service"]["name"]) where attributes["service"]["name"] != nil
+          - set(attributes["service.version"], attributes["service"]["version"]) where attributes["service"]["version"] != nil
+          - set(attributes["deployment.environment.name"], attributes["service"]["environment"]) where attributes["service"]["environment"] != nil
+          - set(attributes["duration_ms"], attributes["elapsed_ms"]) where attributes["elapsed_ms"] != nil
+          - set(attributes["outcome"], attributes["result"]) where attributes["result"] != nil
+          - set(severity_text, attributes["log"]["level"]) where attributes["log"]["level"] != nil
+          - set(body, "")
+          - keep_keys(attributes, ["service.name", "service.version", "deployment.environment.name", "event", "duration_ms", "error_code", "outcome", "stage", "trace_id", "span_id"])
+  groupbyattrs/service:
+    keys: ["service.name", "service.version", "deployment.environment.name"]
+  batch:
+    send_batch_size: 64
+    send_batch_max_size: 128
+exporters:
+  otlp_http/central:
+    endpoint: ${env:OTEL_EXPORTER_OTLP_ENDPOINT}
+    headers:
+      Authorization: "Bearer ${env:FLEET_OTLP_TOKEN}"
+    timeout: 2s
+    sending_queue:
+      enabled: true
+      queue_size: 256
+      block_on_overflow: false
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 15s
+service:
+  pipelines:
+    logs:
+      receivers: [filelog/runtime]
+      processors: [memory_limiter, transform/privacy, groupbyattrs/service, batch]
+      exporters: [otlp_http/central]
+  telemetry:
+    logs:
+      level: warn

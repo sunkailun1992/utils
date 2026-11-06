@@ -1,0 +1,33 @@
+# Jaeger v2 单节点持久化；配置来自官方 v2.23 Badger 示例的最小子集。
+extensions:
+  jaeger_storage:
+    backends:
+      primary:
+        badger:
+          directories:
+            keys: /tmp/jaeger/keys
+            values: /tmp/jaeger/values
+          ephemeral: false
+          ttl:
+            spans: 24h
+  jaeger_query:
+    storage:
+      traces: primary
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  batch:
+    send_batch_size: 128
+exporters:
+  jaeger_storage_exporter:
+    trace_storage: primary
+service:
+  extensions: [jaeger_storage, jaeger_query]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger_storage_exporter]

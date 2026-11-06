@@ -8,7 +8,7 @@ from pathlib import Path
 SCRIPTS = {
     "ai": ["ai-init.sql"],
     "ai-memory": ["ai-memory-init.sql"],
-    "rag": ["rag-knowledge-graph-schema.sql"],
+    "rag": [],
     "message": ["message-schema.sql"],
     "user": ["auth-schema.sql", "auth-external-identity-schema.sql", "auth-oauth-client-schema.sql"],
     "mcp": [],

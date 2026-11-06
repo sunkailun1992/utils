@@ -1,0 +1,108 @@
+# 个人微服务观测与极空间部署
+
+## 目标与状态
+
+覆盖 gateway、user、message、ai、ai-agent、ai-memory、rag、report、mcp，以及Python rag-engine。这里是独立观测编排，不包含业务服务、数据库或RAG图谱重建。代码/配置检查、镜像启动、目标采集、日志入库与真实链路分别验收；文件存在不表示已安装。
+
+技术路线：Micrometer Prometheus 指标；OTel agent/Python SDK→Collector→Jaeger；运行日志仍进既有ES，Grafana统一查看。Java agent仅traces，metrics/logs exporter关闭，防止重复SDK/重复计数。
+
+## 是否安装到极空间
+
+可以把以下4个组件单独部署到极空间。固定tag来自官方release，现场解析目标架构digest并写私有.env后再启动，不使用latest。
+
+| 组件 | 固定版本 | 初始硬上限提案 | 持久化 |
+|---|---|---|---|
+| OTel Collector contrib | 0.164.0 | 0.5CPU / 384MiB | 有界内存队列，无业务数据 |
+| Prometheus | 3.16.0 | 0.5CPU / 768MiB | named volume，7天/2GB先到先限 |
+| Grafana | 13.3.0 | 0.5CPU / 512MiB | named volume，禁匿名/注册 |
+| Jaeger v2 | 2.23.0 | 0.5CPU / 768MiB | Badger named volume，24小时TTL |
+
+合计是2CPU、2432MiB的配置上限提案，不是实测RSS、最低要求或NAS当前余量。部署前核现有进程、可用内存/swap、CPU、磁盘空间与IO、目标架构和端口冲突。若余量不足，先改变观测部署位置或参数，不挤占现有Engine/OCR/Neo4j，不拿旧快照证明当前容量。
+
+Java若运行在Mac，NAS上的Collector不能直接读Mac日志。`collector-agent.yaml`用于应用运行主机的轻量文件采集进程；已有采集器优先复用。同宿主时可在中央Collector合入filelog接收，不重复起一套完整监控栈。本仓没有自动安装本机Docker、Collector或任何系统工具。
+
+## 私有配置与启动前检查
+
+1. 将`.env.example`复制到Git忽略的`.env`，填写已核私网绑定和既有ES地址。地址不含内嵌凭据。API key仅私有环境提供，权限限新运行日志索引。
+2. 建立仅属主可遍历的`.private/`（0700），按现有权威配置提供`actuator_token`和`engine_token`；它们分别匹配当前服务运维令牌与Engine服务密钥，不能随机重置。另生成独立`otlp_token`和`grafana_password`，不回显或提交。Compose file secrets是只读bind，原文件0600可能让容器非root UID无法读取；给精确文件设置可读mode（例如受0700父目录保护的0444），或为容器UID设置专用ACL，并在目标实例验证，不能放宽整个私有目录。仅将需要的文件挂给对应容器。
+3. 私有`targets.json`从`targets.example.json`填真实地址。9服务必须完整；gateway和ai-agent使用受保护独立管理端口（示例17100/17310），不要把主端口或公网网关当作采集入口。其它服务仅受限私网可达。
+4. 生成Prometheus配置，缺服务、URL/凭据/路径注入和未替换示例会失败：
+
+```bash
+python3 render.py .private/targets.json --output generated/prometheus.json
+docker compose config --quiet
+```
+
+5. 在目标主机只读核容量：`docker version`、`docker stats --no-stream`、磁盘容量和现有监听。不要在日志/聊天贴完整环境、私有Compose、连接串或令牌。
+6. 经具体部署授权后拉固定镜像，记录各镜像RepoDigest并覆盖`.env`，再验证容器内的配置：
+
+```bash
+docker compose run --rm --no-deps collector validate --config=/etc/otelcol/collector.yaml
+docker compose run --rm --no-deps --entrypoint promtool prometheus check config /etc/prometheus/prometheus.json
+docker compose run --rm --no-deps --entrypoint promtool prometheus check rules /etc/prometheus/alerts.yaml
+docker compose run --rm --no-deps jaeger validate --config=/etc/jaeger/config.yaml
+```
+
+原生component校验在目标镜像中执行，YAML可解析不能替代它。
+
+启动仅此独立项目：`docker compose up -d`。不要运行`down -v`，不要覆盖业务编排。Grafana默认宿主13000、Collector默认14318，仅loopback绑定；跨主机必须显式私网绑定和网络访问源限制。Jaeger、Prometheus不映射宿主端口，Grafana走内部网络。
+
+## Java与Python接入
+
+`kellen-workspace/scripts/run-observed.py`只给选定服务bootRun JVM挂agent，先校验官方SHA-256；Gradle daemon、编译器与测试JVM不受影响。Jar/IDE直接运行时把相同agent参数配置到服务JVM，不能只修改应用启动后才加载的Nacos。
+
+- 固定Java agent v2.33.1，OTel API/context/common由BOM1.59.0对齐；应用不创建第二个tracing SDK。
+- `OTEL_SERVICE_NAME`、版本与`deployment.environment.name=github-dev`保持一致。workspace 的服务 JVM 同时从 `project.version` 设置 `SPRING_APPLICATION_VERSION`，供 Boot ECS 输出 `service.version`；共享 `logging.yml` 显式输出环境 `github-dev`。
+- Jar/IDE/其它部署入口也必须将确定的制品版本注入 `SPRING_APPLICATION_VERSION`（或 `spring.application.version`），并在 OTel resource 的 `service.version` 中使用同一值。缺版本时 ECS 明确输出 `unknown`，不能把它当作已核部署版本；名称取 `spring.application.name`，缺名称同样输出 `unknown`。
+- `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`；endpoint与Authorization由私有环境注入。
+- `OTEL_METRICS_EXPORTER=none`、`OTEL_LOGS_EXPORTER=none`、`OTEL_PROPAGATORS=tracecontext`。
+- 初期内部parent-based 10%采样，公网gateway按自身概率采样，避免调用方sampled标志强制全采。短时验收可显式100%，之后按容量恢复。
+- graph build为独立trace并link提交请求，排队过期/取消/超时/worker kill由父进程保留终态；不往worker stdout写观测输出。
+
+完整端到端实际验收：gateway→ai→rag→Engine；ai→ai-agent→ai-memory；message→user；MCP协议业务结果。report骨架只验基础指标，不编造不存在的业务。
+
+## 日志到ES
+
+运行日志与旧请求审计索引分离。Java用共享`logging.yml`的真实ECS字段白名单（没有message/原始异常/任意MDC）；Python使用metadata-only单行JSON，带UTC`@timestamp`。本机文件收集器只读指定日志目录，发出前清空body、白名单属性；中心再次清理。
+
+Java文件输出需在运行环境显式设置`LOGGING_FILE_NAME`到本机安全日志目录，并设置`LOGGING_STRUCTURED_FORMAT_FILE=ecs`，文件轮转有界。不要同步写NAS远程文件造成业务请求阻塞；应用主机的Collector再异步发送。Python stderr采集/轮转按engine说明，不更改业务容器资源。
+
+`collector-agent.yaml`读取`FLEET_LOG_DIR/*.json`/`*.jsonl`，`elapsed_ms/result`映射为`duration_ms/outcome`。从每条 Java/Python 嵌套 `service` 中只提取名称、版本、环境到 record attributes，再由 `groupbyattrs` 按三字段关联到各自 resource，随后 batch；不能在逐条转换时改同批共享 resource。没有活动 trace 的启动/后台日志也保留这三字段，缺 trace 不补造。通过独立OTLP凭据送中心。当前模板为短时有界内存队列；进程重启/队列满可丢遥测，不能宣称零丢失。部署前核文件权限、轮转行为和offset持久化需求，禁止同一日志从stdout和文件重复采集。
+
+中央ES exporter固定`raw`映射兼容ES7.17/8/9，不使用要求8.12+的默认otel/ecs映射。实际版本、认证、索引模板/生命周期先核；不为了监控强升ES。导出schema的`@timestamp`、`TraceId/SpanId/SeverityText`与白名单自定义`trace_id/span_id/event`分清，Grafana使用实际字段。
+
+部署前先按 [ES mapping 准备步骤](es/README.md) 只读核现有审计索引。实体 Keyword 注解和应用重启不会自动给已存在索引补字段；本仓只提供 additive mapping JSON 与新运行日志索引模板，不执行 ES 写入。
+
+Grafana的ES数据源默认未附认证配置；若ES启用认证，在私有provisioning或UI中配置受限凭据，不提交秘密。先发送一条安全合成事件，证实应用→采集→ES→Grafana→同一Jaeger trace。反向trace→ES日志需独立配置correlation与时间窗口并实际验收，不把默认Jaeger数据源当成已开箱双向。
+
+## 看板、告警与故障验收
+
+自带全9服务+Engine采集状态、HTTP请求率/P95、JVM堆与Collector错误看板。公共Actuator配置需要为`http.server.requests`开启histogram才能展示P95；业务指标按固定结果枚举聚合，不加tenant/KB/业务ID/hash标签。
+
+业务结果面板同时消费 `ai_agent_model_call_seconds_count`，这是 ai-agent 的 `ai.agent.model.call` Timer 导出的计数序列；实际结果标签为 `outcome`，包括 `success/failure/cancelled`，与其他业务 counter 按 `application/outcome` 聚合。Java RAG/MCP 的有限结果保留在 span 的 `business.outcome` 中。
+
+告警先按低流量门槛、持续时间触发：目标不可达、HTTP5xx至少20样本且超过5%、JVM堆持续85%、Collector上报失败。告警规则可查询不等于已通知；Grafana通知渠道凭据和路由在目标私有设置完成，必须验证触发及恢复。RAG Engine降级/构建失败、阶段预算及AI/MCP失败在部署时验证后补相应阈值，不以低流量偶发比例自动判断专业质量。
+
+验收必须覆盖：无/错令牌、公网管理阻断、并发trace不串、SSE成功/失败/取消、MCP HTTP200业务失败、RAG空命中/降级/超时、worker终态、Collector/ES/Jaeger停机/队列满时业务不阻塞，以及原文/秘密注入不进入遥测。保留上游5秒、Engine3秒、图扩展0.4秒预算。只复用已发布知识库做少量检索，不重抽图谱。
+
+本机检查：
+
+```bash
+python3 -m unittest discover -s ops/github-dev/observability -p 'test_*.py' -v
+```
+
+固定镜像的原生行为回放（需要已可用的 Docker，不由本仓安装）：
+
+```bash
+python3 ops/github-dev/observability/verify_collector_native.py
+```
+
+CI 还原生校验主机 Collector 配置。回放只覆盖实际配置的处理链，替换合成输入/本地 file exporter，容器 `--network none`，不会连接 ES、Jaeger、NAS 或业务服务；覆盖真实 filelog JSON parser、同一个原始 ResourceLogs 的两服务与无 trace 日志、正文/秘密清理和 RAG/MCP 实际结果属性。普通 Python 单测只验证 fixture/断言器，不代表该原生回放已执行；没有 Docker 时保留这一验收缺口。
+
+## 退役与回滚
+
+旧Admin/Zipkin本地模板及imports已删除并登记`retired-dataids.json`。目标Nacos旧项在新制品及配置切换读回后再按权威旧值备份清理；此目录不自动DELETE远端dataId。
+
+旧RAG仅清理已替代的Java检索回退/MySQL派生图谱。旧表候选与恢复条件见rag的`docs/legacy-rag-retirement.md`；此编排无数据库清理动作。文档、版本、来源、Qdrant原文向量与Neo4j已发布图保留。
+
+回滚可先移除服务JVM agent/关闭Python观测，保留业务配置；停止独立观测项目不删除卷。旧RAG实现已移除，回退需恢复相互匹配的旧制品/配置；删表后还需备份恢复，不能再使用已删除开关。

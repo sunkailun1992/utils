@@ -1,0 +1,54 @@
+name: Observability configuration
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ops/github-dev/observability/**
+      - .github/workflows/observability-config.yml
+  push:
+    branches: [main]
+    paths:
+      - ops/github-dev/observability/**
+      - .github/workflows/observability-config.yml
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_ES_URL: http://127.0.0.1:9200
+      GITHUB_ES_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Render and validate private-free fixtures
+        working-directory: ops/github-dev/observability
+        run: |
+          python3 -m unittest discover -s . -p 'test_*.py' -v
+          mkdir -m 700 .private
+          for name in otlp_token actuator_token engine_token grafana_password; do
+            printf 'synthetic-fixture-only' > ".private/$name"
+            chmod 444 ".private/$name"
+          done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          import render
+          names = render.SERVICES
+          fixture = {'environment': 'github-dev', 'services': {name: f'127.0.0.1:{18000+i}' for i,name in enumerate(names)}, 'engine': '127.0.0.1:18091'}
+          Path('.private/targets.json').write_text(json.dumps(fixture))
+          PY
+          python3 render.py .private/targets.json --output generated/prometheus.json
+          docker compose config --quiet
+      - name: Validate pinned component configurations
+        working-directory: ops/github-dev/observability
+        run: |
+          docker compose run --rm --no-deps collector validate --config=/etc/otelcol/collector.yaml
+          docker compose run --rm --no-deps --entrypoint promtool prometheus check config /etc/prometheus/prometheus.json
+          docker compose run --rm --no-deps --entrypoint promtool prometheus check rules /etc/prometheus/alerts.yaml
+          docker compose run --rm --no-deps jaeger validate --config=/etc/jaeger/config.yaml
+          docker run --rm --network none -e FLEET_LOG_DIR=/tmp -e OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:9 -e FLEET_OTLP_TOKEN=synthetic -v "$PWD:/config:ro" otel/opentelemetry-collector-contrib:0.164.0 validate --config=/config/collector-agent.yaml
+      - name: Replay privacy and service grouping through pinned Collector
+        working-directory: ops/github-dev/observability
+        run: python3 verify_collector_native.py

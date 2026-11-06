@@ -13,8 +13,14 @@ management:
     web:
       exposure:
         # 允许通过 HTTP 暴露的 Actuator 端点列表；不开放 env/configprops 等敏感端点。
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       # 健康检查详情展示策略；never 不向请求方返回组件连接细节。
       show-details: never
+  metrics:
+    tags:
+      # 固定应用标识，禁止使用用户、租户或业务 ID。
+      application: ${spring.application.name}
+      # 当前个人部署环境；不是 Git 分支名称。
+      environment: github-dev

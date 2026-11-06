@@ -1,5 +1,6 @@
 package com.kellen.config.async;
 
+import com.kellen.observability.TraceContextTaskDecorator;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,6 +36,8 @@ public class AsyncConfig implements AsyncConfigurer {
         threadPool.setMaxPoolSize(100);
         //线程池所使用的缓冲队列
         threadPool.setQueueCapacity(10);
+        // 在提交时捕获真实链路；任务结束恢复作用域，避免线程池复用串线。
+        threadPool.setTaskDecorator(new TraceContextTaskDecorator());
         // 拒绝策略， 由当前执行线程执行
         threadPool.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         //等待任务在关机时完成--表明等待所有线程执行完

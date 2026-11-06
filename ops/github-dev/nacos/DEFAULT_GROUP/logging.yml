@@ -1,6 +1,6 @@
 # 配置分类：安全与可观测性
 # dataId：logging.yml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：全局与应用包日志等级。
+# 用途：全局日志等级与安全结构化元数据白名单。
 # 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
@@ -10,3 +10,22 @@ logging:
     root: INFO
     # 应用 Java 包日志级别；包名与 Maven group 的环境隔离无关。
     com.kellen: INFO
+    # Spring AI 默认聚合器会记录原始模型异常；仅保留元数据指标/span。
+    org.springframework.ai.chat.model.MessageAggregator: "OFF"
+    # 禁止观察处理器重复输出模型正文/原始异常，失败由安全结果指标表达。
+    org.springframework.ai.model.observation.ErrorLoggingObservationHandler: "OFF"
+  structured:
+    ecs:
+      service:
+        # 与服务 JVM 的 OTel service.name 一致；缺名称明确标为 unknown。
+        name: ${spring.application.name:unknown}
+        # 部署时注入与 OTel service.version 相同的制品版本；缺值明确标为 unknown。
+        version: ${spring.application.version:unknown}
+        # 本共享模板只属于 github-dev；环境不能由活动 trace 或业务 MDC 推定。
+        environment: github-dev
+    format:
+      # Boot 4 ECS；OTel agent 的 trace_id/span_id 作为 MDC 元数据关联。
+      console: ecs
+    json:
+      # 仅允许固定结构字段；未知 MDC、原始日志正文与异常不会被采集。
+      include: "@timestamp,log,log.level,service,service.name,service.version,service.environment,event,event.action,duration_ms,error_code,trace_id,span_id"

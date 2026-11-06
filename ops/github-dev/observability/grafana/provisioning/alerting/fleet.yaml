@@ -1,0 +1,49 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: fleet-availability
+    folder: 个人微服务
+    interval: 1m
+    rules:
+      - uid: fleet-target-down
+        title: 个人服务采集目标不可达
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: fleet-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              datasource:
+                type: prometheus
+                uid: fleet-prometheus
+              editorMode: code
+              expr: sum(1 - up{job=~"fleet-.*"})
+              instant: true
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: classic_conditions
+              refId: C
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [0]
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+                  type: query
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "至少一个预期服务无法采集，或采集系统本身不可查询"
+        isPaused: false

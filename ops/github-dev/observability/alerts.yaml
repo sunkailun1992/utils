@@ -1,0 +1,51 @@
+groups:
+  - name: github-dev-availability
+    rules:
+      - alert: FleetTargetDown
+        expr: up{job=~"fleet-.*"} == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "个人服务采集目标不可达"
+      - alert: FleetHighHttpErrorRate
+        expr: sum by (application) (rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / clamp_min(sum by (application) (rate(http_server_requests_seconds_count[5m])), 0.001) > 0.05 and on(application) sum by(application) (increase(http_server_requests_seconds_count[5m])) >= 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "HTTP错误率持续超过5%，且已有至少20次样本"
+      - alert: CollectorDroppedSpans
+        expr: sum(rate(otelcol_exporter_send_failed_spans[5m])) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "链路上报失败，检查Collector与Jaeger"
+      - alert: FleetJvmHeapPressure
+        expr: sum by(application)(jvm_memory_used_bytes{area="heap"}) / clamp_min(sum by(application)(jvm_memory_max_bytes{area="heap"}), 1) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM堆占用持续超过85%"
+      - alert: RagRetrievalDegraded
+        expr: sum(increase(rag_engine_retrievals_total{result="degraded"}[5m])) / clamp_min(sum(increase(rag_engine_retrievals_total[5m])), 1) > 0.05 and sum(increase(rag_engine_retrievals_total[5m])) >= 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAG检索降级超过5%，至少20次样本"
+      - alert: RagGraphBuildFailed
+        expr: sum(increase(rag_engine_graph_builds_total{result=~"failed|timeout"}[5m])) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "图谱构建失败或超时，取消不计故障"
+      - alert: RagGraphExpansionBudget
+        expr: histogram_quantile(0.95, sum by(le)(rate(rag_engine_stage_duration_seconds_bucket{stage="graph_expand"}[5m]))) > 0.4 and sum(increase(rag_engine_stage_duration_seconds_count{stage="graph_expand"}[5m])) >= 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "图扩展P95超过0.4秒预算"

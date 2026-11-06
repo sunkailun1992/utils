@@ -1,0 +1,15 @@
+{
+  "environment": "github-dev",
+  "services": {
+    "gateway": "JAVA_PRIVATE_HOST:17100",
+    "user": "JAVA_PRIVATE_HOST:7500",
+    "message": "JAVA_PRIVATE_HOST:7400",
+    "ai": "JAVA_PRIVATE_HOST:7300",
+    "ai-agent": "JAVA_PRIVATE_HOST:17310",
+    "ai-memory": "JAVA_PRIVATE_HOST:7301",
+    "rag": "JAVA_PRIVATE_HOST:7200",
+    "report": "JAVA_PRIVATE_HOST:7600",
+    "mcp": "JAVA_PRIVATE_HOST:7700"
+  },
+  "engine": "ENGINE_PRIVATE_HOST:18091"
+}

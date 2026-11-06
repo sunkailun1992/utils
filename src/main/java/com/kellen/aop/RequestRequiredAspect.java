@@ -1,5 +1,7 @@
 package com.kellen.aop;
 
+import com.kellen.observability.TraceContextSnapshot;
+
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
@@ -162,6 +164,10 @@ public class RequestRequiredAspect {
     private void setLog(ProceedingJoinPoint proceedingJoinPoint, HttpServletRequest httpServletRequest, long time, Map<String, String> map, Object o, String performBefore, String performAfter) {
         SecurityUser user = UserContextHolder.get(); // 从 Spring Security 过滤器写入的上下文获取当前用户。
         RequestLog requestLog = new RequestLog(); // 创建请求日志实体，后续统一补齐请求、响应、用户和环境信息。
+        // 在异步落库前抓取真实 span，不依赖异步线程的 MDC 或业务会话标识。
+        TraceContextSnapshot trace = TraceContextSnapshot.capture();
+        requestLog.setTraceId(trace.traceId());
+        requestLog.setSpanId(trace.spanId());
         if (user != null) {
             requestLog.setUserId(parseUserId(user.getUserId())); // 兼容日志表 Long 类型用户 ID，非数字用户 ID 记录为空。
             requestLog.setUsername(user.getUsername()); // 记录当前认证用户名。

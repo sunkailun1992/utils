@@ -1,0 +1,96 @@
+# 个人 github-dev 独立观测编排；不包含/覆盖业务容器或 RAG 数据。
+name: github-dev-observability
+services:
+  collector:
+    # 官方固定 release；目标部署前解析并记录 digest，支持用 digest 覆盖。
+    image: ${COLLECTOR_IMAGE:-otel/opentelemetry-collector-contrib:0.164.0}
+    command: ["--config=/etc/otelcol/collector.yaml"]
+    ports:
+      # 默认仅本机；跨主机仅绑定已核私网接口，不绑定公网。
+      - "${OBS_BIND_IP:-127.0.0.1}:${OTLP_HTTP_PORT:-14318}:4318"
+    volumes:
+      - ./collector.yaml:/etc/otelcol/collector.yaml:ro
+    secrets: [otlp_token]
+    environment:
+      GITHUB_ES_URL: ${GITHUB_ES_URL:?Set the existing private ES endpoint}
+      GITHUB_ES_API_KEY: ${GITHUB_ES_API_KEY:-}
+    mem_limit: 384m
+    cpus: 0.5
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    depends_on: [jaeger]
+  jaeger:
+    image: ${JAEGER_IMAGE:-jaegertracing/jaeger:2.23.0}
+    command: ["--config=/etc/jaeger/config.yaml"]
+    volumes:
+      - ./jaeger.yaml:/etc/jaeger/config.yaml:ro
+      # 官方镜像以10001运行且/tmp可写；挂官方VOLUME避免新目录root属主造成Badger拒绝。
+      - jaeger-data:/tmp
+    # 不映射 OTLP/query 到宿主；Grafana 通过编排网络查询。
+    mem_limit: 768m
+    cpus: 0.5
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:v3.16.0}
+    command:
+      - --config.file=/etc/prometheus/prometheus.json
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --storage.tsdb.retention.size=2GB
+      - --web.enable-lifecycle=false
+    volumes:
+      # render.py 生成完整目标配置，缺少任一服务时拒绝生成。
+      - ./generated/prometheus.json:/etc/prometheus/prometheus.json:ro
+      - ./alerts.yaml:/etc/prometheus/alerts.yaml:ro
+      - prometheus-data:/prometheus
+    secrets: [actuator_token, engine_token]
+    mem_limit: 768m
+    cpus: 0.5
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:13.3.0}
+    ports:
+      - "${OBS_BIND_IP:-127.0.0.1}:${GRAFANA_PORT:-13000}:3000"
+    environment:
+      # 管理密码来自私有 secret 文件；禁匿名和自助注册。
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      # URL/凭据只从目标私有环境注入；默认 ES 仅是显式部署占位。
+      GITHUB_ES_URL: ${GITHUB_ES_URL:?Set the existing private ES endpoint}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    secrets: [grafana_password]
+    mem_limit: 512m
+    cpus: 0.5
+    read_only: true
+    tmpfs: [/tmp:size=32m,mode=1777]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    depends_on: [prometheus, jaeger]
+secrets:
+  otlp_token:
+    file: ./.private/otlp_token
+  actuator_token:
+    file: ./.private/actuator_token
+  engine_token:
+    file: ./.private/engine_token
+  grafana_password:
+    file: ./.private/grafana_password
+volumes:
+  jaeger-data: {}
+  prometheus-data: {}
+  grafana-data: {}

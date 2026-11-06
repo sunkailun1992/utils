@@ -1,6 +1,6 @@
 # 个人 Nacos 配置目录
 
-本目录仅维护 `github-dev / DEFAULT_GROUP` 的 29 个模板。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。Yudao 与美联实际配置不在本目录维护范围。
+本目录仅维护 `github-dev / DEFAULT_GROUP` 的 27 个模板。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。Yudao 与美联实际配置不在本目录维护范围。
 
 每个文件包含职责、导入服务与叶子参数注释；`GITHUB_*` 由私有环境渲染，Spring `${custom.*}` 等引用留给应用解析。[目录清单](catalog.json) 同时记录 dataId 说明、分类和消费者，供 Nacos 配置描述同步与一致性校验。Dubbo 自动生成的 metadata/mapping 不属于人工配置模板，不因数量多而删除。
 
@@ -29,13 +29,11 @@
 | dataId | 用途 | 当前 dev 导入服务 |
 |---|---|---|
 | [actuator.yaml](DEFAULT_GROUP/actuator.yaml) | 管理端点访问令牌、暴露范围与健康详情策略 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
-| [admin.yaml](DEFAULT_GROUP/admin.yaml) | Spring Boot Admin 客户端注册开关 | ai、ai-memory、gateway、mcp、message、rag、report、user |
-| [logging.yml](DEFAULT_GROUP/logging.yml) | 全局与应用包日志等级 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
+| [logging.yml](DEFAULT_GROUP/logging.yml) | 全局日志等级与安全结构化元数据白名单 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [security-auth.yaml](DEFAULT_GROUP/security-auth.yaml) | 认证来源、数据权限与租户隔离 | ai-memory、mcp、message、rag、report、user |
 | [security-jwt.yaml](DEFAULT_GROUP/security-jwt.yaml) | 人员访问 JWT 的签名密钥与签发方 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [swagger.yaml](DEFAULT_GROUP/swagger.yaml) | OpenAPI 文档和 Swagger UI 暴露开关 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [traffic-governance.yaml](DEFAULT_GROUP/traffic-governance.yaml) | 灰度治理开关与服务发现泳道元数据 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
-| [zipkin.yaml](DEFAULT_GROUP/zipkin.yaml) | Micrometer 链路追踪开关 | ai、ai-memory、gateway、mcp、message、rag、report、user |
 
 ## 共享 AI 协议
 
@@ -67,7 +65,7 @@
 
 本轮按实际消费者和键空间核对后，将 `ai.yaml`、`ai-agent.yaml`、`mcp.yaml`、`rag.yaml`、`user.yaml` 合并到对应 `{service}-spring.yaml`；合并前两项在所有 profile 中相邻，均为 `optional`、`refreshEnabled=true`，且没有重复叶子键。移除空映射 `ai-memory.yaml`、`message.yaml`、`report.yaml`。清理清单及替代关系见 [retired-dataids.json](retired-dataids.json)。这次结构调整已单独授权，不能据此把今后的纯注释任务扩大为自动合并。
 
-发布必须先从 Nacos 读取当前 37 个 DEFAULT_GROUP 配置并备份，按当前真实值合并并证明有效参数等价，再发布 29 个候选和说明。不能拿旧渲染模板覆盖远端运行值。旧 8 项先保留至消费者换用新 imports 并完成健康/配置读回验证，再按清理清单逐项确认旧版本未漂移后删除；它们的备份不进入 Git。若无法切换全部消费者，报告待清理，不把“模板已删除”称为“远端已删除”。Dubbo 自动配置不进入这份清理清单。
+发布必须先从 Nacos 读取当前 37 个 DEFAULT_GROUP 配置并备份，按当前真实值合并并证明有效参数等价，再发布 27 个候选和说明。不能拿旧渲染模板覆盖远端运行值。旧 8 项先保留至消费者换用新 imports 并完成健康/配置读回验证，再按清理清单逐项确认旧版本未漂移后删除；它们的备份不进入 Git。若无法切换全部消费者，报告待清理，不把“模板已删除”称为“远端已删除”。Dubbo 自动配置不进入这份清理清单。
 
 旧版本回滚先恢复旧 8 个 dataId，再恢复应用旧 imports；合并目标中的专属参数须与旧项保持一致，避免刷新覆盖差异。共享模板、namespace/group 和凭据保持不变。RAG 新增 `hybrid-write-enabled` 默认关闭，与本轮解析/检索升级联动，不能因配置合并而提前打开。
 
@@ -77,3 +75,5 @@
 - 渲染必须保留说明，不能用普通 YAML dump 丢弃注释。
 - 整理前后比较解析结果及列表顺序；发布前读取权威内容，存在漂移先复核，使用 CAS 并在发布后逐文件读回。
 - 注释不赋予修改真实值的权限；凭据只在私有文件及目标 Nacos 中处理，不写入本文。
+
+`admin.yaml`、`zipkin.yaml` 已退役，仅登记于 retired-dataids.json；远端尚未删除。指标使用受令牌保护的 Prometheus 端点，链路由服务 JVM 专用 OpenTelemetry agent 上报。ECS 日志默认排除 message 与异常正文，trace_id/span_id 保持真实上下文。

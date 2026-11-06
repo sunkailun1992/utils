@@ -220,3 +220,8 @@
 - Redis：直接用 `StringRedisTemplate` / `RedisCacheConfig`（原 `redis.RedisUtils`）。
 - 文件类型：`cn.hutool.core.io.FileTypeUtil`（原 `file.FileFormat`）。
 - 公式 `math.FormulaUtils`、WebSocket 推送 `websocket.WebSocketUtils`、IP 归属 `http.AddressUtils`（含硬编码密钥，已随类删除）、枚举 `enumeration.LenEnum`/`NumericEnum`：均零引用删除，需要时迁回业务项目。
+
+## 可观测性
+
+- `com.kellen.observability.TraceContextSnapshot`：捕获有效 OTel trace/span 标识，无活动 span 返回空字段，不回退业务 MDC。
+- `com.kellen.observability.TraceContextTaskDecorator`：提交线程捕获、工作线程作用域恢复，适用于公共异步池；不传播或伪造业务身份。
