@@ -66,7 +66,7 @@
 - 业务微服务新增业务表时，DDL 默认包含 `code`、`description`、`create_date_time`、`create_name`、`modify_date_time`、`modify_name`、`is_delete`、`type`、`state`、`label`、`sorting`、`version`、`tenant_id` 等公共治理字段，不得只写业务字段。
 - `type/state` 是 DDL 默认治理/状态字段，但不放入 `EntityBase`。业务代码需要读写时由当前实体自行声明并配套 `IEnum` 或受控枚举；不需要读写时依赖数据库默认值。
 - 数据库列 `version` 只表示 MyBatis-Plus 乐观锁。业务版本、模板版本、协议版本、Prompt 版本必须使用明确列名，例如 `template_version`、`prompt_version`、`protocol_version`，不得复用 `version`。
-- `src/main/resources/db/common-infra-schema.sql` 是业务库公共基础脚本源头，维护 `ddl_history` 与 Seata AT `undo_log`。消费者服务全新或空业务库首次启动前，必须在目标业务库手动执行该脚本；Seata AT 会在 `DataSource` 初始化时先检查 `undo_log`，不能依赖 MyBatis-Plus DDL 首次启动自动创建。
+- `src/main/resources/db/postgresql/common-infra-schema.sql` 是业务库公共基础脚本源头，维护 `ddl_history` 与 Seata AT `undo_log`。消费者服务全新或空业务库首次启动前，必须在目标业务库手动执行该脚本；Seata AT 会在 `DataSource` 初始化时先检查 `undo_log`，不能依赖 MyBatis-Plus DDL 首次启动自动创建。
 - 乐观锁由 `MyBatisPlusConfig` 注册 `OptimisticLockerInnerInterceptor`。
 - 更新接口需要提交查询时拿到的当前 `version`。
 - 更新建议使用 `updateById(entity)`，避免只按 id 的 `UpdateWrapper` 绕过乐观锁。
@@ -136,3 +136,5 @@
 cd ../user
 ./gradlew clean compileJava -x test
 ```
+
+个人 XXL-JOB 已退役，不再新增其依赖、配置类或 `xxl-job.yaml` 导入。调度选用 NAS 独立 Conductor OSS，通过 REST 接入；业务 Java 调度接口尚未实现，保持 Java 17，不为此引入要求 Java 21 的最新 SDK。

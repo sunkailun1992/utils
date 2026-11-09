@@ -71,53 +71,65 @@ public class DynamicDataSourceConfig {
     @Value("${utils.datasource.health.min-idle:1}")
     private int minIdle = 1;
 
+    /** 主库最大连接数；与gray之和最多6，为调度与维护连接保留容量。 */
+    @Value("${utils.datasource.pool.master.max-active:4}")
+    private int masterMaxActive = 4;
+
+    /** gray库最大连接数；不再使用Druid缺省的每池8连接。 */
+    @Value("${utils.datasource.pool.gray.max-active:2}")
+    private int grayMaxActive = 2;
+
+    /** 等待空闲连接的上限，单位毫秒，范围1至30000；禁止无限等待。 */
+    @Value("${utils.datasource.pool.max-wait-millis:3000}")
+    private long maxWaitMillis = 3000;
+
     /**
      * 主库 JDBC URL。
      */
-    @Value("${mysql.url}")
+    @Value("${postgresql.url}")
     private String url;
 
     /**
      * 主库用户名。
      */
-    @Value("${mysql.username}")
+    @Value("${postgresql.username}")
     private String username;
 
     /**
      * 主库密码。
      */
-    @Value("${mysql.password}")
+    @Value("${postgresql.password}")
     private String password;
 
     /**
      * 主库驱动类名。
      */
-    @Value("${mysql.driverClassName}")
+    @Value("${postgresql.driverClassName}")
     private String driverClassName;
 
 
     /**
      * 灰度库 JDBC URL。
      */
-    @Value("${mysql-gray.url}")
+    @Value("${postgresql-gray.url}")
     private String urlGray;
 
     /**
      * 灰度库用户名。
      */
-    @Value("${mysql-gray.username}")
+    @Value("${postgresql-gray.username}")
     private String usernameGray;
 
     /**
      * 灰度库密码。
      */
-    @Value("${mysql-gray.password}")
+    @Value("${postgresql-gray.password}")
     private String passwordGray;
 
     /**
      * 灰度库驱动类名。
      */
-    @Value("${mysql-gray.driverClassName}")
+    @Value("${postgresql-gray.driverClassName}")
     private String driverClassNameGray;
 
     /**
@@ -127,7 +139,7 @@ public class DynamicDataSourceConfig {
      */
     @Bean(name = "master")
     public DruidDataSource master() {
-        return createDruidDataSource(url, username, password, driverClassName);
+        return createDruidDataSource(url, username, password, driverClassName, masterMaxActive);
     }
 
 
@@ -138,7 +150,7 @@ public class DynamicDataSourceConfig {
      */
     @Bean(name = "gray")
     public DataSource gray() {
-        return createDruidDataSource(urlGray, usernameGray, passwordGray, driverClassNameGray);
+        return createDruidDataSource(urlGray, usernameGray, passwordGray, driverClassNameGray, grayMaxActive);
     }
 
     /**
@@ -151,17 +163,32 @@ public class DynamicDataSourceConfig {
      * @param jdbcUsername   数据库用户名
      * @param jdbcPassword   数据库密码
      * @param jdbcDriverName JDBC 驱动类名
+     * @param maxActive      此池最大连接数
      * @return 已配置连接健康检查的 Druid 数据源
      */
     private DruidDataSource createDruidDataSource(String jdbcUrl,
                                                    String jdbcUsername,
                                                    String jdbcPassword,
-                                                   String jdbcDriverName) {
+                                                   String jdbcDriverName,
+                                                   int maxActive) {
+        if (masterMaxActive < 1 || grayMaxActive < 1 || masterMaxActive > 6 || grayMaxActive > 6
+                || masterMaxActive + grayMaxActive > 6 || minIdle < 0
+                || minIdle > masterMaxActive || minIdle > grayMaxActive
+                || maxWaitMillis < 1 || maxWaitMillis > 30_000) {
+            throw new IllegalArgumentException("invalid PostgreSQL business pool budget");
+        }
+        if (jdbcUrl == null || !jdbcUrl.startsWith("jdbc:postgresql:")
+                || !"org.postgresql.Driver".equals(jdbcDriverName)) {
+            throw new IllegalArgumentException("personal business datasource requires PostgreSQL URL and driver");
+        }
         DruidDataSource druidDataSource = new DruidDataSource();
         druidDataSource.setUrl(jdbcUrl);
         druidDataSource.setUsername(jdbcUsername);
         druidDataSource.setPassword(jdbcPassword);
         druidDataSource.setDriverClassName(jdbcDriverName);
+        druidDataSource.setMaxActive(maxActive);
+        druidDataSource.setMaxWait(maxWaitMillis);
+        druidDataSource.setInitialSize(minIdle);
 
         druidDataSource.setValidationQuery(validationQuery);
         druidDataSource.setValidationQueryTimeout(validationQueryTimeout);

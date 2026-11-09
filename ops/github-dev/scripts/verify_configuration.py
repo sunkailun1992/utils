@@ -152,7 +152,8 @@ def check_consolidation_baseline(baseline_file):
                                   "version": "${spring.application.version:unknown}",
                                   "environment": "github-dev"}},
             "format": {"console": "ecs"},
-            "json": {"include": APPROVED_STRUCTURED_INCLUDE},
+            "json": {"include": APPROVED_STRUCTURED_INCLUDE,
+                     "context": {"include": False}},
         }
         # 只豁免完整匹配的新增树；额外输出、JSON规则、键和类型变化都必须失败。
         assert json.dumps(logging, sort_keys=True) == json.dumps(approved_logging, sort_keys=True), "structured logging 存在未经核准的键、类型或值"
@@ -258,7 +259,8 @@ def check():
     assert auth["tenant"]["ignore-without-tenant"] is False
     elasticsearch = yaml_json((CONFIG / "elasticsearch.yaml").read_text())
     assert elasticsearch["elasticsearch"]["request-log-index"] == "github_dev_request_log"
-    sql, manifest = prepare(ROOT)
+    documents, manifest = prepare(ROOT)
+    sql = "\n".join(documents.values())
     assert not re.search(r"INSERT(?: IGNORE)? INTO auth_user\b", sql, re.I)
     assert not re.search(r"meilianshuke\.com|hz2y\.com", sql)
     for service, inventory in manifest.items():

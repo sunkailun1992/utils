@@ -1,0 +1,2 @@
+org.springframework.boot.logging.structured.StructuredLoggingJsonMembersCustomizer=\
+com.kellen.observability.fleet.FleetStructuredLoggingCustomizer

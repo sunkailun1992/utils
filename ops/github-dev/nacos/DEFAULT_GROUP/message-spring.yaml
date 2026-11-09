@@ -1,24 +1,24 @@
 # 配置分类：服务配置
 # dataId：message-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：message 的主/灰度数据源；均引用个人 schema。
+# 用途：message 的主/灰度数据源；均引用对应个人独立库。
 # 导入服务：message。
-# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+# 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
-mysql:
-  # 个人主数据源的JDBC URL，库名与服务匹配。
-  url: jdbc:mysql://${custom.infra-mysql-host}:${custom.infra-mysql-port}/github_dev_message?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
-  # 个人主数据源的数据库账号；仅授予个人 schema 所需权限。
-  username: ${GITHUB_MYSQL_USERNAME}
+postgresql:
+  # 个人 PostgreSQL JDBC URL；连接超时3秒、socket超时30秒，库名与服务匹配。
+  url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_message?connectTimeout=3&socketTimeout=30&tcpKeepAlive=true
+  # 个人主数据源的数据库账号；仅授予对应个人独立库所需权限。
+  username: ${GITHUB_POSTGRESQL_MESSAGE_USERNAME}
   # 个人主数据源的数据库密码；真实值仅在私有配置中。
-  password: ${GITHUB_MYSQL_PASSWORD}
-  # 个人主数据源的MySQL JDBC 驱动类。
-  driverClassName: com.mysql.cj.jdbc.Driver
-mysql-gray:
+  password: ${GITHUB_POSTGRESQL_MESSAGE_PASSWORD}
+  # 个人主数据源的PostgreSQL JDBC 驱动类。
+  driverClassName: org.postgresql.Driver
+postgresql-gray:
   # 灰度数据源复用主数据源的JDBC URL，库名与服务匹配。
-  url: ${mysql.url}
-  # 灰度数据源复用主数据源的数据库账号；仅授予个人 schema 所需权限。
-  username: ${mysql.username}
+  url: ${postgresql.url}
+  # 灰度数据源复用主数据源的数据库账号；仅授予对应个人独立库所需权限。
+  username: ${postgresql.username}
   # 灰度数据源复用主数据源的数据库密码；真实值仅在私有配置中。
-  password: ${mysql.password}
-  # 灰度数据源复用主数据源的MySQL JDBC 驱动类。
-  driverClassName: ${mysql.driverClassName}
+  password: ${postgresql.password}
+  # 灰度数据源复用主数据源的PostgreSQL JDBC 驱动类。
+  driverClassName: ${postgresql.driverClassName}

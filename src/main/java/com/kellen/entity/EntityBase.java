@@ -71,8 +71,8 @@ public class EntityBase implements Serializable {
     /**
      * 逻辑删除标记。
      */
-    @Schema(description = "删除状态（0：未删除，1：删除）")
-    @TableLogic
+    @Schema(description = "删除状态（false：未删除，true：删除）")
+    @TableLogic(value = "false", delval = "true")
     private Boolean isDelete;
 
     /**

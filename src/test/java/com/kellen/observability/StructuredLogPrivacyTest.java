@@ -20,11 +20,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 /** 运行 Boot 的真实 ECS formatter，验证共享配置不会导出任意 MDC 或原始错误。 */
 class StructuredLogPrivacyTest {
     @Test
-    void templateOnlyExportsAllowedMetadataFromLoggingEvent() throws Exception {
+    void templateDisablesUntrustedContextBeforeFleetCustomizer() throws Exception {
         String json = format(Map.of("spring.application.name", "fixture-java",
                 "spring.application.version", "1.2.3"), true);
-        assertThat(json).contains("0123456789abcdef0123456789abcdef", "0123456789abcdef", "WARN");
-        assertThat(json).doesNotContain("SYNTHETIC_PRIVATE", "private_field");
+        // 根制品不依赖轻量模块：模板先关闭 Boot 的自由 MDC/KVP 合并；
+        // 受限 trace/事件字段由轻量模块 SPI 提供，并在该模块真实 encoder 回归中验证。
+        assertThat(json).contains("WARN");
+        assertThat(json).doesNotContain("trace_id", "span_id", "SYNTHETIC_PRIVATE", "private_field");
         assertThat(service(json)).containsEntry("name", "fixture-java")
                 .containsEntry("version", "1.2.3").containsEntry("environment", "github-dev");
     }

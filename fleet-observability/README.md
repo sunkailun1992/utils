@@ -1,6 +1,6 @@
 # fleet-observability
 
-轻量 Java 17 / Spring Boot 4 HTTP 观测库，坐标 `com:fleet-observability:0.1.0`。`utils` 通过 `api project` 引入；没有数据库、Redis、Seata、Spring starter 或 Servlet/Reactor 运行时传递依赖，适用于独立的 Servlet 与 WebFlux 服务。消费者提供其实际 Spring Web 栈，条件自动配置只启用对应适配器。
+轻量 Java 17 / Spring Boot 4 HTTP 观测库，坐标 `com:fleet-observability:0.1.1`。`utils` 通过 `api project` 引入；没有数据库、Redis、Seata、Spring starter 或 Servlet/Reactor 运行时传递依赖，适用于独立的 Servlet 与 WebFlux 服务。消费者提供其实际 Spring Web 栈，条件自动配置只启用对应适配器。
 
 ## 服务端配置
 
@@ -12,9 +12,13 @@ fleet.observability.max-body-bytes=8192
 # AI自由正文不由HTTP访问日志采集。该可选API目前只投影诊断元数据。
 fleet.observability.ai-content-enabled=false
 fleet.observability.max-ai-content-characters=2048
+# 0.1.1 的固定成员 SPI 提供安全上下文；关闭 Boot 默认自由 MDC/KVP 合流，避免同名键冲突丢日志。
+logging.structured.json.context.include=false
 ```
 
 保持现有 OTel Java agent 与私有配置。库只读取当前有效 `SpanContext`，不建立 SDK，不采用业务 DTO/MDC 的 `traceId`；未挂 agent 时 trace 字段缺失。是否全量采样属于受信运行配置，不能由本库伪造链路来补齐。
+
+`0.1.1` 通过 Boot 结构化日志 SPI 仅输出固定、限长、类型受控的 HTTP/AI 字段。可信事件 KVP 优先；MDC 只可回退合法 OTel trace/span。任意 message、异常正文/堆栈、未知 MDC/KVP 均不导出；普通异常日志只提供等级、安全 logger 类别和根异常类别摘要。真实 Boot encoder 回归覆盖同名字段冲突、唯一 JSON 成员和不泄密，应用运行态与 Collector/ES 仍须另验。
 
 ## HTTP合同
 

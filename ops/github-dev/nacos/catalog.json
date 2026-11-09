@@ -40,7 +40,7 @@
     },
     {
       "dataId": "ai-memory-spring.yaml",
-      "description": "ai-memory 的主/灰度数据源；均引用个人 schema；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "ai-memory 的主/灰度数据源；均引用对应个人独立库；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "ai-memory"
@@ -127,7 +127,7 @@
     },
     {
       "dataId": "message-spring.yaml",
-      "description": "message 的主/灰度数据源；均引用个人 schema；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "message 的主/灰度数据源；均引用对应个人独立库；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "message"
@@ -196,7 +196,7 @@
     },
     {
       "dataId": "report-spring.yaml",
-      "description": "report 的主/灰度数据源；均引用个人 schema；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "report 的主/灰度数据源；均引用对应个人独立库；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "report"
@@ -306,20 +306,6 @@
       "description": "用户服务主/灰度数据源与 OAuth 授权服务器公开入口；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
-        "user"
-      ]
-    },
-    {
-      "dataId": "xxl-job.yaml",
-      "description": "XXL-JOB 执行器启用状态；个人 github-dev 配置，凭据由私有环境注入。",
-      "category": "共享基础设施",
-      "consumers": [
-        "ai",
-        "ai-memory",
-        "mcp",
-        "message",
-        "rag",
-        "report",
         "user"
       ]
     }

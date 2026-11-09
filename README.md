@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.5.5`
+- 发布坐标：`com:utils:1.6.0`
 - Java 版本：`17`
 - Spring Boot：`4.0.4`
 - Spring Cloud：`2025.1.1`
@@ -21,7 +21,8 @@
 - 认证上下文：使用 `SecurityUser` 与 `UserContextHolder`
 - 租户上下文：使用 `TenantContextHolder`
 - 动态数据源：只保留 `master` 与 `gray`
-- 数据源连接健康：默认借出前执行 `SELECT 1` 校验，并启用空闲检测与保活；保活间隔默认 60 秒且会自动归一化为严格大于空闲检测间隔，避免 MySQL 空闲超时后的首次请求命中失效连接或 Druid 因非法时间组合启动失败
+- 个人业务库迁移目标为 PostgreSQL；`postgresql` / `postgresql-gray` 配置、字符串租户与 Boolean 逻辑删除、独立测试库及切换边界见 [PG 底座说明](docs/postgresql-fleet-foundation.md)。历史 MySQL 仍供其它项目或必要中间件使用，本轮不删除其数据库、账号或容器。
+- 数据源连接健康：默认借出前执行 `SELECT 1` 校验，并启用空闲检测与保活；保活间隔默认 60 秒且会自动归一化为严格大于空闲检测间隔，避免数据库空闲超时后的首次请求命中失效连接或 Druid 因非法时间组合启动失败
 - 乐观锁：`EntityBase.version` 只表示 MyBatis-Plus `@Version` 数据库版本号
 - JSON：`JsonUtil` 使用 Spring Boot 4 默认 Jackson 3 databind API；`json/bean/list` 方法签名保持兼容
 
@@ -68,13 +69,13 @@
 
 ## 远程发布
 
-个人公共包统一使用 `com:utils:1.5.5` 和 `com:rpc-api:1.0.7`；美联公共包使用 `com.kellen:utils` 和 `com.kellen:rpc-api`。两边共用阿里云 Maven 地址，由 group 形成不同仓库路径，独立发布和递增版本。个人消费者不得引用 `com.kellen` 的这两个制品；Java package `com.kellen.*` 不受 Maven group 迁移影响。
+个人公共包统一使用 `com:utils:1.6.0` 和 `com:rpc-api:1.0.7`；美联公共包使用 `com.kellen:utils` 和 `com.kellen:rpc-api`。两边共用阿里云 Maven 地址，由 group 形成不同仓库路径，独立发布和递增版本。个人消费者不得引用 `com.kellen` 的这两个制品；Java package `com.kellen.*` 不受 Maven group 迁移影响。
 
 个人坐标此前从 `com.kellen:utils:1.4.9` 迁移到 `com:utils:1.5.1`，`1.5.2` 增加 ES 请求日志索引配置；`1.5.3` 增加 Prometheus registry、真实 OTel trace/span 快照与异步上下文恢复。观测使用 API 1.59.0，不在应用内创建第二个 SDK。保留旧制品用于历史构建，不覆盖或删除美联制品。回滚需同时回滚消费者依赖和对应代码，不能仅改制品 group。
 
 `1.5.4` 修复 `ops/github-dev/observability/` 的采集状态配色、缺失目标判定、Collector UTF-8 指标名及无数据语义。本批没有修改 Java API 或运行时 JAR 逻辑，观测配置独立于 Maven JAR 分发；消费者无需仅为本批观测配置修复升级 `com:utils`，可以继续使用已发布的精确版本。新版本从 `main` 发布时仍须按本仓规则同步发布 Maven 制品。
 
-当前 `1.5.5` 引入轻量 `com:fleet-observability:0.1.0`，统一受控HTTP终态与输入输出投影；旧审计/慢请求提醒不再保存或发送原始参数与返回对象。独立Web栈、隐私与传输合同见 [HTTP安全结构化观测](docs/fleet-http-observability.md)。
+`1.5.5` 首次引入轻量 `com:fleet-observability:0.1.0`，统一受控HTTP终态与输入输出投影；旧审计/慢请求提醒不再保存或发送原始参数与返回对象。独立Web栈、隐私与传输合同见 [HTTP安全结构化观测](docs/fleet-http-observability.md)。
 
 请求日志索引通过 `elasticsearch.request-log-index` 配置；未指定时保留 `request_log`，个人 `github-dev` 使用 `github_dev_request_log`。Nacos namespace 只隔离配置与服务发现，不能隔离同一 ES 的索引。更换索引不会搬迁或删除历史日志，发布后需重新启动消费者以载入新的实体映射。
 
@@ -121,7 +122,7 @@ cd ../gateway
 - 不再把 HTTP 请求头里的 `version` 当作业务版本校验。
 - 不再新增 `bank`、`hz`、`hx`、`jghx` 等动态数据源常量或配置。
 - 不在 `gateway`、`user` 等消费者项目内复制 `utils` 工具类源码。
-- 业务库公共基础脚本源头为 `src/main/resources/db/common-infra-schema.sql`；接入 MyBatis-Plus DDL 与 Seata AT 的消费者服务首次启动空库前，必须在目标业务库手动执行该脚本，先建 `ddl_history` 和 `undo_log`。
+- 业务库公共基础脚本源头为 `src/main/resources/db/postgresql/common-infra-schema.sql`；接入 MyBatis-Plus DDL 与 Seata AT 的消费者服务首次启动空库前，必须在目标业务库手动执行该脚本，先建 `ddl_history` 和 `undo_log`。
 - 不把网关路由、Nacos 配置、SLS/Logback 本地配置放进本仓库。
 - AI 新增或修改 Java 代码时，必须补充说明公共职责、消费者影响和安全边界的有效注释，禁止机械逐行或行尾堆叠注释。
 - 新增 Java 类必须补齐类注释、字段注释、方法 JavaDoc，并在关键逻辑块前说明为什么这样实现。
@@ -150,3 +151,7 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 ## 个人微服务观测
 
 唯一公共模板、独立极空间编排、采集目标渲染与验收步骤见 [观测部署说明](ops/github-dev/observability/README.md)。服务日志在请求线程通过 `TraceContextSnapshot.capture()` 取得真实 trace/span，异步保存保持该快照；业务会话 ID 不作为链路标识。公共异步池通过 `TraceContextTaskDecorator` 绑定并恢复 OTel Context，不替代用户与租户授权。
+
+个人 Java 服务已移除 XXL-JOB 依赖、执行器配置与演示任务，不再读取 `xxl-job.yaml`。Conductor OSS 作为 NAS 独立服务通过 REST 接入；当前未接入业务 Java 调度接口，不添加 Java 21 SDK 或虚构任务开关。NAS XXL-JOB 服务按用户后续授权另行退役，先确认美联 dev 已显式关闭执行器；旧 MySQL 调度数据保留。
+
+`1.6.0` 将个人业务 JDBC 驱动、方言与 Boolean 逻辑删除切换为 PostgreSQL，并移除个人 XXL-JOB 依赖；这是需要数据库迁移与配置联动的 minor 变更。配套轻库 `0.1.1` 修复 Boot ECS 中同名 MDC/KVP 导致整条事件丢失的问题，必须与 `logging.structured.json.context.include=false` 一起使用。源码/制品校验通过与实际配置发布、数据库切换、服务及链路验收分别取证。

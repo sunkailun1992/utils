@@ -14,7 +14,6 @@ import com.kellen.datapermission.DataPermissionSqlHandler;
 import com.kellen.security.config.TenantProperties;
 import com.kellen.utils.context.TenantContextHolder;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.LongValue;
 import net.sf.jsqlparser.expression.StringValue;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -80,7 +79,7 @@ public class MyBatisPlusConfig {
         if (securityProperties.isBlockAttackEnabled()) {
             interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor()); // 注册防全表更新删除插件，避免无条件 update/delete 破坏数据。
         }
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL)); // 注册 MySQL 分页插件。
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.POSTGRE_SQL)); // 注册 PostgreSQL 分页插件。
         interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor()); // 注册 @Version 乐观锁插件。
         return interceptor; // 返回完整插件链。
     }
@@ -101,10 +100,12 @@ public class MyBatisPlusConfig {
             @Override
             public Expression getTenantId() {
                 String tenantId = TenantContextHolder.getTenantId(); // 从租户上下文读取租户ID。
-                if (StringUtils.isNumeric(tenantId)) {
-                    return new LongValue(tenantId); // 纯数字租户使用数字表达式，避免 SQL 类型不匹配。
+                if (StringUtils.isBlank(tenantId)) {
+                    throw new IllegalStateException("tenant context required for tenant-filtered SQL");
                 }
-                return new StringValue(tenantId); // 非数字租户使用字符串表达式。
+                StringValue value = new StringValue();
+                value.setValue(tenantId.replace("'", "''")); // tenant_id 为 varchar，保留前导零并按SQL字面量转义。
+                return value;
             }
 
             /**

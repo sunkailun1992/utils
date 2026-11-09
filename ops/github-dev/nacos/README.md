@@ -1,6 +1,6 @@
 # 个人 Nacos 配置目录
 
-本目录仅维护 `github-dev / DEFAULT_GROUP` 的 27 个模板。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。Yudao 与美联实际配置不在本目录维护范围。
+本目录仅维护 `github-dev / DEFAULT_GROUP` 的 26 个模板。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。Yudao 与美联实际配置不在本目录维护范围。
 
 每个文件包含职责、导入服务与叶子参数注释；`GITHUB_*` 由私有环境渲染，Spring `${custom.*}` 等引用留给应用解析。[目录清单](catalog.json) 同时记录 dataId 说明、分类和消费者，供 Nacos 配置描述同步与一致性校验。Dubbo 自动生成的 metadata/mapping 不属于人工配置模板，不因数量多而删除。
 
@@ -22,7 +22,6 @@
 | [redis.yaml](DEFAULT_GROUP/redis.yaml) | 公共 Redis 缓存和 Spring Data Redis 共用连接 | ai、ai-memory、gateway、mcp、message、rag、report、user |
 | [seata.yaml](DEFAULT_GROUP/seata.yaml) | Seata 分布式事务启用状态 | ai、ai-memory、mcp、message、rag、report、user |
 | [storage.yaml](DEFAULT_GROUP/storage.yaml) | X File Storage 统一入口与私有 MinIO 平台 | ai |
-| [xxl-job.yaml](DEFAULT_GROUP/xxl-job.yaml) | XXL-JOB 执行器启用状态 | ai、ai-memory、mcp、message、rag、report、user |
 
 ## 安全与可观测性
 
@@ -77,3 +76,5 @@
 - 注释不赋予修改真实值的权限；凭据只在私有文件及目标 Nacos 中处理，不写入本文。
 
 `admin.yaml`、`zipkin.yaml` 已退役，仅登记于 retired-dataids.json；远端尚未删除。指标使用受令牌保护的 Prometheus 端点，链路由服务 JVM 专用 OpenTelemetry agent 上报。ECS 日志默认排除 message 与异常正文，trace_id/span_id 保持真实上下文。
+
+个人 XXL-JOB 已从依赖、示例处理器和各 profile 导入退役；旧 dataId 的受控清理登记在 `retired-dataids.json`。Conductor OSS 作为独立 NAS 服务接入，不能把它写成尚不存在的 Java 配置 dataId。美联 dev 的开关独立核对，不由本目录发布。

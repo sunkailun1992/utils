@@ -53,6 +53,12 @@
       "replacement": null,
       "reason": "由 OpenTelemetry agent + Prometheus/Grafana 独立编排替代；备份并验证全部消费者切换后才删除远端配置",
       "kind": "monitoring-retirement"
+    },
+    {
+      "dataId": "xxl-job.yaml",
+      "replacement": null,
+      "reason": "个人 XXL-JOB 依赖、示例处理器和全部 profile 导入退役；采用独立 Conductor OSS，消费者重启验证后按 CAS 清理个人远端配置，不处理美联 namespace。",
+      "kind": "scheduler-retirement"
     }
   ]
 }

@@ -55,7 +55,7 @@
 - 新增公共配置、SDK 适配、拦截器、策略、工具类或自动配置时，必须优先沿用 `docs/ai-coding/AI_DESIGN_PATTERN_GUIDE.md` 中的 Auto Configuration、Strategy、Adapter、Interceptor、Template、Factory 等公共包适用模式。
 - 不在 `user`、`message`、`gateway` 等消费者项目复制 `utils` 源码。
 - 修改公共 API、注解、AOP、认证、租户、异常、返回值或 MyBatis-Plus 配置时，必须评估消费者项目编译影响。
-- 公共数据库基础脚本源头是 `src/main/resources/db/common-infra-schema.sql`；接入 MyBatis-Plus DDL 与 Seata AT 的业务服务首次启动空库前，必须让目标业务库手动执行该脚本，不能依赖消费者应用首次启动自动创建 `undo_log`。
+- 个人 PostgreSQL 公共数据库基础脚本源头是 `src/main/resources/db/postgresql/common-infra-schema.sql`；接入 MyBatis-Plus DDL 与 Seata AT 的业务服务首次启动空库前，必须让目标业务库手动执行该脚本，不能依赖消费者应用首次启动自动创建 `undo_log`。旧 MySQL 脚本保留为已发布历史，不改写或在 PG 执行，也不删除其它项目或必要中间件仍使用的 MySQL 数据。
 - 业务微服务表设计规范由 `docs/ai-coding/PROJECT_CODING_SPEC.md` 和 `docs/ai-coding/examples` 提供模板；新增表必须包含公共治理字段，`version` 只做乐观锁，业务版本使用 `*_version` 命名。
 - `utils` 不维护业务路由或 Swagger UI 聚合列表；新增公共 OpenAPI/Springdoc 能力或新 Java 服务消费者时，必须提醒消费者在 `../gateway` 的 Nacos `gateway-spring.yaml` 按需补业务路由和 `springdoc.swagger-ui.urls`，并先验证对应网关文档路径。
 

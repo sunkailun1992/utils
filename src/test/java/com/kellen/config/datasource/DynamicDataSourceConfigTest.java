@@ -18,10 +18,10 @@ class DynamicDataSourceConfigTest {
     @Test
     void shouldEnableConnectionHealthChecksForMasterDataSource() {
         DynamicDataSourceConfig config = new DynamicDataSourceConfig();
-        ReflectionTestUtils.setField(config, "url", "jdbc:mysql://127.0.0.1:3306/test");
+        ReflectionTestUtils.setField(config, "url", "jdbc:postgresql://127.0.0.1:1/synthetic_fixture");
         ReflectionTestUtils.setField(config, "username", "test");
         ReflectionTestUtils.setField(config, "password", "test");
-        ReflectionTestUtils.setField(config, "driverClassName", "com.mysql.cj.jdbc.Driver");
+        ReflectionTestUtils.setField(config, "driverClassName", "org.postgresql.Driver");
 
         try (DruidDataSource dataSource = config.master()) {
             assertThat(dataSource.getValidationQuery()).isEqualTo("SELECT 1");
@@ -32,7 +32,7 @@ class DynamicDataSourceConfigTest {
             assertThat(dataSource.getTimeBetweenEvictionRunsMillis()).isEqualTo(30_000L);
             assertThat(dataSource.getKeepAliveBetweenTimeMillis()).isEqualTo(60_000L);
             assertThat(dataSource.getMinIdle()).isEqualTo(1);
-            assertThatCode(dataSource::init).doesNotThrowAnyException();
+            assertThatCode(() -> initializeWithoutNetwork(dataSource)).doesNotThrowAnyException();
         }
     }
 
@@ -42,17 +42,24 @@ class DynamicDataSourceConfigTest {
     @Test
     void shouldNormalizeInvalidKeepAliveInterval() {
         DynamicDataSourceConfig config = new DynamicDataSourceConfig();
-        ReflectionTestUtils.setField(config, "url", "jdbc:mysql://127.0.0.1:3306/test");
+        ReflectionTestUtils.setField(config, "url", "jdbc:postgresql://127.0.0.1:1/synthetic_fixture");
         ReflectionTestUtils.setField(config, "username", "test");
         ReflectionTestUtils.setField(config, "password", "test");
-        ReflectionTestUtils.setField(config, "driverClassName", "com.mysql.cj.jdbc.Driver");
+        ReflectionTestUtils.setField(config, "driverClassName", "org.postgresql.Driver");
         ReflectionTestUtils.setField(config, "evictionRunIntervalMillis", 60_000L);
         ReflectionTestUtils.setField(config, "keepAliveIntervalMillis", 30_000L);
 
         try (DruidDataSource dataSource = config.master()) {
             assertThat(dataSource.getTimeBetweenEvictionRunsMillis()).isEqualTo(60_000L);
             assertThat(dataSource.getKeepAliveBetweenTimeMillis()).isGreaterThan(60_000L);
-            assertThatCode(dataSource::init).doesNotThrowAnyException();
+            assertThatCode(() -> initializeWithoutNetwork(dataSource)).doesNotThrowAnyException();
         }
+    }
+
+    /** 隔离池初始化参数检查，不让健康配置单测访问任何数据库。初始容量由独立契约测试验证。 */
+    private void initializeWithoutNetwork(DruidDataSource dataSource) throws Exception {
+        dataSource.setInitialSize(0);
+        dataSource.setMinIdle(0);
+        dataSource.init();
     }
 }

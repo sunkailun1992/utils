@@ -2,7 +2,7 @@
 # dataId：mybatis-plus.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：MyBatis-Plus 映射、逻辑删除和 MyBatis-Mate 授权。
 # 导入服务：ai、ai-memory、mcp、message、rag、report、user。
-# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+# 维护：个人业务库使用 PostgreSQL Boolean 逻辑删除字段；其它参数保持既有语义。
 
 ---
 mybatis-plus:
@@ -14,10 +14,10 @@ mybatis-plus:
     # 历史字段策略键；保值保留，是否生效须以当前框架绑定结果为准。
     field-strategy: 1
     db-config:
-      # 逻辑删除标记值；1 表示已删除，需与实体和数据库约定一致。
-      logic-delete-value: 1
-      # 逻辑未删除标记值；0 表示正常记录。
-      logic-not-delete-value: 0
+      # PostgreSQL Boolean 逻辑删除标记；true 表示已删除，需与实体和数据库约定一致。
+      logic-delete-value: 'true'
+      # PostgreSQL Boolean 逻辑未删除标记；false 表示正常记录。
+      logic-not-delete-value: 'false'
 mybatis-mate:
   cert:
     # MyBatis-Mate 授权 grant；仅通过私有环境注入，禁止写入注释和日志。
