@@ -31,6 +31,8 @@
 
 共 50 张表，包含七组公共 `ddl_history` / Seata `undo_log`。`ai-agent`、gateway 不使用业务 JDBC 数据库。RAG 正文和向量继续由 Qdrant 保存，可重建图谱继续由 Neo4j 保存；不恢复旧关系库 RAG / 图谱表。现行 Entity 与 PostgreSQL 权威 DDL 是建表依据，历史 MySQL SQL 保留为历史材料，不在 PostgreSQL 执行。
 
+NAS 独立 Conductor OSS 的 PostgreSQL、隔离锁 Redis、UI/API 认证、安全观测和真实合成工作流验收，见 [Conductor 运维说明](../../docs/conductor-operations.md)。HTTP、404 重试、Cron、WAIT 恢复与日志链路对账已分别验证；旧 XXL-JOB 服务退役，原 MySQL 调度数据完整保留。完整私有 Compose 不进入本目录。
+
 生成逐库结构脚本（只写文件，不连接数据库）：
 
 ```bash
