@@ -11,8 +11,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
 import javax.sql.DataSource;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -181,8 +185,11 @@ public class DynamicDataSourceConfig {
                 || !"org.postgresql.Driver".equals(jdbcDriverName)) {
             throw new IllegalArgumentException("personal business datasource requires PostgreSQL URL and driver");
         }
+        PostgresqlTimeouts timeouts = normalizePostgresqlTimeouts(jdbcUrl);
         DruidDataSource druidDataSource = new DruidDataSource();
-        druidDataSource.setUrl(jdbcUrl);
+        druidDataSource.setUrl(timeouts.url());
+        druidDataSource.setConnectTimeout(timeouts.connectMillis());
+        druidDataSource.setSocketTimeout(timeouts.socketMillis());
         druidDataSource.setUsername(jdbcUsername);
         druidDataSource.setPassword(jdbcPassword);
         druidDataSource.setDriverClassName(jdbcDriverName);
@@ -202,6 +209,76 @@ public class DynamicDataSourceConfig {
         druidDataSource.setMinIdle(minIdle);
         return druidDataSource;
     }
+
+    /**
+     * PostgreSQL URL 的超时单位是秒，Druid 字段及 JDBC network timeout 的单位是毫秒。
+     * 移除已归一化的两项，防止 Druid 初始化时再次用 URL 原值覆盖毫秒字段。
+     * 其余参数保留原字节和顺序；缺省仍为连接 3 秒、读取 30 秒。
+     */
+    private PostgresqlTimeouts normalizePostgresqlTimeouts(String jdbcUrl) {
+        int queryStart = jdbcUrl.indexOf('?');
+        if (queryStart < 0) {
+            return new PostgresqlTimeouts(jdbcUrl, 3000, 30000);
+        }
+        Integer connectMillis = null;
+        Integer socketMillis = null;
+        List<String> retained = new ArrayList<>();
+        for (String parameter : jdbcUrl.substring(queryStart + 1).split("&", -1)) {
+            int separator = parameter.indexOf('=');
+            String key = decodeTimeoutOption(separator < 0 ? parameter : parameter.substring(0, separator));
+            if (key.equalsIgnoreCase("connectTimeout") || key.equalsIgnoreCase("socketTimeout")) {
+                if (!key.equals("connectTimeout") && !key.equals("socketTimeout")) {
+                    throw invalidPostgresqlTimeout();
+                }
+                int millis = timeoutMillis(separator < 0 ? "" : parameter.substring(separator + 1));
+                if (key.equals("connectTimeout")) {
+                    if (connectMillis != null) {
+                        throw invalidPostgresqlTimeout();
+                    }
+                    connectMillis = millis;
+                } else {
+                    if (socketMillis != null) {
+                        throw invalidPostgresqlTimeout();
+                    }
+                    socketMillis = millis;
+                }
+            } else {
+                retained.add(parameter);
+            }
+        }
+        String sanitizedUrl = jdbcUrl.substring(0, queryStart)
+                + (retained.isEmpty() ? "" : "?" + String.join("&", retained));
+        return new PostgresqlTimeouts(sanitizedUrl, connectMillis == null ? 3000 : connectMillis,
+                socketMillis == null ? 30000 : socketMillis);
+    }
+
+    /** 只接受能安全转成 Druid 整数毫秒的正整数秒；0 的无限等待语义不允许进入业务池。 */
+    private int timeoutMillis(String encodedSeconds) {
+        String seconds = decodeTimeoutOption(encodedSeconds);
+        if (!seconds.matches("[1-9][0-9]{0,6}")) {
+            throw invalidPostgresqlTimeout();
+        }
+        int value = Integer.parseInt(seconds);
+        if (value > Integer.MAX_VALUE / 1000) {
+            throw invalidPostgresqlTimeout();
+        }
+        return value * 1000;
+    }
+
+    private String decodeTimeoutOption(String value) {
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException failure) {
+            throw invalidPostgresqlTimeout();
+        }
+    }
+
+    /** 配置拒绝原因固定，不把可能携带凭据或地址的 URL、参数值和解析异常写入日志。 */
+    private IllegalArgumentException invalidPostgresqlTimeout() {
+        return new IllegalArgumentException("invalid PostgreSQL connection timeout options");
+    }
+
+    private record PostgresqlTimeouts(String url, int connectMillis, int socketMillis) { }
 
     /**
      * 保证 Druid 保活间隔严格大于空闲检测间隔。
