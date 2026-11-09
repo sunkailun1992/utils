@@ -1,6 +1,6 @@
 # fleet-observability
 
-轻量 Java 17 / Spring Boot 4 HTTP 观测库，坐标 `com:fleet-observability:0.1.1`。`utils` 通过 `api project` 引入；没有数据库、Redis、Seata、Spring starter 或 Servlet/Reactor 运行时传递依赖，适用于独立的 Servlet 与 WebFlux 服务。消费者提供其实际 Spring Web 栈，条件自动配置只启用对应适配器。
+轻量 Java 17 / Spring Boot 4 HTTP 观测库，坐标 `com:fleet-observability:0.1.2`。`utils` 通过 `api project` 引入；没有数据库、Redis、Seata、Spring starter 或 Servlet/Reactor 运行时传递依赖，适用于独立的 Servlet 与 WebFlux 服务。消费者提供其实际 Spring Web 栈，条件自动配置只启用对应适配器。
 
 ## 服务端配置
 
@@ -30,6 +30,7 @@ logging.structured.json.context.include=false
 - 超限、重复键、过深、非法JSON、未知编码整体省略，不保存原始前缀。请求仅复制业务实际读取的字节，不主动读取或二次消费。
 - 响应即时透传。SSE、multipart、二进制、文件不聚合正文；保留flush、背压和取消。AI chat/patient/questionnaire路由在HTTP层始终禁止正文捕获。
 - Servlet通过原生async/error dispatch追踪最终响应；WebFlux使用Spring原生 `HttpHandlerDecoratorFactory` 包住包含 `WebExceptionHandler` 的整条传输处理，WebFilter只关联框架路由，不重复发事件。
+- Servlet 在 REQUEST/ASYNC 成功 `sendError` 后等待 ERROR 分派；ERROR 内再次 `sendError` 则在本次分派结束发出唯一终态，不等待不存在的第三次分派。每次成功 `sendError` 都丢弃被容器清空的未提交响应前缀；已经提交而抛错时保留失败终态，不假装已经安排下一次分派。认证及错误响应保持原样，不能通过放行 `/error` 来补日志。
 - 自定义 `FleetEventSink` 可替换默认 SLF4J key/value sink。sink失败被隔离，不改变业务结果，也不回退打印原文。
 
 `SafeBodyProjector.projectAiDiagnostic(String)` 仅在受信开关开启时返回允许字段的诊断元数据JSON，默认缺失。它不实现任意患者、Prompt或回答自由文的通用脱敏，也不代表开启正文诊断能力；新增正文方案必须定义独立受控结构并验证后才能接入。
@@ -38,4 +39,4 @@ logging.structured.json.context.include=false
 
 在仓库根执行 `./gradlew :fleet-observability:test :fleet-observability:verifyLightweightPublication publishToMavenLocal --offline`。根 `test/check/publishToMavenLocal` 也包含子模块对应检查。发布POM只含精确版本JSON、SLF4J、OTel API依赖，独立验证生成POM、runtime依赖图和JAR自动配置资源。
 
-测试启动本机临时Servlet与Reactive HTTP server，不访问真实模型、中间件或监控平台；验证JSON透传、实读/实写量、401/404/非法JSON最终响应、writer、async、SSE及时flush/取消、一次终态、类型投影和秘密省略。单纯应用测试通过不代表Collector/ES/Grafana字段已接通，部署链路须另验。
+测试启动本机临时Servlet与Reactive HTTP server，不访问真实模型、中间件或监控平台；验证JSON透传、实读/实写量、401/404/非法JSON最终响应、writer、async、SSE及时flush/取消、一次终态、类型投影和秘密省略。`ServletSecurityErrorDispatchTest` 用真实 Tomcat/Spring Security 的无认证与错误 Bearer 请求核对 REQUEST 与 ERROR 都被拒绝时的 403、空响应、唯一终态及原 trace/span，不以 mock 或放行错误路由替代。Security 依赖仅供测试，不进入发布 POM。单纯应用测试通过不代表Collector/ES/Grafana字段已接通，部署链路须另验。

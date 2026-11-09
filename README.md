@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.6.1`
+- 发布坐标：`com:utils:1.6.2`
 - Java 版本：`17`
 - Spring Boot：`4.0.4`
 - Spring Cloud：`2025.1.1`
@@ -155,3 +155,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 个人 Java 服务已移除 XXL-JOB 依赖、执行器配置与演示任务，不再读取 `xxl-job.yaml`。Conductor OSS 作为 NAS 独立服务通过 REST 接入；当前未接入业务 Java 调度接口，不添加 Java 21 SDK 或虚构任务开关。NAS XXL-JOB 服务按用户后续授权另行退役，先确认美联 dev 已显式关闭执行器；旧 MySQL 调度数据保留。
 
 `1.6.0` 将个人业务 JDBC 驱动、方言与 Boolean 逻辑删除切换为 PostgreSQL，并移除个人 XXL-JOB 依赖；这是需要数据库迁移与配置联动的 minor 变更。配套轻库 `0.1.1` 修复 Boot ECS 中同名 MDC/KVP 导致整条事件丢失的问题，必须与 `logging.structured.json.context.include=false` 一起使用。源码/制品校验通过与实际配置发布、数据库切换、服务及链路验收分别取证。
+
+`1.6.2` 配套轻库 `0.1.2` 修复 Servlet Security 在 ERROR 分派内再次 `sendError(403)` 时等待不存在后续分派而遗漏终态的问题；同时保留已提交响应上 `sendError` 抛错的一次失败终态。不改变认证规则或 403 响应，也不增加日志字段。真实 Tomcat/Security 回归、异步/取消相邻路径与运行态日志联结分别验收。

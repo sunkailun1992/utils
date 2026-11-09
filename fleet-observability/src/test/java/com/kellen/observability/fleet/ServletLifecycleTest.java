@@ -98,6 +98,34 @@ class ServletLifecycleTest {
         assertThat(events).hasSize(1); assertThat(events.get(0)).containsEntry("outcome", "failure")
                 .containsEntry("http_status", 200).containsEntry("response_body_complete", false);
     }
+    @Test void errorDispatchSendingErrorAgainCompletesOnceAndDiscardsBothPrefixes() throws Exception {
+        var events = new ArrayList<Map<String, Object>>(); var response = new MockHttpServletResponse();
+        var request = request(); var filter = filter(events::add);
+        filter.doFilter(request, response, (req, res) -> {
+            res.getWriter().write("SYNTHETIC_SECRET");
+            ((jakarta.servlet.http.HttpServletResponse) res).sendError(403);
+        });
+        assertThat(events).isEmpty();
+        request.setDispatcherType(jakarta.servlet.DispatcherType.ERROR); response.setCommitted(false);
+        filter.doFilter(request, response, (req, res) -> {
+            res.getWriter().write("SYNTHETIC_ERROR_PREFIX");
+            ((jakarta.servlet.http.HttpServletResponse) res).sendError(403);
+        });
+        assertThat(events).hasSize(1);
+        assertThat(events.get(0)).containsEntry("http_status", 403).containsEntry("outcome", "rejected")
+                .containsEntry("response_bytes", 0L).doesNotContainKey("response_body");
+        assertThat(events.toString()).doesNotContain("SYNTHETIC_SECRET", "SYNTHETIC_ERROR_PREFIX");
+    }
+    @Test void committedSendErrorFailureCannotArmAnImpossibleErrorDispatch() {
+        var events = new ArrayList<Map<String, Object>>(); var response = new MockHttpServletResponse();
+        assertThatThrownBy(() -> filter(events::add).doFilter(request(), response, (req, res) -> {
+            res.getOutputStream().write(1); res.flushBuffer();
+            ((jakarta.servlet.http.HttpServletResponse) res).sendError(403);
+        })).isInstanceOf(IllegalStateException.class);
+        assertThat(events).hasSize(1);
+        assertThat(events.get(0)).containsEntry("http_status", 200).containsEntry("outcome", "failure")
+                .containsEntry("response_body_complete", false);
+    }
     @Test void asyncRedispatchUsesCurrentRequestViewWithoutDoubleCountingTheTee() throws Exception {
         var events = new ArrayList<Map<String, Object>>(); var initial = request(); initial.setAsyncSupported(true);
         var response = new MockHttpServletResponse(); var filter = filter(events::add);

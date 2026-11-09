@@ -219,8 +219,13 @@ public final class FleetServletFilter extends OncePerRequestFilter {
             return writer;
         }
         @Override public void flushBuffer() throws IOException { if (writer != null) writer.flush(); super.flushBuffer(); }
-        @Override public void sendError(int status) throws IOException { exchange.errorDispatchExpected = true; super.sendError(status); }
-        @Override public void sendError(int status, String message) throws IOException { exchange.errorDispatchExpected = true; super.sendError(status, message); }
+        @Override public void sendError(int status) throws IOException { super.sendError(status); errorSent(); }
+        @Override public void sendError(int status, String message) throws IOException { super.sendError(status, message); errorSent(); }
+        private void errorSent() {
+            // sendError 清空未提交的响应；ERROR 内再次拒绝不会触发第三次分派。
+            exchange.log.response.reset(); if (countingWriter != null) countingWriter.resetEncoding();
+            exchange.errorDispatchExpected = exchange.request.getDispatcherType() != DispatcherType.ERROR;
+        }
         @Override public void resetBuffer() {
             super.resetBuffer(); exchange.log.response.reset(); if (countingWriter != null) countingWriter.resetEncoding();
         }

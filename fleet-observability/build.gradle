@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com'
-version = '0.1.1'
+version = '0.1.2'
 description = 'Bounded, privacy-preserving HTTP observability for the personal Java fleet'
 
 repositories {
@@ -37,6 +37,8 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc'
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-config'
+    testImplementation 'org.springframework.security:spring-security-web'
     testImplementation 'io.opentelemetry:opentelemetry-sdk-testing:1.59.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
@@ -70,7 +72,7 @@ tasks.register('verifyLightweightPublication') {
     dependsOn 'generatePomFileForMavenJavaPublication', 'jar'
     doLast {
         def pom = new groovy.xml.XmlSlurper(false, false).parse(layout.buildDirectory.file('publications/mavenJava/pom-default.xml').get().asFile)
-        assert pom.groupId.text() == 'com' && pom.artifactId.text() == 'fleet-observability' && pom.version.text() == '0.1.1'
+        assert pom.groupId.text() == 'com' && pom.artifactId.text() == 'fleet-observability' && pom.version.text() == '0.1.2'
         def artifacts = pom.dependencies.dependency.collect { it.artifactId.text() } as Set
         assert artifacts == ['opentelemetry-api', 'slf4j-api', 'jackson-databind'] as Set
         def forbidden = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.findAll {
