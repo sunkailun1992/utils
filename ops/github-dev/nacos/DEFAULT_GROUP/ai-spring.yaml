@@ -38,8 +38,8 @@ ai:
     # 单次上传大小上限，单位字节；20971520 字节为 20 MiB。
     max-upload-bytes: 20971520
   agent-registry:
-    # 关闭 AI 侧 Agent 注册发现入口；不表示客户端签名关闭。
-    enabled: false
+    # 启用当前个人空间内的Agent发现；找不到Agent时业务保持既有失败/回退策略。
+    enabled: true
     # Nacos 应用端连接地址，引用本地引导变量；不使用控制台端口。
     server-addr: ${custom.nacos-ip}
     # 引用当前个人命名空间 ID，保持配置、发现和 Registry 隔离一致。

@@ -14,6 +14,30 @@ import verify_collector_native as native
 
 
 class NativeFixtureContractTest(unittest.TestCase):
+    def test_filelog_persists_offsets_without_replaying_initial_history(self):
+        config = (native.ROOT / 'collector-agent.yaml').read_text()
+        self.assertIn('storage: file_storage/offsets', config)
+        self.assertIn('directory: ${env:FLEET_LOG_STATE_DIR}', config)
+        self.assertIn('extensions: [file_storage/offsets]', config)
+        self.assertIn('start_at: end', config)
+
+    def test_resumed_offset_assertion_rejects_duplicates_and_missing_records(self):
+        def payload(stages):
+            return {'resourceLogs': [{'resource': {'attributes': native.attributes({
+                'service.name': 'fixture-java', 'service.version': '1.2.3',
+                'deployment.environment.name': 'github-dev'})}, 'scopeLogs': [{'logRecords': [
+                    {'attributes': native.attributes({'event': 'http.server.exchange', 'stage': stage})}
+                    for stage in stages]}]}]}
+        expected = ['offline-first', 'offline-second']
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'records.jsonl'
+            path.write_text(json.dumps(payload(expected)) + '\n')
+            native.assert_offset_records(path, expected)
+            for stages in (expected[:1], expected + ['offline-first'], expected + ['online-before-stop'], []):
+                path.write_text(json.dumps(payload(stages)) + '\n')
+                with self.subTest(stages=stages), self.assertRaises(AssertionError):
+                    native.assert_offset_records(path, expected)
+
     def test_nested_attributes_use_otlp_anyvalue_kvlist_encoding(self):
         # OTLP AnyValue 的 map 字段名是 kvlistValue；未知 mapValue 会被 receiver 读成 Empty。
         encoded = native.value({'service': {'name': 'fixture-java'}})
@@ -92,7 +116,15 @@ class NativeFixtureContractTest(unittest.TestCase):
     def test_log_assertion_rejects_cross_service_secret_and_missing_records(self):
         resources = []
         for stage, (name, version, traced) in native.EXPECTED.items():
-            fields = {'stage': stage, 'duration_ms': 7, 'outcome': 'success'}
+            fields = {key: item for key, item in next(event for event in native.input_logs() if event['stage'] == stage).items()
+                      if key in native.LOG_FIELDS}
+            fields['duration_ms'] = 7
+            fields['outcome'] = 'success'
+            for key in ['http_status', 'ai_output_tokens']:
+                if key in fields:
+                    fields[key] = str(fields[key])
+            for key in ['ai_input_tokens'] + (['request_bytes', 'request_body_complete'] if stage == 'python-call' else []):
+                fields.pop(key, None)
             if traced:
                 fields.update(trace_id=native.TRACE, span_id=native.SPAN)
             resources.append({'resource': {'attributes': native.attributes({
@@ -134,7 +166,7 @@ class NativeFixtureContractTest(unittest.TestCase):
                 for scope in resource['scopeSpans']:
                     for span in scope['spans']:
                         span['attributes'] = [field for field in span['attributes']
-                                              if field['key'] not in {'private', 'url.full'}]
+                                              if native.SECRET not in json.dumps(field)]
                         span.get('status', {}).pop('message', None)
                         span['events'] = []
             output = root / 'sanitized.jsonl'

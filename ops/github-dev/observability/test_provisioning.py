@@ -221,3 +221,38 @@ class DashboardSemanticsTest(unittest.TestCase):
         exporter_rule = next(item for item in rule if item['alert'] == 'CollectorDroppedSpans')
         self.assertIn('__name__="otelcol.elasticsearch.docs.processed"', exporter_rule['expr'])
         self.assertIn('outcome!="success"', exporter_rule['expr'])
+
+
+class StructuredIoContractTest(unittest.TestCase):
+    def test_both_boundaries_use_identical_typed_log_contract(self):
+        from privacy_contract import LOG_FIELDS, log_statements, span_statements
+        for name, include_resource in [('collector-agent.yaml', True), ('collector.yaml', False)]:
+            data = yaml_json((ROOT / name).read_text())
+            statements = next(item['statements'] for item in data['processors']['transform/privacy']['log_statements']
+                              if item['context'] == 'log')
+            for statement in log_statements(include_resource):
+                self.assertIn(statement, statements)
+        for forbidden in ('message', 'error.message', 'error.stack_trace', 'password', 'authorization', 'ai_input', 'ai_output'):
+            self.assertNotIn(forbidden, LOG_FIELDS)
+        data = yaml_json((ROOT / 'collector.yaml').read_text())
+        statements = next(item['statements'] for item in data['processors']['transform/privacy']['trace_statements']
+                          if item['context'] == 'span')
+        for statement in span_statements():
+            self.assertIn(statement, statements)
+
+    def test_additive_schema_never_changes_existing_index_or_audit_fields(self):
+        from privacy_contract import LOG_FIELDS
+        addition = json.loads((ROOT / 'es/runtime-log-additive-mapping.json').read_text())
+        self.assertEqual(set(addition), {'properties'})
+        fields = addition['properties']
+        self.assertLessEqual(set(fields), set(LOG_FIELDS))
+        self.assertFalse(set(fields) & {'@timestamp', 'Resource', 'TraceId', 'SpanId', 'trace_id', 'span_id'})
+        self.assertEqual(fields['request_body'], {'type': 'text', 'index': False})
+        self.assertEqual(fields['response_body_complete'], {'type': 'boolean'})
+        self.assertEqual(fields['ai_input_tokens'], {'type': 'long'})
+
+    def test_grafana_displays_generated_summary_and_keeps_trace_join(self):
+        sources = yaml_json((ROOT / 'grafana/provisioning/datasources/fleet.yaml').read_text())['datasources']
+        source = next(item for item in sources if item['type'] == 'elasticsearch')
+        self.assertEqual(source['jsonData']['logMessageField'], 'summary')
+        self.assertTrue(any(item['field'] == 'trace_id' for item in source['jsonData']['dataLinks']))

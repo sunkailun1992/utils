@@ -1,0 +1,84 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'com'
+version = '0.1.0'
+description = 'Bounded, privacy-preserving HTTP observability for the personal Java fleet'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) }
+    withSourcesJar()
+    withJavadocJar()
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8'; options.release = 17 }
+tasks.withType(Javadoc).configureEach { options.encoding = 'UTF-8'; failOnError = false }
+tasks.withType(GenerateModuleMetadata).configureEach { enabled = false }
+
+dependencies {
+    // 运行依赖只有 JSON、日志 API、OTel API；Web 栈由实际服务提供。
+    api 'io.opentelemetry:opentelemetry-api:1.59.0'
+    implementation 'org.slf4j:slf4j-api:2.0.17'
+    implementation 'tools.jackson.core:jackson-databind:3.1.0'
+    compileOnly platform('org.springframework.boot:spring-boot-dependencies:4.0.4')
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
+    compileOnly 'org.springframework.boot:spring-boot-web-server'
+    compileOnly 'org.springframework:spring-webmvc'
+    compileOnly 'org.springframework:spring-webflux'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api'
+    testImplementation platform('org.springframework.boot:spring-boot-dependencies:4.0.4')
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webflux'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.opentelemetry:opentelemetry-sdk-testing:1.59.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+tasks.named('test') { useJUnitPlatform() }
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = 'fleet-observability'
+            pom { name = 'fleet-observability'; description = project.description }
+        }
+    }
+    repositories {
+        def target = providers.gradleProperty('privateMavenUrl').orElse(providers.environmentVariable('PRIVATE_MAVEN_URL'))
+        if (target.isPresent()) {
+            maven {
+                name = 'privateRelease'
+                url = uri(target.get())
+                credentials {
+                    username = providers.gradleProperty('privateMavenUsername').orElse(providers.environmentVariable('PRIVATE_MAVEN_USERNAME')).getOrNull()
+                    password = providers.gradleProperty('privateMavenPassword').orElse(providers.environmentVariable('PRIVATE_MAVEN_PASSWORD')).getOrNull()
+                }
+            }
+        }
+    }
+}
+
+// 发布合同验收使用实际生成的 POM/JAR，不以依赖声明文本代替传递依赖验证。
+tasks.register('verifyLightweightPublication') {
+    dependsOn 'generatePomFileForMavenJavaPublication', 'jar'
+    doLast {
+        def pom = new groovy.xml.XmlSlurper(false, false).parse(layout.buildDirectory.file('publications/mavenJava/pom-default.xml').get().asFile)
+        assert pom.groupId.text() == 'com' && pom.artifactId.text() == 'fleet-observability' && pom.version.text() == '0.1.0'
+        def artifacts = pom.dependencies.dependency.collect { it.artifactId.text() } as Set
+        assert artifacts == ['opentelemetry-api', 'slf4j-api', 'jackson-databind'] as Set
+        def forbidden = configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.findAll {
+            it.moduleVersion.id.group.startsWith('org.springframework') || it.name =~ /(?i)(servlet|reactor|redis|jdbc|seata|mysql|utils)/
+        }
+        assert forbidden.empty : 'unexpected heavy runtime dependency'
+        new java.util.jar.JarFile(tasks.named('jar').get().archiveFile.get().asFile).withCloseable { jar ->
+            assert jar.getJarEntry('META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports') != null
+        }
+    }
+}
+tasks.named('check') { dependsOn 'verifyLightweightPublication' }

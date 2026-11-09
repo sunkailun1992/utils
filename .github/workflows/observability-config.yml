@@ -52,7 +52,7 @@ jobs:
             -v "$PWD:/config:ro" --workdir /config --entrypoint promtool \
             prom/prometheus:v3.16.0 test rules dashboard-promql-tests.json
           docker compose run --rm --no-deps jaeger validate --config=/etc/jaeger/config.yaml
-          docker run --rm --network none -e FLEET_LOG_DIR=/tmp -e OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:9 -e FLEET_OTLP_TOKEN=synthetic -v "$PWD:/config:ro" otel/opentelemetry-collector-contrib:0.164.0 validate --config=/config/collector-agent.yaml
+          docker run --rm --network none -e FLEET_LOG_DIR=/tmp -e FLEET_LOG_STATE_DIR=/tmp -e OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:9 -e FLEET_OTLP_TOKEN=synthetic -v "$PWD:/config:ro" otel/opentelemetry-collector-contrib:0.164.0 validate --config=/config/collector-agent.yaml
       - name: Replay privacy and service grouping through pinned Collector
         working-directory: ops/github-dev/observability
         run: python3 verify_collector_native.py

@@ -4,22 +4,13 @@ import com.kellen.observability.TraceContextSnapshot;
 
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import com.kellen.aliyun.dingding.DingDingUtil;
 import com.kellen.idempotent.PreventRepeatInit;
 import com.kellen.log.entity.ElasticSearchRequestLog;
-import com.kellen.log.entity.RequestLog;
 import com.kellen.log.service.ElasticSearchRequestLogService;
-import com.kellen.security.SecurityUser; // 使用 Spring Security 解析后的当前用户作为日志用户来源。
-import com.kellen.security.UserContextHolder; // 从统一用户上下文读取用户信息，替代历史 token Redis 用户读取。
 import com.kellen.utils.context.DynamicSourceTtl;
-import com.kellen.utils.convert.GeneralConvertor;
-import com.kellen.utils.http.IpUtils;
 import com.kellen.utils.http.RequestUtil;
-import com.kellen.utils.json.JsonUtil;
 import com.kellen.utils.exception.BusinessException;
 import com.kellen.utils.exception.PreventRepeatException;
 import com.kellen.utils.methods.MethodsJudge;
@@ -28,9 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -67,12 +56,6 @@ public class RequestRequiredAspect {
      */
     @Autowired
     private ElasticSearchRequestLogService elasticSearchRequestLogService;
-
-    /**
-     * Spring 应用上下文。
-     */
-    @Autowired
-    private ConfigurableApplicationContext applicationContext;
 
     /**
      * 匹配标记了 RequestRequired 的 Controller 或服务类。
@@ -162,39 +145,19 @@ public class RequestRequiredAspect {
      * @author 孙凯伦
      */
     private void setLog(ProceedingJoinPoint proceedingJoinPoint, HttpServletRequest httpServletRequest, long time, Map<String, String> map, Object o, String performBefore, String performAfter) {
-        SecurityUser user = UserContextHolder.get(); // 从 Spring Security 过滤器写入的上下文获取当前用户。
-        RequestLog requestLog = new RequestLog(); // 创建请求日志实体，后续统一补齐请求、响应、用户和环境信息。
-        // 在异步落库前抓取真实 span，不依赖异步线程的 MDC 或业务会话标识。
+        // 传输层统一记录受控 IO；旧审计不序列化参数、返回对象、扩展点正文或身份资料。
         TraceContextSnapshot trace = TraceContextSnapshot.capture();
-        requestLog.setTraceId(trace.traceId());
-        requestLog.setSpanId(trace.spanId());
-        if (user != null) {
-            requestLog.setUserId(parseUserId(user.getUserId())); // 兼容日志表 Long 类型用户 ID，非数字用户 ID 记录为空。
-            requestLog.setUsername(user.getUsername()); // 记录当前认证用户名。
-            requestLog.setName(user.getUsername()); // 历史日志 name 字段沿用用户名填充。
-            requestLog.setCreateName(user.getUsername()); // 日志创建人使用当前认证用户名。
-        }
-        requestLog.setUrl(httpServletRequest.getRequestURI()); // 记录当前请求 URI。
-        requestLog.setElapsedTime(time); // 记录接口耗时。
-        requestLog.setRequest(map); // 记录请求参数。
-        requestLog.setResults(o); // 记录接口返回结果。
-        requestLog.setSystemName(applicationContext.getEnvironment().getProperty("swagger.name") + "服务"); // 记录服务名称。
-        requestLog.setCreateDateTime(LocalDateTime.now()); // 记录日志创建时间。
-        requestLog.setIp(IpUtils.getIp(httpServletRequest)); // 记录客户端真实 IP。
-        requestLog.setPerformBefore(performBefore); // 记录 Methods 扩展点执行前结果。
-        requestLog.setPerformAfter(performAfter); // 记录 Methods 扩展点执行后结果。
-        requestLog.setEnvironment("环境：" + applicationContext.getEnvironment().getProperty("spring.profiles.active") + "，数据源：" + (DynamicSourceTtl.get() != null ? DynamicSourceTtl.get() : httpServletRequest.getHeader("dataSource"))); // 记录当前环境和数据源。
-        try {
-            requestLog.setDescription(MethodsJudge.description(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName(), map)); // 记录接口业务描述。
-            requestLog.setInterfaceName(MethodsJudge.getInterfaceName(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName())); // 记录接口展示名称。
-        } catch (Exception e) {
-            log.warn("请求日志描述解析失败，uri: {}", httpServletRequest.getRequestURI(), e); // 描述解析失败不阻断业务响应。
-        }
-        ElasticSearchRequestLog elasticSearchRequestLog = GeneralConvertor.convertor(requestLog, ElasticSearchRequestLog.class); // 将临时日志对象转换为 ES 日志实体。
-        elasticSearchRequestLog.setId(IdUtil.simpleUUID()); // 为 ES 日志生成独立 ID。
-        elasticSearchRequestLog.setCreateDateTime(LocalDateTime.now()); // 设置 ES 日志创建时间。
-        elasticSearchRequestLogService.insert(elasticSearchRequestLog); // 写入 ES 请求日志。
-        dingDing(proceedingJoinPoint, httpServletRequest, time, map, o); // 保留慢请求钉钉提醒。
+        ElasticSearchRequestLog entry = new ElasticSearchRequestLog();
+        entry.setId(IdUtil.simpleUUID());
+        entry.setCreateDateTime(LocalDateTime.now());
+        entry.setTraceId(trace.traceId());
+        entry.setSpanId(trace.spanId());
+        entry.setUrl(safeRoute(httpServletRequest));
+        entry.setElapsedTime(Math.max(0, time));
+        entry.setRequest("{\"omitted\":\"policy\"}");
+        entry.setResults("{\"omitted\":\"policy\"}");
+        elasticSearchRequestLogService.insert(entry);
+        dingDing(proceedingJoinPoint, httpServletRequest, time, map, o);
     }
 
     /**
@@ -212,22 +175,28 @@ public class RequestRequiredAspect {
     public void dingDing(ProceedingJoinPoint proceedingJoinPoint, HttpServletRequest httpServletRequest, long time, Map<String, String> map, Object o) {
         if (time >= 3000) {
             try {
+                TraceContextSnapshot trace = TraceContextSnapshot.capture();
                 String json = DingDingUtil.markdown(false, "请求超长",
-                        " #### 请求模块：" + applicationContext.getEnvironment().getProperty("swagger.name") + "服务" + "\n "
-                                + "#### 请求名称：" + MethodsJudge.getInterfaceName(Class.forName(proceedingJoinPoint.getTarget().getClass().getName()), proceedingJoinPoint.getSignature().getName()) + "\n "
-                                + "#### 请求地址：" + httpServletRequest.getRequestURI() + "\n "
-                                + "#### traceId：" + MDC.get("traceId") + "\n "
-                                + "#### 消耗时间：" + (time % (1000 * 60)) / 1000 + "/秒\n "
-                                + "\n---\n"
-                                + "#### 请求参数：\n```\n" + JSON.toJSONString(JSONObject.parseObject(JsonUtil.json(map)), SerializerFeature.PrettyFormat, SerializerFeature.WriteMapNullValue, SerializerFeature.WriteDateUseDateFormat) + "\n```\n"
-                        , Arrays.asList(""));
+                        "#### 路由：" + safeRoute(httpServletRequest) + "\n"
+                                + "#### trace ID：" + (trace.traceId() == null ? "unavailable" : trace.traceId()) + "\n"
+                                + "#### 耗时：" + Math.max(0, time) + " ms",
+                        Arrays.asList(""));
                 DingDingUtil.sendReboot(json);
             } catch (Exception e) {
-                log.warn("慢请求钉钉提醒发送失败，uri: {}", httpServletRequest.getRequestURI(), e); // 钉钉发送失败不影响业务响应。
+                log.warn("慢请求提醒发送失败"); // 钉钉发送失败不影响业务响应。
             }
         }
     }
 
+
+
+    /** 审计只采用框架路由模板，不把动态 URI、查询参数或客户端 trace ID 提升为元数据。 */
+    private String safeRoute(HttpServletRequest request) {
+        Object pattern = request.getAttribute(org.springframework.web.servlet.HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        if (pattern == null) return "UNMATCHED";
+        String route = pattern.toString();
+        return route.length() <= 180 && route.matches("[/A-Za-z0-9_{}:*?.-]+") ? route : "UNMATCHED";
+    }
 
     /**
      * 获取当前请求对象
@@ -253,7 +222,6 @@ public class RequestRequiredAspect {
         String dataSource = "master"; // 默认使用主数据源。
         String requestDataSource = request.getHeader("dataSource"); // 从请求头读取数据源标识。
         if (StringUtils.isNotBlank(requestDataSource)) {
-            log.debug("aop获取到的dataSource {}", requestDataSource); // 输出数据源调试日志。
             dataSource = requestDataSource; // 使用请求头指定的数据源。
         }
         return dataSource; // 返回最终数据源。
@@ -276,20 +244,6 @@ public class RequestRequiredAspect {
                 throw new BusinessException("存在sql注入拦截"); // 命中危险字符时直接阻断。
             }
         }
-    }
-
-    /**
-     * 解析日志用户ID
-     *
-     * @param userId: Spring Security上下文中的用户ID
-     * @return java.lang.Long
-     * @author 孙凯伦
-     */
-    private Long parseUserId(String userId) {
-        if (!StringUtils.isNumeric(userId)) { // userId 可能是 u_admin_100 这类业务字符串，不能强转 Long。
-            return null; // 非数字用户 ID 不写入 Long 类型日志字段。
-        }
-        return Long.valueOf(userId); // 数字用户 ID 按历史日志字段类型写入。
     }
 
 }

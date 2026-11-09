@@ -1,0 +1,122 @@
+{
+  "properties": {
+    "summary": {
+      "type": "text",
+      "index": false
+    },
+    "http_method": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "http_route": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "request_body": {
+      "type": "text",
+      "index": false
+    },
+    "response_body": {
+      "type": "text",
+      "index": false
+    },
+    "request_body_omitted": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "response_body_omitted": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "error_type": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_operation": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_provider": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_model": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_response_model": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_prompt_key": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_prompt_version": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_prompt_source": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_reasoning_kind": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_finish_reason": {
+      "type": "keyword",
+      "ignore_above": 1024
+    },
+    "ai_input_summary": {
+      "type": "text",
+      "index": false
+    },
+    "ai_output_summary": {
+      "type": "text",
+      "index": false
+    },
+    "request_bytes": {
+      "type": "long"
+    },
+    "response_bytes": {
+      "type": "long"
+    },
+    "ai_input_tokens": {
+      "type": "long"
+    },
+    "ai_output_tokens": {
+      "type": "long"
+    },
+    "ai_reasoning_tokens": {
+      "type": "long"
+    },
+    "ai_input_characters": {
+      "type": "long"
+    },
+    "ai_output_characters": {
+      "type": "long"
+    },
+    "ai_message_count": {
+      "type": "long"
+    },
+    "ai_document_count": {
+      "type": "long"
+    },
+    "request_body_complete": {
+      "type": "boolean"
+    },
+    "response_body_complete": {
+      "type": "boolean"
+    },
+    "ai_usage_available": {
+      "type": "boolean"
+    },
+    "ai_reasoning_present": {
+      "type": "boolean"
+    },
+    "http_status": {
+      "type": "long"
+    }
+  }
+}

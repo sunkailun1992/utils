@@ -19,7 +19,11 @@ public final class AgentPrivacyProbe {
             // 应用必须保持 API-only。
         }
         var tracer = GlobalOpenTelemetry.getTracer("fleet.business");
+        var remote = io.opentelemetry.api.trace.SpanContext.createFromRemoteParent(
+                "ffffffffffffffffffffffffffffffff", "1111111111111111",
+                io.opentelemetry.api.trace.TraceFlags.getDefault(), io.opentelemetry.api.trace.TraceState.getDefault());
         Span span = tracer.spanBuilder("rag.retrieve")
+                .setParent(io.opentelemetry.context.Context.root().with(Span.wrap(remote)))
                 .addLink(io.opentelemetry.api.trace.SpanContext.create("0123456789abcdef0123456789abcdef", "0123456789abcdef",
                         io.opentelemetry.api.trace.TraceFlags.getSampled(), io.opentelemetry.api.trace.TraceState.getDefault()), Attributes.builder().put("private", "SYNTHETIC_LINK_SECRET").build())
                 .startSpan();
@@ -41,6 +45,22 @@ public final class AgentPrivacyProbe {
             if (response.statusCode() != 200 || !"synthetic-response".equals(response.body())) {
                 throw new AssertionError("HTTP behavior changed");
             }
+            Span model = tracer.spanBuilder("ai.model.call").startSpan();
+            model.setAttribute("gen_ai.operation.name", "chat");
+            model.setAttribute("gen_ai.provider.name", "gcp.gemini");
+            model.setAttribute("gen_ai.request.model", "fixture-model-v1");
+            model.setAttribute("gen_ai.usage.input_tokens", 17L);
+            model.setAttribute("gen_ai.usage.output_tokens", 11L);
+            model.setAttribute("gen_ai.usage.reasoning.output_tokens", 3L);
+            model.setAttribute("fleet.ai.usage.available", true);
+            model.setAttribute("rpc.system.name", "apache_dubbo");
+            model.setAttribute("rpc.service", "com.kellen.rpc.user.UserRpcService");
+            model.setAttribute("rpc.method", "findUser");
+            model.setAttribute("fleet.ai.reasoning.present", false);
+            model.setAttribute("gen_ai.input.messages", "SYNTHETIC_PROMPT_SECRET");
+            model.setAttribute("gen_ai.output.messages", "SYNTHETIC_COMPLETION_SECRET");
+            model.setAttribute("fleet.ai.private", "SYNTHETIC_AI_SECRET");
+            model.end();
             System.out.println("PROBE_TRACE=" + span.getSpanContext().getTraceId());
         } finally {
             span.end();

@@ -61,7 +61,7 @@ docker compose run --rm --no-deps jaeger validate --config=/etc/jaeger/config.ya
 
 `kellen-workspace/scripts/run-observed.py`只给选定服务bootRun JVM挂agent，先校验固定官方 agent 与本地构建隐私扩展两个 SHA-256；Gradle daemon、编译器与测试JVM不受影响。缺隐私扩展或任一摘要/版本不匹配均拒绝启用。Jar/IDE直接运行时把相同 agent 和扩展参数配置到服务JVM，不能只修改应用启动后才加载的Nacos。
 
-- 固定 Java agent v2.33.1 内置 SDK 1.67.0，独立 `agent-extension/` 仅以 compileOnly SDK 1.67.0 编译，薄 Jar 版本 0.1.0；应用 API/context/common 继续由 BOM 1.59.0 对齐，不创建第二个 tracing SDK。
+- 固定 Java agent v2.33.1 内置 SDK 1.67.0，独立 `agent-extension/` 仅以 compileOnly SDK 1.67.0 编译，薄 Jar 版本 0.1.1；应用 API/context/common 继续由 BOM 1.59.0 对齐，不创建第二个 tracing SDK。
 - Java 出站前必须加载 privacy extension：强制 `otel.span.event.count.limit=0`，原始异常 events 不进入 batch 队列；exporter 包装器清理 attributes/events/status description/resource/link attributes/scope/tracestate，只保留 trace/span/parent IDs、时间、状态码和有限业务元数据。动态 URL/query、SQL、headers、prompt/body 以及未知字段不出站。自动 span 名称归一成固定 kind 操作名，仅固定业务名称原样保留；动态 route/RPC 名称不保留。中央 Collector 仍是第二道清理。
 - 扩展保留实际 Java `business.outcome`、ai-agent `outcome/operation` 和 Python `rag.result` 的有限值合同；中央 native fixture 同时覆盖 Python 请求、retrieval 与 graph_build 的结果及两种 service resource，不能只用 Java span 推定跨语言合同。
 - `OTEL_SERVICE_NAME`、版本与`deployment.environment.name=github-dev`保持一致。workspace 的服务 JVM 同时从 `project.version` 设置 `SPRING_APPLICATION_VERSION`，供 Boot ECS 输出 `service.version`；共享 `logging.yml` 显式输出环境 `github-dev`。
@@ -142,3 +142,23 @@ CI 还原生校验主机 Collector 配置。回放只覆盖实际配置的处理
 旧RAG仅清理已替代的Java检索回退/MySQL派生图谱。旧表候选与恢复条件见rag的`docs/legacy-rag-retirement.md`；此编排无数据库清理动作。文档、版本、来源、Qdrant原文向量与Neo4j已发布图保留。
 
 回滚可先移除服务JVM agent/关闭Python观测，保留业务配置；停止独立观测项目不删除卷。旧RAG实现已移除，回退需恢复相互匹配的旧制品/配置；删表后还需备份恢复，不能再使用已删除开关。
+
+
+### 安全HTTP/AI日志与全量开发跟踪
+
+github-dev的Java/Python应使用非parent-based的全量采样，验证incoming sampled=0仍保留原Trace/parent；不要只把parentbased ratio调成1。薄扩展0.1.1仅允许模型操作、提供方、模型/Prompt有限标识、真实报告的token/finish reason、reasoning存在性和Dubbo协议，原始prompt/completion/events/异常继续删除。`fleet.ai.usage.available/final`区分供应商是否报告及正常终态；缺失token不补0，reasoning输出是output子集而非另加总。
+
+`privacy_contract.py`定义两级Collector共同的有界类型合同。HTTP终态使用`summary`、方法、框架路由、状态、耗时、实际读写字节、完整性及安全JSON投影；SSE/AI正文/未知路由自由正文不进入日志。filelog把JSON number解为Double，因此仅在数值精确为非负安全整数时转Long，字符串数字或非法类型删除。ES的`runtime-log-additive-mapping.json`只增加新字段，既有索引先读回类型，冲突须报告；不得重建索引或修改请求审计历史。正文投影存`index:false`仅用于展开查看，不能当全文搜索库。
+
+Grafana的日志message字段为代码生成的`summary`，trace_id仍链接Jaeger。启动日志没有HTTP终态摘要时可能仅有级别元数据，不能为显示方便放开原始`message`。每个HTTP终态恰一条，模型事件继承真实模型child span；无Trace的后台日志不伪造关联。
+
+可用现有固定0.164.0二进制在应用之外回放四段合成fixture（文件采集、同batch服务隔离、中心日志、业务/GenAI spans）：
+
+```bash
+python3 verify_collector_native.py --collector-bin /path/to/verified/otelcol-contrib-0.164.0
+```
+
+默认仍使用固定官方Docker镜像供CI；本机模式只启动合成文件receiver/exporter，不读取应用日志，不安装组件。两种方式都不能代替NAS/ES/Jaeger实际请求对账。
+
+
+filelog使用Collector内置`file_storage/offsets`持久化读取位置，`FLEET_LOG_STATE_DIR`必须指向本机受控0700目录。托管入口强制使用所选state下`collector-offsets`，拒绝被Git跟踪或未忽略、非本人、软链接、宽权限目录/文件，并保持已有offset。初次没有checkpoint仍按`start_at:end`跳过历史；建立checkpoint后的正常停止/恢复会读取停机追加的日志。固定0.164原生fixture已验证seed→stop→离线追加两条→resume只读两条，重复0。它证明源读取恢复，不能把内存OTLP队列、崩溃/断电、轮转或存储持久化描述为exactly-once或永久零丢失。

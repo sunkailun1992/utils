@@ -93,9 +93,25 @@ class AgentEgressTest {
                 });
             }
             Span business = spans.stream().filter(span -> span.getName().equals("rag.retrieve")).findFirst().orElseThrow();
+            assertEquals("ffffffffffffffffffffffffffffffff", java.util.HexFormat.of().formatHex(business.getTraceId().toByteArray()));
+            assertEquals("1111111111111111", java.util.HexFormat.of().formatHex(business.getParentSpanId().toByteArray()));
             assertEquals(1, business.getLinksCount(), "synthetic valid link must survive without attributes");
             assertEquals("matched", strings(business.getAttributesList()).get("business.outcome"));
             assertEquals("degraded", strings(business.getAttributesList()).get("rag.result"));
+            Span model = spans.stream().filter(span -> span.getName().equals("ai.model.call")).findFirst().orElseThrow();
+            assertEquals(business.getTraceId(), model.getTraceId());
+            assertEquals(business.getSpanId(), model.getParentSpanId());
+            assertEquals("chat", strings(model.getAttributesList()).get("gen_ai.operation.name"));
+            assertEquals("fixture-model-v1", strings(model.getAttributesList()).get("gen_ai.request.model"));
+            var modelAttributes = model.getAttributesList().stream().collect(Collectors.toMap(KeyValue::getKey, KeyValue::getValue));
+            assertEquals(17L, modelAttributes.get("gen_ai.usage.input_tokens").getIntValue());
+            assertEquals(11L, modelAttributes.get("gen_ai.usage.output_tokens").getIntValue());
+            assertEquals(3L, modelAttributes.get("gen_ai.usage.reasoning.output_tokens").getIntValue());
+            assertTrue(modelAttributes.get("fleet.ai.usage.available").getBoolValue());
+            assertFalse(modelAttributes.get("fleet.ai.reasoning.present").getBoolValue());
+            assertEquals("apache_dubbo", strings(model.getAttributesList()).get("rpc.system.name"));
+            assertEquals("com.kellen.rpc.user.UserRpcService", strings(model.getAttributesList()).get("rpc.service"));
+            assertEquals("findUser", strings(model.getAttributesList()).get("rpc.method"));
             for (Span span : spans) {
                 assertEquals(0, span.getEventsCount());
                 assertEquals("", span.getStatus().getMessage());

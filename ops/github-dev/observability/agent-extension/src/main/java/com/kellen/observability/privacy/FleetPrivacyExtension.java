@@ -29,10 +29,12 @@ public final class FleetPrivacyExtension implements AutoConfigurationCustomizerP
     private static final Set<String> RESOURCE_KEYS = Set.of(
             "service.name", "service.version", "deployment.environment.name");
     private static final Set<String> BUSINESS_NAMES = Set.of(
-            "ai.dialogue.stream", "ai.agent.execution", "rag.retrieval", "rag.retrieve", "mcp.protocol");
+            "ai.dialogue.stream", "ai.agent.execution", "ai.model.call", "memory.retrieve", "rag.prefetch",
+            "memory.context", "rag.retrieval", "rag.retrieve", "mcp.protocol");
     private static final Map<String, Set<String>> ENUMS = Map.of(
             "http.request.method", Set.of("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "CONNECT", "TRACE", "_OTHER"),
-            "rpc.system", Set.of("dubbo", "grpc", "java_rmi", "jsonrpc"),
+            "rpc.system", Set.of("dubbo", "apache_dubbo", "grpc", "java_rmi", "jsonrpc"),
+            "rpc.system.name", Set.of("dubbo", "apache_dubbo", "grpc", "java_rmi", "jsonrpc"),
             "db.system.name", Set.of("mysql", "postgresql", "redis", "elasticsearch", "h2"),
             "rag.stage", Set.of("parse", "retrieval", "embedding", "recall", "graph_expand", "rerank", "graph_submit",
                     "graph_query", "graph_build", "worker_run", "source_recheck", "publish", "upstream"),
@@ -42,6 +44,25 @@ public final class FleetPrivacyExtension implements AutoConfigurationCustomizerP
                     "failed", "timeout", "protocol_error", "business_error", "disabled", "unmatched", "rejected", "notification"),
             "outcome", Set.of("success", "failure", "cancelled"),
             "operation", Set.of("patient_analysis", "questionnaire_reply", "questionnaire_interpret"));
+    private static final Map<String, Set<String>> AI_ENUMS = Map.of(
+            "gen_ai.operation.name", Set.of("chat", "generate_content", "embeddings", "retrieval", "invoke_agent", "execute_tool"),
+            "gen_ai.provider.name", Set.of("gcp.gemini", "google", "deepseek", "qwen", "alibaba.dashscope", "openai"),
+            "fleet.ai.prompt.source", Set.of("db", "database", "nacos", "caller", "local", "fallback", "override", "unknown"),
+            "fleet.ai.reasoning.kind", Set.of("none", "summary", "provider_output"));
+    private static final Set<String> AI_IDENTIFIERS = Set.of(
+            "gen_ai.request.model", "gen_ai.response.model", "fleet.ai.prompt.key", "fleet.ai.prompt.version");
+    private static final Set<String> AI_COUNTS = Set.of(
+            "gen_ai.usage.input_tokens", "gen_ai.usage.output_tokens", "gen_ai.usage.reasoning.output_tokens",
+            "gen_ai.usage.cache_read.input_tokens", "gen_ai.usage.cache_creation.input_tokens",
+            "fleet.ai.input.characters", "fleet.ai.output.characters", "fleet.ai.input.message_count",
+            "fleet.ai.input.document_count");
+    private static final Set<String> FLAGS = Set.of(
+            "rag.degraded", "rag.graph_augmented", "rag.graph_degraded", "fleet.ai.usage.available", "fleet.ai.usage.final",
+            "fleet.ai.reasoning.present", "fleet.ai.reasoning.summary_present");
+    private static final Set<String> FINISH_REASONS = Set.of(
+            "stop", "length", "tool_calls", "function_call", "content_filter", "error", "cancelled", "unknown",
+            "max_tokens", "safety", "recitation", "other",
+            "STOP", "MAX_TOKENS", "SAFETY", "RECITATION", "OTHER", "FINISH_REASON_UNSPECIFIED");
 
     @Override
     public void customize(AutoConfigurationCustomizer customizer) {
@@ -64,6 +85,7 @@ public final class FleetPrivacyExtension implements AutoConfigurationCustomizerP
         var safe = Attributes.builder();
         source.forEach((key, value) -> {
             Set<String> values = ENUMS.get(key.getKey());
+            if (values == null) values = AI_ENUMS.get(key.getKey());
             if (values != null && value instanceof String string && values.contains(string)) {
                 safe.put(AttributeKey.stringKey(key.getKey()), string);
             } else if ("http.response.status_code".equals(key.getKey()) && value instanceof Long number
@@ -71,9 +93,31 @@ public final class FleetPrivacyExtension implements AutoConfigurationCustomizerP
                 safe.put(AttributeKey.longKey(key.getKey()), number);
             } else if ("rag.hit_count".equals(key.getKey()) && value instanceof Long number && number >= 0) {
                 safe.put(AttributeKey.longKey(key.getKey()), number);
-            } else if (Set.of("rag.degraded", "rag.graph_augmented", "rag.graph_degraded").contains(key.getKey())
+            } else if (AI_COUNTS.contains(key.getKey()) && value instanceof Long number && number >= 0 && number <= 1_000_000_000L) {
+                safe.put(AttributeKey.longKey(key.getKey()), number);
+            } else if (AI_IDENTIFIERS.contains(key.getKey()) && value instanceof String string
+                    && string.matches("[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}") && !string.contains("://")) {
+                safe.put(AttributeKey.stringKey(key.getKey()), string);
+            } else if (FLAGS.contains(key.getKey())
                     && value instanceof Boolean flag) {
                 safe.put(AttributeKey.booleanKey(key.getKey()), flag);
+            } else if ("gen_ai.response.finish_reasons".equals(key.getKey()) && value instanceof List<?> reasons
+                    && !reasons.isEmpty() && reasons.size() <= 8 && reasons.stream().allMatch(FINISH_REASONS::contains)) {
+                safe.put(AttributeKey.stringArrayKey(key.getKey()), reasons.stream().map(String.class::cast).toList());
+            } else if ("rpc.service".equals(key.getKey()) && value instanceof String string
+                    && string.startsWith("com.kellen.rpc.") && string.matches("[A-Za-z0-9_.$]{1,200}")) {
+                safe.put(AttributeKey.stringKey(key.getKey()), string);
+            } else if ("rpc.method".equals(key.getKey()) && value instanceof String string
+                    && string.length() <= 200
+                    && string.matches("(?:com\\.kellen\\.rpc\\.[A-Za-z0-9_.$]+[/#.])?[a-z][A-Za-z0-9]{0,79}")) {
+                safe.put(AttributeKey.stringKey(key.getKey()), string);
+            } else if ("http.route".equals(key.getKey()) && value instanceof String string
+                    && (string.matches("/(?:api|actuator|auth|messages|message|user|report|ai-memory|rag|mcp)/.*") || string.equals("/mcp"))
+                    && string.matches("/[A-Za-z0-9_/{\\}*.-]{0,199}")) {
+                safe.put(AttributeKey.stringKey(key.getKey()), string);
+            } else if ("error.type".equals(key.getKey()) && value instanceof String string
+                    && string.matches("(?:[a-z][A-Za-z0-9_]*\\.)+[A-Z][A-Za-z0-9_$]{0,79}")) {
+                safe.put(AttributeKey.stringKey(key.getKey()), string);
             }
         });
         return safe.build();

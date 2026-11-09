@@ -8,7 +8,7 @@ import com.kellen.traffic.TrafficGovernanceContext;
 import com.kellen.traffic.TrafficGovernanceProperties;
 import com.kellen.utils.context.TenantContextHolder;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.MDC;
+import com.kellen.observability.TraceContextSnapshot;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.security.core.Authentication;
@@ -76,7 +76,8 @@ public class ReqInterceptor implements HandlerInterceptor {
             return false;
         }
         initTrafficGovernanceContext(request); // 从请求头初始化发布版本、泳道和灰度 tag 上下文。
-        response.addHeader("traceId", MDC.get("traceId")); // 将日志 traceId 回写响应头，便于前后端联查日志。
+        String traceId = TraceContextSnapshot.capture().traceId();
+        if (traceId != null) response.setHeader("traceId", traceId);
         return HandlerInterceptor.super.preHandle(request, response, handler); // 继续执行后续处理链。
     }
 

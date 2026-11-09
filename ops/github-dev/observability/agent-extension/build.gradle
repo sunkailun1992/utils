@@ -1,6 +1,6 @@
 plugins { id 'java' }
 group = 'com.kellen.observability'
-version = '0.1.0'
+version = '0.1.1'
 repositories { mavenCentral() }
 java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 // 只给 agent 扩展编译提供 SDK；薄 Jar 不携带 SDK，也不进入应用依赖。
@@ -50,7 +50,7 @@ tasks.register('runtimeChecksums') {
         def rows = runtime.listFiles().findAll { it.name.endsWith('.jar') }.sort { it.name }.collect { file ->
             def sha = java.security.MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()
             if (file.name == 'opentelemetry-javaagent-2.33.1.jar' && sha !=
-                    'e43a270df53c6f423e0ab157be9c27ccc01d5dc3232e162fe54777573db2f149') {
+                    "e43a270df53c6f423e0ab157be9c27ccc01d5dc3232e162fe54777573db2f149") {
                 throw new GradleException('官方 agent SHA-256 不匹配')
             }
             "${sha}  ${file.name}"

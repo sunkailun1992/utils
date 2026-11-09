@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.5.4`
+- 发布坐标：`com:utils:1.5.5`
 - Java 版本：`17`
 - Spring Boot：`4.0.4`
 - Spring Cloud：`2025.1.1`
@@ -68,11 +68,13 @@
 
 ## 远程发布
 
-个人公共包统一使用 `com:utils:1.5.4` 和 `com:rpc-api:1.0.7`；美联公共包使用 `com.kellen:utils` 和 `com.kellen:rpc-api`。两边共用阿里云 Maven 地址，由 group 形成不同仓库路径，独立发布和递增版本。个人消费者不得引用 `com.kellen` 的这两个制品；Java package `com.kellen.*` 不受 Maven group 迁移影响。
+个人公共包统一使用 `com:utils:1.5.5` 和 `com:rpc-api:1.0.7`；美联公共包使用 `com.kellen:utils` 和 `com.kellen:rpc-api`。两边共用阿里云 Maven 地址，由 group 形成不同仓库路径，独立发布和递增版本。个人消费者不得引用 `com.kellen` 的这两个制品；Java package `com.kellen.*` 不受 Maven group 迁移影响。
 
 个人坐标此前从 `com.kellen:utils:1.4.9` 迁移到 `com:utils:1.5.1`，`1.5.2` 增加 ES 请求日志索引配置；`1.5.3` 增加 Prometheus registry、真实 OTel trace/span 快照与异步上下文恢复。观测使用 API 1.59.0，不在应用内创建第二个 SDK。保留旧制品用于历史构建，不覆盖或删除美联制品。回滚需同时回滚消费者依赖和对应代码，不能仅改制品 group。
 
-当前 `1.5.4` 修复 `ops/github-dev/observability/` 的采集状态配色、缺失目标判定、Collector UTF-8 指标名及无数据语义。本批没有修改 Java API 或运行时 JAR 逻辑，观测配置独立于 Maven JAR 分发；消费者无需仅为本批观测配置修复升级 `com:utils`，可以继续使用已发布的精确版本。新版本从 `main` 发布时仍须按本仓规则同步发布 Maven 制品。
+`1.5.4` 修复 `ops/github-dev/observability/` 的采集状态配色、缺失目标判定、Collector UTF-8 指标名及无数据语义。本批没有修改 Java API 或运行时 JAR 逻辑，观测配置独立于 Maven JAR 分发；消费者无需仅为本批观测配置修复升级 `com:utils`，可以继续使用已发布的精确版本。新版本从 `main` 发布时仍须按本仓规则同步发布 Maven 制品。
+
+当前 `1.5.5` 引入轻量 `com:fleet-observability:0.1.0`，统一受控HTTP终态与输入输出投影；旧审计/慢请求提醒不再保存或发送原始参数与返回对象。独立Web栈、隐私与传输合同见 [HTTP安全结构化观测](docs/fleet-http-observability.md)。
 
 请求日志索引通过 `elasticsearch.request-log-index` 配置；未指定时保留 `request_log`，个人 `github-dev` 使用 `github_dev_request_log`。Nacos namespace 只隔离配置与服务发现，不能隔离同一 ES 的索引。更换索引不会搬迁或删除历史日志，发布后需重新启动消费者以载入新的实体映射。
 

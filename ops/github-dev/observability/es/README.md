@@ -20,3 +20,6 @@
 固定 Collector 0.164 的 `raw` encoder 把 resource 属性放在 `Resource` 前缀下，因此服务筛选字段为 `Resource.service.name`、`Resource.service.version`、`Resource.deployment.environment.name`；日志自己的白名单属性 `trace_id/span_id/event/stage/outcome` 位于根。候选模板的 `dynamic=false` 只限制索引字段，不代替 Collector 清空正文/秘密，也不会从 `_source` 中移除未映射值。时间字段为 `@timestamp`，原生记录的关联/级别字段为 `TraceId/SpanId/SeverityText`。
 
 模板不设置 alias、生命周期或业务数据保留策略。若运行索引已经存在，模板不会回填其 mapping；先 GET 实际 mapping，另审 additive 变更或新索引方案。首次安全合成事件后，读回实际 `_source` 与 mapping，核三项服务 metadata 和无 trace 的启动事件，并在 Grafana 按服务筛选、按真实 trace 跳转。候选文件存在、JSON 可解析与目标已写入分别记录。
+
+
+HTTP/AI投影新字段通过`runtime-log-additive-mapping.json`增量加入已核对的`github_dev_runtime_log`具体索引。先逐字段读回，已存在且类型相同可跳过，任何类型冲突都停止并报告。仅本运行日志索引属于该变更，不改审计/业务/历史索引，不删除/reindex数据。应用已完成脱敏限长的request_body、response_body、summary及AI长度摘要使用text/index:false，保留在_source供Grafana展开；结构筛选仍使用service/event/outcome/Trace Keyword及数值类型。

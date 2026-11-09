@@ -23,7 +23,73 @@ processors:
       - context: span
         statements:
           # 丢弃自动埋点可能附带的 URL/query、SQL、prompt、身份与原始异常。
-          - keep_keys(attributes, ["http.request.method", "http.response.status_code", "http.route", "rpc.system", "rpc.service", "rpc.method", "db.system.name", "error.type", "rag.stage", "rag.mode", "rag.result", "rag.degraded", "rag.graph_augmented", "rag.graph_degraded", "rag.hit_count", "business.outcome", "outcome", "operation"])
+          - keep_keys(attributes, ["http.response.status_code", "http.route", "rpc.service", "rpc.method", "error.type", "rag.hit_count", "http.request.method", "db.system.name", "rag.stage", "rag.mode", "rag.result", "business.outcome", "outcome", "operation", "gen_ai.operation.name", "gen_ai.provider.name", "fleet.ai.prompt.source", "fleet.ai.reasoning.kind", "rpc.system", "rpc.system.name", "gen_ai.request.model", "gen_ai.response.model", "fleet.ai.prompt.key", "fleet.ai.prompt.version", "gen_ai.usage.input_tokens", "gen_ai.usage.output_tokens", "gen_ai.usage.reasoning.output_tokens", "gen_ai.usage.cache_read.input_tokens", "gen_ai.usage.cache_creation.input_tokens", "fleet.ai.input.characters", "fleet.ai.output.characters", "fleet.ai.input.message_count", "fleet.ai.input.document_count", "rag.degraded", "rag.graph_augmented", "rag.graph_degraded", "fleet.ai.usage.available", "fleet.ai.usage.final", "fleet.ai.reasoning.present", "fleet.ai.reasoning.summary_present", "gen_ai.response.finish_reasons"])
+          - delete_key(attributes, "http.request.method") where attributes["http.request.method"] != nil and (attributes["http.request.method"] != "GET" and attributes["http.request.method"] != "POST" and attributes["http.request.method"] != "PUT" and attributes["http.request.method"] != "PATCH" and attributes["http.request.method"] != "DELETE" and attributes["http.request.method"] != "HEAD" and attributes["http.request.method"] != "OPTIONS" and attributes["http.request.method"] != "CONNECT" and attributes["http.request.method"] != "TRACE" and attributes["http.request.method"] != "OTHER" and attributes["http.request.method"] != "_OTHER")
+          - delete_key(attributes, "db.system.name") where attributes["db.system.name"] != nil and (attributes["db.system.name"] != "mysql" and attributes["db.system.name"] != "postgresql" and attributes["db.system.name"] != "redis" and attributes["db.system.name"] != "elasticsearch" and attributes["db.system.name"] != "h2")
+          - delete_key(attributes, "rag.stage") where attributes["rag.stage"] != nil and (attributes["rag.stage"] != "parse" and attributes["rag.stage"] != "retrieval" and attributes["rag.stage"] != "embedding" and attributes["rag.stage"] != "recall" and attributes["rag.stage"] != "graph_expand" and attributes["rag.stage"] != "rerank" and attributes["rag.stage"] != "graph_submit" and attributes["rag.stage"] != "graph_query" and attributes["rag.stage"] != "graph_build" and attributes["rag.stage"] != "worker_run" and attributes["rag.stage"] != "source_recheck" and attributes["rag.stage"] != "publish" and attributes["rag.stage"] != "upstream")
+          - delete_key(attributes, "rag.mode") where attributes["rag.mode"] != nil and (attributes["rag.mode"] != "dense" and attributes["rag.mode"] != "hybrid" and attributes["rag.mode"] != "graph")
+          - delete_key(attributes, "rag.result") where attributes["rag.result"] != nil and (attributes["rag.result"] != "success" and attributes["rag.result"] != "failed" and attributes["rag.result"] != "cancelled" and attributes["rag.result"] != "timeout" and attributes["rag.result"] != "degraded" and attributes["rag.result"] != "empty" and attributes["rag.result"] != "client_error")
+          - delete_key(attributes, "business.outcome") where attributes["business.outcome"] != nil and (attributes["business.outcome"] != "success" and attributes["business.outcome"] != "error" and attributes["business.outcome"] != "cancelled" and attributes["business.outcome"] != "matched" and attributes["business.outcome"] != "empty" and attributes["business.outcome"] != "degraded" and attributes["business.outcome"] != "unavailable" and attributes["business.outcome"] != "failed" and attributes["business.outcome"] != "timeout" and attributes["business.outcome"] != "protocol_error" and attributes["business.outcome"] != "business_error" and attributes["business.outcome"] != "disabled" and attributes["business.outcome"] != "unmatched" and attributes["business.outcome"] != "rejected" and attributes["business.outcome"] != "notification")
+          - delete_key(attributes, "outcome") where attributes["outcome"] != nil and (attributes["outcome"] != "success" and attributes["outcome"] != "failure" and attributes["outcome"] != "cancelled" and attributes["outcome"] != "timeout" and attributes["outcome"] != "rejected")
+          - delete_key(attributes, "operation") where attributes["operation"] != nil and (attributes["operation"] != "patient_analysis" and attributes["operation"] != "questionnaire_reply" and attributes["operation"] != "questionnaire_interpret")
+          - delete_key(attributes, "gen_ai.operation.name") where attributes["gen_ai.operation.name"] != nil and (attributes["gen_ai.operation.name"] != "chat" and attributes["gen_ai.operation.name"] != "generate_content" and attributes["gen_ai.operation.name"] != "embeddings" and attributes["gen_ai.operation.name"] != "retrieval" and attributes["gen_ai.operation.name"] != "invoke_agent" and attributes["gen_ai.operation.name"] != "execute_tool")
+          - delete_key(attributes, "gen_ai.provider.name") where attributes["gen_ai.provider.name"] != nil and (attributes["gen_ai.provider.name"] != "gcp.gemini" and attributes["gen_ai.provider.name"] != "google" and attributes["gen_ai.provider.name"] != "deepseek" and attributes["gen_ai.provider.name"] != "qwen" and attributes["gen_ai.provider.name"] != "alibaba.dashscope" and attributes["gen_ai.provider.name"] != "openai")
+          - delete_key(attributes, "fleet.ai.prompt.source") where attributes["fleet.ai.prompt.source"] != nil and (attributes["fleet.ai.prompt.source"] != "db" and attributes["fleet.ai.prompt.source"] != "database" and attributes["fleet.ai.prompt.source"] != "nacos" and attributes["fleet.ai.prompt.source"] != "caller" and attributes["fleet.ai.prompt.source"] != "local" and attributes["fleet.ai.prompt.source"] != "fallback" and attributes["fleet.ai.prompt.source"] != "override" and attributes["fleet.ai.prompt.source"] != "unknown")
+          - delete_key(attributes, "fleet.ai.reasoning.kind") where attributes["fleet.ai.reasoning.kind"] != nil and (attributes["fleet.ai.reasoning.kind"] != "none" and attributes["fleet.ai.reasoning.kind"] != "summary" and attributes["fleet.ai.reasoning.kind"] != "provider_output")
+          - delete_key(attributes, "rpc.system") where attributes["rpc.system"] != nil and (attributes["rpc.system"] != "dubbo" and attributes["rpc.system"] != "apache_dubbo" and attributes["rpc.system"] != "grpc" and attributes["rpc.system"] != "java_rmi" and attributes["rpc.system"] != "jsonrpc")
+          - delete_key(attributes, "rpc.system.name") where attributes["rpc.system.name"] != nil and (attributes["rpc.system.name"] != "dubbo" and attributes["rpc.system.name"] != "apache_dubbo" and attributes["rpc.system.name"] != "grpc" and attributes["rpc.system.name"] != "java_rmi" and attributes["rpc.system.name"] != "jsonrpc")
+          - delete_key(attributes, "gen_ai.request.model") where attributes["gen_ai.request.model"] != nil and not IsString(attributes["gen_ai.request.model"])
+          - delete_key(attributes, "gen_ai.request.model") where IsString(attributes["gen_ai.request.model"]) and not IsMatch(attributes["gen_ai.request.model"], "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+          - delete_key(attributes, "gen_ai.request.model") where IsString(attributes["gen_ai.request.model"]) and IsMatch(attributes["gen_ai.request.model"], "://")
+          - delete_key(attributes, "gen_ai.response.model") where attributes["gen_ai.response.model"] != nil and not IsString(attributes["gen_ai.response.model"])
+          - delete_key(attributes, "gen_ai.response.model") where IsString(attributes["gen_ai.response.model"]) and not IsMatch(attributes["gen_ai.response.model"], "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+          - delete_key(attributes, "gen_ai.response.model") where IsString(attributes["gen_ai.response.model"]) and IsMatch(attributes["gen_ai.response.model"], "://")
+          - delete_key(attributes, "fleet.ai.prompt.key") where attributes["fleet.ai.prompt.key"] != nil and not IsString(attributes["fleet.ai.prompt.key"])
+          - delete_key(attributes, "fleet.ai.prompt.key") where IsString(attributes["fleet.ai.prompt.key"]) and not IsMatch(attributes["fleet.ai.prompt.key"], "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+          - delete_key(attributes, "fleet.ai.prompt.key") where IsString(attributes["fleet.ai.prompt.key"]) and IsMatch(attributes["fleet.ai.prompt.key"], "://")
+          - delete_key(attributes, "fleet.ai.prompt.version") where attributes["fleet.ai.prompt.version"] != nil and not IsString(attributes["fleet.ai.prompt.version"])
+          - delete_key(attributes, "fleet.ai.prompt.version") where IsString(attributes["fleet.ai.prompt.version"]) and not IsMatch(attributes["fleet.ai.prompt.version"], "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$")
+          - delete_key(attributes, "fleet.ai.prompt.version") where IsString(attributes["fleet.ai.prompt.version"]) and IsMatch(attributes["fleet.ai.prompt.version"], "://")
+          - delete_key(attributes, "gen_ai.usage.input_tokens") where attributes["gen_ai.usage.input_tokens"] != nil and not IsInt(attributes["gen_ai.usage.input_tokens"])
+          - delete_key(attributes, "gen_ai.usage.input_tokens") where IsInt(attributes["gen_ai.usage.input_tokens"]) and (attributes["gen_ai.usage.input_tokens"] < 0 or attributes["gen_ai.usage.input_tokens"] > 1000000000)
+          - delete_key(attributes, "gen_ai.usage.output_tokens") where attributes["gen_ai.usage.output_tokens"] != nil and not IsInt(attributes["gen_ai.usage.output_tokens"])
+          - delete_key(attributes, "gen_ai.usage.output_tokens") where IsInt(attributes["gen_ai.usage.output_tokens"]) and (attributes["gen_ai.usage.output_tokens"] < 0 or attributes["gen_ai.usage.output_tokens"] > 1000000000)
+          - delete_key(attributes, "gen_ai.usage.reasoning.output_tokens") where attributes["gen_ai.usage.reasoning.output_tokens"] != nil and not IsInt(attributes["gen_ai.usage.reasoning.output_tokens"])
+          - delete_key(attributes, "gen_ai.usage.reasoning.output_tokens") where IsInt(attributes["gen_ai.usage.reasoning.output_tokens"]) and (attributes["gen_ai.usage.reasoning.output_tokens"] < 0 or attributes["gen_ai.usage.reasoning.output_tokens"] > 1000000000)
+          - delete_key(attributes, "gen_ai.usage.cache_read.input_tokens") where attributes["gen_ai.usage.cache_read.input_tokens"] != nil and not IsInt(attributes["gen_ai.usage.cache_read.input_tokens"])
+          - delete_key(attributes, "gen_ai.usage.cache_read.input_tokens") where IsInt(attributes["gen_ai.usage.cache_read.input_tokens"]) and (attributes["gen_ai.usage.cache_read.input_tokens"] < 0 or attributes["gen_ai.usage.cache_read.input_tokens"] > 1000000000)
+          - delete_key(attributes, "gen_ai.usage.cache_creation.input_tokens") where attributes["gen_ai.usage.cache_creation.input_tokens"] != nil and not IsInt(attributes["gen_ai.usage.cache_creation.input_tokens"])
+          - delete_key(attributes, "gen_ai.usage.cache_creation.input_tokens") where IsInt(attributes["gen_ai.usage.cache_creation.input_tokens"]) and (attributes["gen_ai.usage.cache_creation.input_tokens"] < 0 or attributes["gen_ai.usage.cache_creation.input_tokens"] > 1000000000)
+          - delete_key(attributes, "fleet.ai.input.characters") where attributes["fleet.ai.input.characters"] != nil and not IsInt(attributes["fleet.ai.input.characters"])
+          - delete_key(attributes, "fleet.ai.input.characters") where IsInt(attributes["fleet.ai.input.characters"]) and (attributes["fleet.ai.input.characters"] < 0 or attributes["fleet.ai.input.characters"] > 1000000000)
+          - delete_key(attributes, "fleet.ai.output.characters") where attributes["fleet.ai.output.characters"] != nil and not IsInt(attributes["fleet.ai.output.characters"])
+          - delete_key(attributes, "fleet.ai.output.characters") where IsInt(attributes["fleet.ai.output.characters"]) and (attributes["fleet.ai.output.characters"] < 0 or attributes["fleet.ai.output.characters"] > 1000000000)
+          - delete_key(attributes, "fleet.ai.input.message_count") where attributes["fleet.ai.input.message_count"] != nil and not IsInt(attributes["fleet.ai.input.message_count"])
+          - delete_key(attributes, "fleet.ai.input.message_count") where IsInt(attributes["fleet.ai.input.message_count"]) and (attributes["fleet.ai.input.message_count"] < 0 or attributes["fleet.ai.input.message_count"] > 1000000000)
+          - delete_key(attributes, "fleet.ai.input.document_count") where attributes["fleet.ai.input.document_count"] != nil and not IsInt(attributes["fleet.ai.input.document_count"])
+          - delete_key(attributes, "fleet.ai.input.document_count") where IsInt(attributes["fleet.ai.input.document_count"]) and (attributes["fleet.ai.input.document_count"] < 0 or attributes["fleet.ai.input.document_count"] > 1000000000)
+          - delete_key(attributes, "rag.degraded") where attributes["rag.degraded"] != nil and not IsBool(attributes["rag.degraded"])
+          - delete_key(attributes, "rag.graph_augmented") where attributes["rag.graph_augmented"] != nil and not IsBool(attributes["rag.graph_augmented"])
+          - delete_key(attributes, "rag.graph_degraded") where attributes["rag.graph_degraded"] != nil and not IsBool(attributes["rag.graph_degraded"])
+          - delete_key(attributes, "fleet.ai.usage.available") where attributes["fleet.ai.usage.available"] != nil and not IsBool(attributes["fleet.ai.usage.available"])
+          - delete_key(attributes, "fleet.ai.usage.final") where attributes["fleet.ai.usage.final"] != nil and not IsBool(attributes["fleet.ai.usage.final"])
+          - delete_key(attributes, "fleet.ai.reasoning.present") where attributes["fleet.ai.reasoning.present"] != nil and not IsBool(attributes["fleet.ai.reasoning.present"])
+          - delete_key(attributes, "fleet.ai.reasoning.summary_present") where attributes["fleet.ai.reasoning.summary_present"] != nil and not IsBool(attributes["fleet.ai.reasoning.summary_present"])
+          - delete_key(attributes, "http.response.status_code") where attributes["http.response.status_code"] != nil and not IsInt(attributes["http.response.status_code"])
+          - delete_key(attributes, "http.response.status_code") where IsInt(attributes["http.response.status_code"]) and (attributes["http.response.status_code"] < 100 or attributes["http.response.status_code"] > 599)
+          - delete_key(attributes, "rag.hit_count") where attributes["rag.hit_count"] != nil and not IsInt(attributes["rag.hit_count"])
+          - delete_key(attributes, "rag.hit_count") where IsInt(attributes["rag.hit_count"]) and (attributes["rag.hit_count"] < 0 or attributes["rag.hit_count"] > 1000000000)
+          - delete_key(attributes, "rpc.service") where attributes["rpc.service"] != nil and not IsString(attributes["rpc.service"])
+          - delete_key(attributes, "rpc.service") where IsString(attributes["rpc.service"]) and (Len(attributes["rpc.service"]) > 200 or not IsMatch(attributes["rpc.service"], "^com[.]kellen[.]rpc[.][A-Za-z0-9_.$]{1,180}$"))
+          - delete_key(attributes, "rpc.method") where attributes["rpc.method"] != nil and not IsString(attributes["rpc.method"])
+          - delete_key(attributes, "rpc.method") where IsString(attributes["rpc.method"]) and (Len(attributes["rpc.method"]) > 200 or not IsMatch(attributes["rpc.method"], "^(com[.]kellen[.]rpc[.][A-Za-z0-9_.$]+[/#.])?[a-z][A-Za-z0-9]{0,79}$"))
+          - delete_key(attributes, "http.route") where attributes["http.route"] != nil and not IsString(attributes["http.route"])
+          - delete_key(attributes, "http.route") where IsString(attributes["http.route"]) and (Len(attributes["http.route"]) > 200 or not IsMatch(attributes["http.route"], "^(/(api|actuator|auth|messages|message|user|report|ai-memory|rag|mcp|v1)/[A-Za-z0-9_/{\\}*.-]{0,180}|/health|/metrics|/mcp|other)$"))
+          - delete_key(attributes, "error.type") where attributes["error.type"] != nil and not IsString(attributes["error.type"])
+          - delete_key(attributes, "error.type") where IsString(attributes["error.type"]) and (Len(attributes["error.type"]) > 200 or not IsMatch(attributes["error.type"], "^([a-z][A-Za-z0-9_]*[.])+[A-Z][A-Za-z0-9_$]{0,79}$"))
+          - delete_key(attributes, "gen_ai.response.finish_reasons") where attributes["gen_ai.response.finish_reasons"] != nil and not IsList(attributes["gen_ai.response.finish_reasons"])
+          - delete_key(attributes, "gen_ai.response.finish_reasons") where IsList(attributes["gen_ai.response.finish_reasons"]) and Len(attributes["gen_ai.response.finish_reasons"]) > 8
+          - delete_key(attributes, "gen_ai.response.finish_reasons") where IsList(attributes["gen_ai.response.finish_reasons"]) and not IsMatch(String(attributes["gen_ai.response.finish_reasons"]), "^\\[\"(stop|length|tool_calls|function_call|content_filter|error|cancelled|unknown|max_tokens|safety|recitation|other|STOP|MAX_TOKENS|SAFETY|RECITATION|OTHER|FINISH_REASON_UNSPECIFIED)\"(,\\s*\"(stop|length|tool_calls|function_call|content_filter|error|cancelled|unknown|max_tokens|safety|recitation|other|STOP|MAX_TOKENS|SAFETY|RECITATION|OTHER|FINISH_REASON_UNSPECIFIED)\"){0,7}\\]$")
           - set(status.message, "")
       - context: spanevent
         statements:
@@ -37,7 +103,94 @@ processors:
         statements:
           # 日志body可能是未审计应用消息，中心端一律不持久化。
           - set(body, "")
-          - keep_keys(attributes, ["event", "duration_ms", "error_code", "outcome", "stage", "trace_id", "span_id"])
+          # HTTP/AI投影来自应用有界白名单；保留可读summary，原始message/body始终清空。
+          - keep_keys(attributes, ["event", "summary", "http_method", "http_route", "request_body", "response_body", "request_body_omitted", "response_body_omitted", "error_type", "error_code", "outcome", "stage", "trace_id", "span_id", "ai_operation", "ai_provider", "ai_model", "ai_response_model", "ai_prompt_key", "ai_prompt_version", "ai_prompt_source", "ai_reasoning_kind", "ai_finish_reason", "ai_input_summary", "ai_output_summary", "request_bytes", "response_bytes", "ai_input_tokens", "ai_output_tokens", "ai_reasoning_tokens", "ai_input_characters", "ai_output_characters", "ai_message_count", "ai_document_count", "request_body_complete", "response_body_complete", "ai_usage_available", "ai_reasoning_present", "duration_ms", "http_status"])
+          - delete_key(attributes, "event") where attributes["event"] != nil and not IsString(attributes["event"])
+          - delete_key(attributes, "event") where IsString(attributes["event"]) and Len(attributes["event"]) > 64
+          - delete_key(attributes, "summary") where attributes["summary"] != nil and not IsString(attributes["summary"])
+          - delete_key(attributes, "summary") where IsString(attributes["summary"]) and Len(attributes["summary"]) > 512
+          - delete_key(attributes, "http_method") where attributes["http_method"] != nil and not IsString(attributes["http_method"])
+          - delete_key(attributes, "http_method") where IsString(attributes["http_method"]) and Len(attributes["http_method"]) > 16
+          - delete_key(attributes, "http_route") where attributes["http_route"] != nil and not IsString(attributes["http_route"])
+          - delete_key(attributes, "http_route") where IsString(attributes["http_route"]) and Len(attributes["http_route"]) > 200
+          - delete_key(attributes, "request_body") where attributes["request_body"] != nil and not IsString(attributes["request_body"])
+          - delete_key(attributes, "request_body") where IsString(attributes["request_body"]) and Len(attributes["request_body"]) > 8192
+          - delete_key(attributes, "response_body") where attributes["response_body"] != nil and not IsString(attributes["response_body"])
+          - delete_key(attributes, "response_body") where IsString(attributes["response_body"]) and Len(attributes["response_body"]) > 8192
+          - delete_key(attributes, "request_body_omitted") where attributes["request_body_omitted"] != nil and not IsString(attributes["request_body_omitted"])
+          - delete_key(attributes, "request_body_omitted") where IsString(attributes["request_body_omitted"]) and Len(attributes["request_body_omitted"]) > 32
+          - delete_key(attributes, "response_body_omitted") where attributes["response_body_omitted"] != nil and not IsString(attributes["response_body_omitted"])
+          - delete_key(attributes, "response_body_omitted") where IsString(attributes["response_body_omitted"]) and Len(attributes["response_body_omitted"]) > 32
+          - delete_key(attributes, "error_type") where attributes["error_type"] != nil and not IsString(attributes["error_type"])
+          - delete_key(attributes, "error_type") where IsString(attributes["error_type"]) and Len(attributes["error_type"]) > 120
+          - delete_key(attributes, "error_code") where attributes["error_code"] != nil and not IsString(attributes["error_code"])
+          - delete_key(attributes, "error_code") where IsString(attributes["error_code"]) and Len(attributes["error_code"]) > 80
+          - delete_key(attributes, "outcome") where attributes["outcome"] != nil and not IsString(attributes["outcome"])
+          - delete_key(attributes, "outcome") where IsString(attributes["outcome"]) and Len(attributes["outcome"]) > 32
+          - delete_key(attributes, "stage") where attributes["stage"] != nil and not IsString(attributes["stage"])
+          - delete_key(attributes, "stage") where IsString(attributes["stage"]) and Len(attributes["stage"]) > 80
+          - delete_key(attributes, "trace_id") where attributes["trace_id"] != nil and not IsString(attributes["trace_id"])
+          - delete_key(attributes, "trace_id") where IsString(attributes["trace_id"]) and Len(attributes["trace_id"]) > 32
+          - delete_key(attributes, "span_id") where attributes["span_id"] != nil and not IsString(attributes["span_id"])
+          - delete_key(attributes, "span_id") where IsString(attributes["span_id"]) and Len(attributes["span_id"]) > 16
+          - delete_key(attributes, "ai_operation") where attributes["ai_operation"] != nil and not IsString(attributes["ai_operation"])
+          - delete_key(attributes, "ai_operation") where IsString(attributes["ai_operation"]) and Len(attributes["ai_operation"]) > 80
+          - delete_key(attributes, "ai_provider") where attributes["ai_provider"] != nil and not IsString(attributes["ai_provider"])
+          - delete_key(attributes, "ai_provider") where IsString(attributes["ai_provider"]) and Len(attributes["ai_provider"]) > 80
+          - delete_key(attributes, "ai_model") where attributes["ai_model"] != nil and not IsString(attributes["ai_model"])
+          - delete_key(attributes, "ai_model") where IsString(attributes["ai_model"]) and Len(attributes["ai_model"]) > 128
+          - delete_key(attributes, "ai_response_model") where attributes["ai_response_model"] != nil and not IsString(attributes["ai_response_model"])
+          - delete_key(attributes, "ai_response_model") where IsString(attributes["ai_response_model"]) and Len(attributes["ai_response_model"]) > 128
+          - delete_key(attributes, "ai_prompt_key") where attributes["ai_prompt_key"] != nil and not IsString(attributes["ai_prompt_key"])
+          - delete_key(attributes, "ai_prompt_key") where IsString(attributes["ai_prompt_key"]) and Len(attributes["ai_prompt_key"]) > 128
+          - delete_key(attributes, "ai_prompt_version") where attributes["ai_prompt_version"] != nil and not IsString(attributes["ai_prompt_version"])
+          - delete_key(attributes, "ai_prompt_version") where IsString(attributes["ai_prompt_version"]) and Len(attributes["ai_prompt_version"]) > 128
+          - delete_key(attributes, "ai_prompt_source") where attributes["ai_prompt_source"] != nil and not IsString(attributes["ai_prompt_source"])
+          - delete_key(attributes, "ai_prompt_source") where IsString(attributes["ai_prompt_source"]) and Len(attributes["ai_prompt_source"]) > 32
+          - delete_key(attributes, "ai_reasoning_kind") where attributes["ai_reasoning_kind"] != nil and not IsString(attributes["ai_reasoning_kind"])
+          - delete_key(attributes, "ai_reasoning_kind") where IsString(attributes["ai_reasoning_kind"]) and Len(attributes["ai_reasoning_kind"]) > 32
+          - delete_key(attributes, "ai_finish_reason") where attributes["ai_finish_reason"] != nil and not IsString(attributes["ai_finish_reason"])
+          - delete_key(attributes, "ai_finish_reason") where IsString(attributes["ai_finish_reason"]) and Len(attributes["ai_finish_reason"]) > 32
+          - delete_key(attributes, "ai_input_summary") where attributes["ai_input_summary"] != nil and not IsString(attributes["ai_input_summary"])
+          - delete_key(attributes, "ai_input_summary") where IsString(attributes["ai_input_summary"]) and Len(attributes["ai_input_summary"]) > 512
+          - delete_key(attributes, "ai_output_summary") where attributes["ai_output_summary"] != nil and not IsString(attributes["ai_output_summary"])
+          - delete_key(attributes, "ai_output_summary") where IsString(attributes["ai_output_summary"]) and Len(attributes["ai_output_summary"]) > 512
+          - set(attributes["request_bytes"], Int(attributes["request_bytes"])) where IsDouble(attributes["request_bytes"]) and attributes["request_bytes"] >= 0 and attributes["request_bytes"] <= 9007199254740991 and attributes["request_bytes"] == Double(Int(attributes["request_bytes"]))
+          - delete_key(attributes, "request_bytes") where attributes["request_bytes"] != nil and not IsInt(attributes["request_bytes"])
+          - delete_key(attributes, "request_bytes") where IsInt(attributes["request_bytes"]) and (attributes["request_bytes"] < 0 or attributes["request_bytes"] > 9223372036854775807)
+          - set(attributes["response_bytes"], Int(attributes["response_bytes"])) where IsDouble(attributes["response_bytes"]) and attributes["response_bytes"] >= 0 and attributes["response_bytes"] <= 9007199254740991 and attributes["response_bytes"] == Double(Int(attributes["response_bytes"]))
+          - delete_key(attributes, "response_bytes") where attributes["response_bytes"] != nil and not IsInt(attributes["response_bytes"])
+          - delete_key(attributes, "response_bytes") where IsInt(attributes["response_bytes"]) and (attributes["response_bytes"] < 0 or attributes["response_bytes"] > 9223372036854775807)
+          - set(attributes["ai_input_tokens"], Int(attributes["ai_input_tokens"])) where IsDouble(attributes["ai_input_tokens"]) and attributes["ai_input_tokens"] >= 0 and attributes["ai_input_tokens"] <= 9007199254740991 and attributes["ai_input_tokens"] == Double(Int(attributes["ai_input_tokens"]))
+          - delete_key(attributes, "ai_input_tokens") where attributes["ai_input_tokens"] != nil and not IsInt(attributes["ai_input_tokens"])
+          - delete_key(attributes, "ai_input_tokens") where IsInt(attributes["ai_input_tokens"]) and (attributes["ai_input_tokens"] < 0 or attributes["ai_input_tokens"] > 9223372036854775807)
+          - set(attributes["ai_output_tokens"], Int(attributes["ai_output_tokens"])) where IsDouble(attributes["ai_output_tokens"]) and attributes["ai_output_tokens"] >= 0 and attributes["ai_output_tokens"] <= 9007199254740991 and attributes["ai_output_tokens"] == Double(Int(attributes["ai_output_tokens"]))
+          - delete_key(attributes, "ai_output_tokens") where attributes["ai_output_tokens"] != nil and not IsInt(attributes["ai_output_tokens"])
+          - delete_key(attributes, "ai_output_tokens") where IsInt(attributes["ai_output_tokens"]) and (attributes["ai_output_tokens"] < 0 or attributes["ai_output_tokens"] > 9223372036854775807)
+          - set(attributes["ai_reasoning_tokens"], Int(attributes["ai_reasoning_tokens"])) where IsDouble(attributes["ai_reasoning_tokens"]) and attributes["ai_reasoning_tokens"] >= 0 and attributes["ai_reasoning_tokens"] <= 9007199254740991 and attributes["ai_reasoning_tokens"] == Double(Int(attributes["ai_reasoning_tokens"]))
+          - delete_key(attributes, "ai_reasoning_tokens") where attributes["ai_reasoning_tokens"] != nil and not IsInt(attributes["ai_reasoning_tokens"])
+          - delete_key(attributes, "ai_reasoning_tokens") where IsInt(attributes["ai_reasoning_tokens"]) and (attributes["ai_reasoning_tokens"] < 0 or attributes["ai_reasoning_tokens"] > 9223372036854775807)
+          - set(attributes["ai_input_characters"], Int(attributes["ai_input_characters"])) where IsDouble(attributes["ai_input_characters"]) and attributes["ai_input_characters"] >= 0 and attributes["ai_input_characters"] <= 9007199254740991 and attributes["ai_input_characters"] == Double(Int(attributes["ai_input_characters"]))
+          - delete_key(attributes, "ai_input_characters") where attributes["ai_input_characters"] != nil and not IsInt(attributes["ai_input_characters"])
+          - delete_key(attributes, "ai_input_characters") where IsInt(attributes["ai_input_characters"]) and (attributes["ai_input_characters"] < 0 or attributes["ai_input_characters"] > 9223372036854775807)
+          - set(attributes["ai_output_characters"], Int(attributes["ai_output_characters"])) where IsDouble(attributes["ai_output_characters"]) and attributes["ai_output_characters"] >= 0 and attributes["ai_output_characters"] <= 9007199254740991 and attributes["ai_output_characters"] == Double(Int(attributes["ai_output_characters"]))
+          - delete_key(attributes, "ai_output_characters") where attributes["ai_output_characters"] != nil and not IsInt(attributes["ai_output_characters"])
+          - delete_key(attributes, "ai_output_characters") where IsInt(attributes["ai_output_characters"]) and (attributes["ai_output_characters"] < 0 or attributes["ai_output_characters"] > 9223372036854775807)
+          - set(attributes["ai_message_count"], Int(attributes["ai_message_count"])) where IsDouble(attributes["ai_message_count"]) and attributes["ai_message_count"] >= 0 and attributes["ai_message_count"] <= 9007199254740991 and attributes["ai_message_count"] == Double(Int(attributes["ai_message_count"]))
+          - delete_key(attributes, "ai_message_count") where attributes["ai_message_count"] != nil and not IsInt(attributes["ai_message_count"])
+          - delete_key(attributes, "ai_message_count") where IsInt(attributes["ai_message_count"]) and (attributes["ai_message_count"] < 0 or attributes["ai_message_count"] > 9223372036854775807)
+          - set(attributes["ai_document_count"], Int(attributes["ai_document_count"])) where IsDouble(attributes["ai_document_count"]) and attributes["ai_document_count"] >= 0 and attributes["ai_document_count"] <= 9007199254740991 and attributes["ai_document_count"] == Double(Int(attributes["ai_document_count"]))
+          - delete_key(attributes, "ai_document_count") where attributes["ai_document_count"] != nil and not IsInt(attributes["ai_document_count"])
+          - delete_key(attributes, "ai_document_count") where IsInt(attributes["ai_document_count"]) and (attributes["ai_document_count"] < 0 or attributes["ai_document_count"] > 9223372036854775807)
+          - set(attributes["http_status"], Int(attributes["http_status"])) where IsDouble(attributes["http_status"]) and attributes["http_status"] >= 0 and attributes["http_status"] <= 9007199254740991 and attributes["http_status"] == Double(Int(attributes["http_status"]))
+          - delete_key(attributes, "http_status") where attributes["http_status"] != nil and not IsInt(attributes["http_status"])
+          - delete_key(attributes, "http_status") where IsInt(attributes["http_status"]) and (attributes["http_status"] < 100 or attributes["http_status"] > 599)
+          - delete_key(attributes, "request_body_complete") where attributes["request_body_complete"] != nil and not IsBool(attributes["request_body_complete"])
+          - delete_key(attributes, "response_body_complete") where attributes["response_body_complete"] != nil and not IsBool(attributes["response_body_complete"])
+          - delete_key(attributes, "ai_usage_available") where attributes["ai_usage_available"] != nil and not IsBool(attributes["ai_usage_available"])
+          - delete_key(attributes, "ai_reasoning_present") where attributes["ai_reasoning_present"] != nil and not IsBool(attributes["ai_reasoning_present"])
+          - delete_key(attributes, "duration_ms") where attributes["duration_ms"] != nil and not IsInt(attributes["duration_ms"]) and not IsDouble(attributes["duration_ms"])
+          - delete_key(attributes, "duration_ms") where attributes["duration_ms"] != nil and attributes["duration_ms"] < 0
   batch:
     timeout: 1s
     send_batch_size: 128

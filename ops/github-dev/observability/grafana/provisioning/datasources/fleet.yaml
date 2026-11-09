@@ -24,7 +24,7 @@ datasources:
       index: github_dev_runtime_log
       timeField: '@timestamp'
       httpHeaderName1: Authorization
-      logMessageField: event
+      logMessageField: summary
       # Collector raw映射使用官方固定字段；事件名来自白名单属性event。
       logLevelField: SeverityText
       dataLinks:

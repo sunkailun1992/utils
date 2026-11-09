@@ -225,3 +225,7 @@
 
 - `com.kellen.observability.TraceContextSnapshot`：捕获有效 OTel trace/span 标识，无活动 span 返回空字段，不回退业务 MDC。
 - `com.kellen.observability.TraceContextTaskDecorator`：提交线程捕获、工作线程作用域恢复，适用于公共异步池；不传播或伪造业务身份。
+
+## 轻量HTTP观测子制品
+
+`fleet-observability` 独立发布 `com:fleet-observability:0.1.0`，提供类型安全JSON投影、真实OTel关联、一次终态Servlet/Reactive适配。Spring/Web栈compileOnly，不为网关或Agent传入完整utils依赖；安全边界与实际验证入口见 [HTTP安全结构化观测](../fleet-http-observability.md)。

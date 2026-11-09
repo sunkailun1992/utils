@@ -1,8 +1,8 @@
 # 配置分类：安全与可观测性
 # dataId：logging.yml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：全局日志等级与安全结构化元数据白名单。
+# 用途：全局日志等级与安全结构化HTTP/AI投影白名单。
 # 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
-# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+# 维护：白名单与本机runtime及两道Collector边界同步；真实凭据不进Git。
 
 logging:
   level:
@@ -28,4 +28,4 @@ logging:
       console: ecs
     json:
       # 仅允许固定结构字段；未知 MDC、原始日志正文与异常不会被采集。
-      include: "@timestamp,log,log.level,service,service.name,service.version,service.environment,event,event.action,duration_ms,error_code,trace_id,span_id"
+      include: "@timestamp,log,log.level,service,service.name,service.version,service.environment,event,summary,http_method,http_route,request_body,response_body,request_body_omitted,response_body_omitted,error_type,error_code,outcome,stage,trace_id,span_id,ai_operation,ai_provider,ai_model,ai_response_model,ai_prompt_key,ai_prompt_version,ai_prompt_source,ai_reasoning_kind,ai_finish_reason,ai_input_summary,ai_output_summary,request_bytes,response_bytes,ai_input_tokens,ai_output_tokens,ai_reasoning_tokens,ai_input_characters,ai_output_characters,ai_message_count,ai_document_count,request_body_complete,response_body_complete,ai_usage_available,ai_reasoning_present,duration_ms,http_status"
