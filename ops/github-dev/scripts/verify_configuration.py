@@ -4,6 +4,7 @@ import re
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
 from prepare_databases import prepare
 from render_nacos import yaml_json
@@ -11,6 +12,13 @@ from render_nacos import yaml_json
 ROOT = Path(__file__).resolve().parents[4]
 SERVICES = ("gateway", "user", "message", "report", "ai", "ai-agent", "ai-memory", "rag", "mcp")
 CONFIG = Path(__file__).resolve().parents[1] / "nacos/DEFAULT_GROUP"
+
+# 与受审计的两级Collector使用同一字段合同，仍对完整树/类型作精确匹配。
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "observability"))
+from privacy_contract import LOG_FIELDS
+
+APPROVED_STRUCTURED_INCLUDE = ",".join((
+    "@timestamp", "log", "log.level", "service", "service.name", "service.version", "service.environment", *LOG_FIELDS))
 
 
 def import_dataid(item):
@@ -144,7 +152,7 @@ def check_consolidation_baseline(baseline_file):
                                   "version": "${spring.application.version:unknown}",
                                   "environment": "github-dev"}},
             "format": {"console": "ecs"},
-            "json": {"include": "@timestamp,log,log.level,service,service.name,service.version,service.environment,event,event.action,duration_ms,error_code,trace_id,span_id"},
+            "json": {"include": APPROVED_STRUCTURED_INCLUDE},
         }
         # 只豁免完整匹配的新增树；额外输出、JSON规则、键和类型变化都必须失败。
         assert json.dumps(logging, sort_keys=True) == json.dumps(approved_logging, sort_keys=True), "structured logging 存在未经核准的键、类型或值"

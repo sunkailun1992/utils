@@ -103,7 +103,7 @@
     },
     {
       "dataId": "logging.yml",
-      "description": "全局日志等级与安全结构化元数据白名单；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "全局日志等级与安全结构化HTTP/AI投影白名单；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "安全与可观测性",
       "consumers": [
         "ai",

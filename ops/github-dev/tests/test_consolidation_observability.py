@@ -79,6 +79,8 @@ class StructuredLoggingBaselineTests(unittest.TestCase):
             (('json', 'add'), {'sensitive': 'unapproved'}),
             (('format', 'console'), ['ecs']),
             (('json', 'include'), ['@timestamp']),
+            (('json', 'include'), verifier.APPROVED_STRUCTURED_INCLUDE + ',message'),
+            (('json', 'include'), verifier.APPROVED_STRUCTURED_INCLUDE + ',ai_input'),
             (('json',), []),
             (('format',), 'ecs'),
             (('ecs', 'service', 'version'), 'unapproved'),
