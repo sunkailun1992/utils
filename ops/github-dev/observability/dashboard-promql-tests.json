@@ -1,0 +1,800 @@
+{
+  "evaluation_interval": "15s",
+  "fuzzy_compare": true,
+  "tests": [
+    {
+      "name": "healthy",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"fleet-gateway\",environment=\"github-dev\",application=\"gateway\",instance=\"java-test:17100\"}",
+          "values": "1+0x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "min(up{job=\"fleet-gateway\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-user\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-message\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-agent\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-memory\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-report\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-mcp\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag-engine\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "scrape_failure",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"fleet-gateway\",environment=\"github-dev\",application=\"gateway\",instance=\"java-test:17100\"}",
+          "values": "0+0x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "min(up{job=\"fleet-gateway\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-user\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-message\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-agent\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-memory\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-report\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-mcp\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag-engine\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "stale_target",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"fleet-gateway\",environment=\"github-dev\",application=\"gateway\",instance=\"java-test:17100\"}",
+          "values": "1 stale"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "min(up{job=\"fleet-gateway\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-user\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-message\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-agent\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-memory\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-report\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-mcp\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag-engine\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "missing_targets",
+      "interval": "15s",
+      "input_series": [],
+      "promql_expr_test": [
+        {
+          "expr": "min(up{job=\"fleet-gateway\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-user\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-message\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-agent\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-memory\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-report\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-mcp\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag-engine\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "one_failed_duplicate_is_not_hidden",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"fleet-gateway\",environment=\"github-dev\",application=\"gateway\",instance=\"java-test:17100\"}",
+          "values": "1+0x20"
+        },
+        {
+          "series": "up{job=\"fleet-gateway\",environment=\"github-dev\",application=\"gateway\",instance=\"java-other:17100\"}",
+          "values": "0+0x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "min(up{job=\"fleet-gateway\",environment=\"github-dev\"}) or vector(-1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "missing_business_samples_stay_unknown",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"fleet-gateway\",environment=\"github-dev\",application=\"gateway\",instance=\"java-test:17100\"}",
+          "values": "1+0x20"
+        },
+        {
+          "series": "up{job=\"fleet-rag-engine\",environment=\"github-dev\",application=\"rag-engine\",instance=\"engine-test:8091\"}",
+          "values": "1+0x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "sum by(application)(rate(http_server_requests_seconds_count[5m]))",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by(application,le)(rate(http_server_requests_seconds_bucket[5m])))",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "sum by(application)(jvm_memory_used_bytes{area=\"heap\"})",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "sum by(result)(rate(rag_engine_retrievals_total[5m]))",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "sum by(result)(increase(rag_engine_graph_builds_total[1h]))",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "sum by(application,outcome)(rate({__name__=~\"ai_model_call_count_total|ai_agent_model_call_seconds_count|mcp_protocol_count_total|rag_retrieval_count_total\"}[5m]))",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by(stage,le)(rate(rag_engine_stage_duration_seconds_bucket[5m])))",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "collector_no_failures_with_success_baseline",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"collector\",instance=\"collector-test:8888\"}",
+          "values": "1+0x20"
+        },
+        {
+          "series": "otelcol_exporter_sent_spans{job=\"collector\",exporter=\"otlp_http/jaeger\",instance=\"collector-test:8888\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "{__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\",\"http.response.status_code\"=\"200\",instance=\"collector-test:8888\"}",
+          "values": "0+30x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "(sum by(exporter)(rate(otelcol_exporter_send_failed_spans{job=\"collector\"}[5m])) or on(exporter) ((0 * sum by(exporter)(rate(otelcol_exporter_sent_spans{job=\"collector\"}[5m]))) and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job=\"collector\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{exporter=\"otlp_http/jaeger\"}",
+              "value": 0
+            }
+          ]
+        },
+        {
+          "expr": "(sum by(outcome)(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome!=\"success\"}[5m])) or on() ((0 * sum(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}[5m]))) and on() sum({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "collector_failures_are_not_hidden",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"collector\",instance=\"collector-test:8888\"}",
+          "values": "1+0x20"
+        },
+        {
+          "series": "otelcol_exporter_sent_spans{job=\"collector\",exporter=\"otlp_http/jaeger\",instance=\"collector-test:8888\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "{__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\",\"http.response.status_code\"=\"200\",instance=\"collector-test:8888\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "otelcol_exporter_send_failed_spans{job=\"collector\",exporter=\"otlp_http/jaeger\",instance=\"collector-test:8888\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "{__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"timeout\",instance=\"collector-test:8888\"}",
+          "values": "0+15x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "(sum by(exporter)(rate(otelcol_exporter_send_failed_spans{job=\"collector\"}[5m])) or on(exporter) ((0 * sum by(exporter)(rate(otelcol_exporter_sent_spans{job=\"collector\"}[5m]))) and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job=\"collector\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{exporter=\"otlp_http/jaeger\"}",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "expr": "(sum by(outcome)(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome!=\"success\"}[5m])) or on() ((0 * sum(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}[5m]))) and on() sum({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{outcome=\"timeout\"}",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "collector_down_does_not_reuse_old_success",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"collector\",instance=\"collector-test:8888\"}",
+          "values": "0+0x20"
+        },
+        {
+          "series": "otelcol_exporter_sent_spans{job=\"collector\",exporter=\"otlp_http/jaeger\",instance=\"collector-test:8888\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "{__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\",\"http.response.status_code\"=\"200\",instance=\"collector-test:8888\"}",
+          "values": "0+30x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "(sum by(exporter)(rate(otelcol_exporter_send_failed_spans{job=\"collector\"}[5m])) or on(exporter) ((0 * sum by(exporter)(rate(otelcol_exporter_sent_spans{job=\"collector\"}[5m]))) and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job=\"collector\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "(sum by(outcome)(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome!=\"success\"}[5m])) or on() ((0 * sum(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}[5m]))) and on() sum({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "collector_missing_does_not_reuse_old_success",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "otelcol_exporter_sent_spans{job=\"collector\",exporter=\"otlp_http/jaeger\",instance=\"collector-test:8888\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "{__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\",\"http.response.status_code\"=\"200\",instance=\"collector-test:8888\"}",
+          "values": "0+30x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "(sum by(exporter)(rate(otelcol_exporter_send_failed_spans{job=\"collector\"}[5m])) or on(exporter) ((0 * sum by(exporter)(rate(otelcol_exporter_sent_spans{job=\"collector\"}[5m]))) and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job=\"collector\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "(sum by(outcome)(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome!=\"success\"}[5m])) or on() ((0 * sum(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}[5m]))) and on() sum({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "collector_missing_output_baseline_is_unknown",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"collector\",instance=\"collector-test:8888\"}",
+          "values": "1+0x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "(sum by(exporter)(rate(otelcol_exporter_send_failed_spans{job=\"collector\"}[5m])) or on(exporter) ((0 * sum by(exporter)(rate(otelcol_exporter_sent_spans{job=\"collector\"}[5m]))) and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job=\"collector\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "(sum by(outcome)(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome!=\"success\"}[5m])) or on() ((0 * sum(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}[5m]))) and on() sum({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "collector_insufficient_output_samples_is_unknown",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"collector\",instance=\"collector-test:8888\"}",
+          "values": "1+0x20"
+        },
+        {
+          "series": "otelcol_exporter_sent_spans{job=\"collector\",exporter=\"otlp_http/jaeger\",instance=\"collector-test:8888\"}",
+          "values": "_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 30"
+        },
+        {
+          "series": "{__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\",\"http.response.status_code\"=\"200\",instance=\"collector-test:8888\"}",
+          "values": "_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 30"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "(sum by(exporter)(rate(otelcol_exporter_send_failed_spans{job=\"collector\"}[5m])) or on(exporter) ((0 * sum by(exporter)(rate(otelcol_exporter_sent_spans{job=\"collector\"}[5m]))) and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job=\"collector\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "(sum by(outcome)(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome!=\"success\"}[5m])) or on() ((0 * sum(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}[5m]))) and on() sum({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "collector_stale_success_baseline_is_unknown",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"collector\",instance=\"collector-test:8888\"}",
+          "values": "1+0x20"
+        },
+        {
+          "series": "otelcol_exporter_sent_spans{job=\"collector\",exporter=\"otlp_http/jaeger\",instance=\"collector-test:8888\"}",
+          "values": "0+30x8 stale"
+        },
+        {
+          "series": "{__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\",\"http.response.status_code\"=\"200\",instance=\"collector-test:8888\"}",
+          "values": "0+30x8 stale"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "(sum by(exporter)(rate(otelcol_exporter_send_failed_spans{job=\"collector\"}[5m])) or on(exporter) ((0 * sum by(exporter)(rate(otelcol_exporter_sent_spans{job=\"collector\"}[5m]))) and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job=\"collector\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "(sum by(outcome)(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome!=\"success\"}[5m])) or on() ((0 * sum(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}[5m]))) and on() sum({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "collector_stale_success_does_not_hide_real_failures",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "up{job=\"collector\",instance=\"collector-test:8888\"}",
+          "values": "1+0x20"
+        },
+        {
+          "series": "otelcol_exporter_sent_spans{job=\"collector\",exporter=\"otlp_http/jaeger\",instance=\"collector-test:8888\"}",
+          "values": "0+30x8 stale"
+        },
+        {
+          "series": "{__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\",\"http.response.status_code\"=\"200\",instance=\"collector-test:8888\"}",
+          "values": "0+30x8 stale"
+        },
+        {
+          "series": "otelcol_exporter_send_failed_spans{job=\"collector\",exporter=\"otlp_http/jaeger\",instance=\"collector-test:8888\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "{__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"timeout\",instance=\"collector-test:8888\"}",
+          "values": "0+15x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "(sum by(exporter)(rate(otelcol_exporter_send_failed_spans{job=\"collector\"}[5m])) or on(exporter) ((0 * sum by(exporter)(rate(otelcol_exporter_sent_spans{job=\"collector\"}[5m]))) and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job=\"collector\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{exporter=\"otlp_http/jaeger\"}",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "expr": "(sum by(outcome)(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome!=\"success\"}[5m])) or on() ((0 * sum(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}[5m]))) and on() sum({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{outcome=\"timeout\"}",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

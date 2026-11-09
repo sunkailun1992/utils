@@ -83,7 +83,7 @@ Java文件输出需在运行环境显式设置`LOGGING_FILE_NAME`到本机安全
 
 中央ES exporter通过`mapping.allowed_modes: [raw]`限定唯一映射，兼容ES7.17/8/9，并保留普通静态索引`github_dev_runtime_log`。固定Collector 0.164.0已忽略`mapping.mode`，仅写`mode: raw`会继续默认使用`otel`，可能要求data stream而导致逐文档拒绝；不能靠配置可解析推定raw已生效。不要放开其他mapping模式改变已审计输出合同，也不为观测新建data stream或升级既有ES。实际版本、认证、索引模板/生命周期先核。导出schema的`@timestamp`、`TraceId/SpanId/SeverityText`与白名单自定义`trace_id/span_id/event`分清，Grafana使用实际字段。[官方0.164映射配置](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.164.0/exporter/elasticsearchexporter/README.md#elasticsearch-document-mapping)
 
-验收以真实索引读回及`otelcol_elasticsearch_docs_processed`的逐文档`outcome`为准。Bulk HTTP 200仍可能逐条拒绝，此时通用`sent_log_records`增长、`send_failed`为零不代表已入库；检查`outcome`、`http_response_status_code`、`error_type`，要求安全合成日志成功写入精确索引，并通过ES与Grafana读回同一trace。既有“Collector导出失败（含ES逐文档）”面板同时展示trace导出失败与ES文档非success速率。诊断只读取指标和错误元数据，保持请求/响应正文、失败文档输入日志关闭；没有真实文档命中不能宣称日志链路已验收。[官方bulk逐文档处理](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.164.0/exporter/elasticsearchexporter/bulkindexer.go)
+验收以真实索引读回及`otelcol.elasticsearch.docs.processed`的逐文档`outcome`为准。Bulk HTTP 200仍可能逐条拒绝，此时通用`sent_log_records`增长、`send_failed`为零不代表已入库；检查`outcome`与实际输出的HTTP状态标签（当前为`http.response.status_code`；并非每种结果都有该标签），要求安全合成日志成功写入精确索引，并通过ES与Grafana读回同一trace。既有“Collector导出失败（含ES逐文档）”面板同时展示trace导出失败与ES文档非success速率。固定版本的内部遥测实际保留UTF-8带点名称，PromQL通过`{__name__="otelcol.elasticsearch.docs.processed"}`查询，不能把它猜成下划线名称。只有Collector当前采集正常、对应成功输出计数器当前仍存在且有足够采集样本，才给尚未注册的失败序列显示`0`；目标不可达、成功计数器已stale或全部输出基线缺失仍保留无数据。成功基线仅限制补零分支，已观察到的真实错误不依赖成功计数器存在。Prometheus的`CollectorDroppedSpans`规则保留既有名称，并同时检测ES逐文档非success，避免Bulk HTTP成功掩盖文档拒绝。诊断只读取指标和错误元数据，保持请求/响应正文、失败文档输入日志关闭；没有真实文档命中不能宣称日志链路已验收。[官方bulk逐文档处理](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.164.0/exporter/elasticsearchexporter/bulkindexer.go)
 
 部署前先按 [ES mapping 准备步骤](es/README.md) 只读核现有审计索引。实体 Keyword 注解和应用重启不会自动给已存在索引补字段；本仓只提供 additive mapping JSON 与新运行日志索引模板，不执行 ES 写入。
 
@@ -92,6 +92,20 @@ Grafana 的 ES 数据源通过私有 `GITHUB_ES_READ_AUTHORIZATION` 提供完整
 ## 看板、告警与故障验收
 
 自带全9服务+Engine采集状态、HTTP请求率/P95、JVM堆与Collector错误看板。公共 Actuator 模板已仅为 `http.server.requests` 开启 histogram；P95 仍需模板实际发布、服务加载且真实 scrape 出现 buckets；业务指标按固定结果枚举聚合，不加tenant/KB/业务ID/hash标签。
+
+“个人微服务 / 个人 Java 微服务总览”（UID `github-dev-fleet`）的采集状态按10个预期目标分别查询当前值，`1`为绿色“采集正常”，`0`为红色“采集失败”，缺少目标为红色“未发现目标”。不使用时间窗口平均值显示当前状态；同一预期目标意外出现多个实例时，任一实例采集失败仍显示失败。采集正常只表示指标端点可读，不能替代业务、日志与链路验收。
+
+其余面板的`No data`需按指标含义判断，面板说明中也保留了这一区分：
+
+| 面板 | 没有数据时先核对 |
+| --- | --- |
+| HTTP速率 / HTTP P95 | 服务刚启动是否已有两次采集、是否收到请求；P95另外需要请求分桶与窗口内耗时样本 |
+| JVM堆占用 | Java目标采集正常时应有JVM指标；缺失需检查绑定与运行制品，Python Engine不提供JVM指标 |
+| RAG检索结果 / 图谱构建终态 / AI、RAG、MCP业务结果 | 带标签计数器在实际调用或终态发生后注册；从未调用、进程重启或窗口内样本不足可为空 |
+| Engine阶段P95 | 仅实际执行的阶段注册直方图，窗口内无耗时观测时不计算分位数 |
+| Collector导出失败 | 先核Collector采集与输出基线，不能把Collector不可达或指标契约缺失解释为没有失败 |
+
+业务无事件与采集故障分开判断，不把缺少的业务序列普遍补成`0`，也不把没有样本的P95显示成`0秒`。无需为填满图表重传文档、调用付费模型或重建图谱。
 
 业务结果面板同时消费 `ai_agent_model_call_seconds_count`，这是 ai-agent 的 `ai.agent.model.call` Timer 导出的计数序列；实际结果标签为 `outcome`，包括 `success/failure/cancelled`，与其他业务 counter 按 `application/outcome` 聚合。Java RAG/MCP 的有限结果保留在 span 的 `business.outcome` 中。
 
@@ -104,6 +118,14 @@ Grafana 的 ES 数据源通过私有 `GITHUB_ES_READ_AUTHORIZATION` 提供完整
 ```bash
 python3 -m unittest discover -s ops/github-dev/observability -p 'test_*.py' -v
 ```
+
+采集状态、缺失目标与空业务序列的PromQL语义使用Prometheus原生工具回放：
+
+```bash
+promtool test rules ops/github-dev/observability/dashboard-promql-tests.json
+```
+
+该JSON文件也是合法YAML输入，覆盖正常、采集失败、缺失及stale目标、重复实例失败，以及无业务样本时保持空序列；还覆盖Collector仍在线但成功计数器已stale时不复用旧样本补零、真实错误仍可显示。`fuzzy_compare: true`仅容许Prometheus官方定义的浮点最后一位差异，避免`rate`外推结果的ULP差异误报，不设置业务误差阈值。Python检查会核对夹具使用当前看板查询；原生回放仍需目标固定版本的`promtool`，没有执行时不能用Python检查代替。
 
 固定镜像的原生行为回放（需要已可用的 Docker，不由本仓安装）：
 

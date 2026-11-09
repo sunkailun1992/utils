@@ -16,12 +16,12 @@ groups:
         annotations:
           summary: "HTTP错误率持续超过5%，且已有至少20次样本"
       - alert: CollectorDroppedSpans
-        expr: sum(rate(otelcol_exporter_send_failed_spans[5m])) > 0
+        expr: sum(rate(otelcol_exporter_send_failed_spans{job="collector"}[5m])) > 0 or sum(rate({__name__="otelcol.elasticsearch.docs.processed",job="collector",outcome!="success"}[5m])) > 0
         for: 2m
         labels:
           severity: warning
         annotations:
-          summary: "链路上报失败，检查Collector与Jaeger"
+          summary: "Collector链路上报或ES逐文档写入持续失败"
       - alert: FleetJvmHeapPressure
         expr: sum by(application)(jvm_memory_used_bytes{area="heap"}) / clamp_min(sum by(application)(jvm_memory_max_bytes{area="heap"}), 1) > 0.85
         for: 10m

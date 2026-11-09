@@ -126,7 +126,98 @@ class ElasticsearchMappingTest(unittest.TestCase):
         self.assertEqual(len({target['refId'] for target in panel['targets']}), len(panel['targets']))
         expressions = [target['expr'] for target in panel['targets']]
         self.assertTrue(any('otelcol_exporter_send_failed_spans' in expr for expr in expressions))
-        self.assertTrue(any('otelcol_elasticsearch_docs_processed' in expr and
+        self.assertTrue(any('__name__="otelcol.elasticsearch.docs.processed"' in expr and
                             'outcome!="success"' in expr and 'rate(' in expr
                             for expr in expressions),
                         'bulk HTTP success must not hide individual document rejections')
+
+
+class DashboardSemanticsTest(unittest.TestCase):
+    def setUp(self):
+        self.dashboard = json.loads((ROOT / 'grafana/dashboards/fleet.json').read_text())
+        self.panels = {panel['id']: panel for panel in self.dashboard['panels']}
+
+    def test_expected_targets_keep_failure_and_absence_visibly_distinct(self):
+        panel = self.panels[1]
+        expected = {'gateway', 'user', 'message', 'ai', 'ai-agent', 'ai-memory',
+                    'rag', 'report', 'mcp', 'rag-engine'}
+        self.assertEqual({target['legendFormat'] for target in panel['targets']}, expected)
+        self.assertEqual(len(panel['targets']), len(expected))
+        for target in panel['targets']:
+            service = target['legendFormat']
+            self.assertEqual(
+                target['expr'],
+                f'min(up{{job="fleet-{service}",environment="github-dev"}}) or vector(-1)',
+            )
+            self.assertTrue(target['instant'], 'state must use the current scrape, not a time average')
+            self.assertFalse(target['range'])
+        self.assertEqual(panel['options']['reduceOptions']['calcs'], ['lastNotNull'])
+        mappings = panel['fieldConfig']['defaults']['mappings'][0]['options']
+        self.assertEqual({value: mapping['color'] for value, mapping in mappings.items()},
+                         {'-1': 'red', '0': 'red', '1': 'green'})
+        self.assertNotEqual(mappings['-1']['text'], mappings['0']['text'])
+
+    def test_missing_business_samples_and_latency_are_not_invented_as_zero(self):
+        for panel_id in [2, 3, 4, 6, 7, 8, 9]:
+            panel = self.panels[panel_id]
+            with self.subTest(panel=panel['title']):
+                self.assertIn('description', panel)
+                for target in panel['targets']:
+                    self.assertNotIn('or vector(0)', target['expr'])
+                    self.assertNotIn('0 *', target['expr'])
+        for panel_id in [3, 9]:
+            self.assertIn('不能', self.panels[panel_id]['description'])
+            self.assertIn('0 秒', self.panels[panel_id]['description'])
+
+    def test_native_promql_fixtures_cover_the_actual_dashboard_queries(self):
+        fixture = json.loads((ROOT / 'dashboard-promql-tests.json').read_text())
+        self.assertTrue(fixture['fuzzy_compare'], 'rate extrapolation can differ by the final float bit')
+        cases = {case['name']: case for case in fixture['tests']}
+        actual = {target['expr'] for panel in self.dashboard['panels']
+                  for target in panel['targets']}
+        for case in cases.values():
+            for query in case['promql_expr_test']:
+                self.assertIn(query['expr'], actual, 'native fixture must exercise deployed queries')
+        expected_states = {'healthy': 1, 'scrape_failure': 0,
+                           'stale_target': -1, 'missing_targets': -1,
+                           'one_failed_duplicate_is_not_hidden': 0}
+        for name, value in expected_states.items():
+            self.assertEqual(cases[name]['promql_expr_test'][0]['exp_samples'][0]['value'], value)
+        missing = cases['missing_targets']['promql_expr_test']
+        self.assertEqual({query['expr'] for query in missing},
+                         {target['expr'] for target in self.panels[1]['targets']})
+        for query in cases['missing_business_samples_stay_unknown']['promql_expr_test']:
+            self.assertEqual(query['exp_samples'], [])
+
+    def test_collector_failure_fallback_needs_current_health_and_real_output_baseline(self):
+        panel = self.panels[5]
+        for target in panel['targets']:
+            self.assertIn('job="collector"', target['expr'])
+            self.assertIn('and on() (min(up{job="collector"}) == 1)', target['expr'])
+            self.assertNotIn('or vector(0)', target['expr'])
+        self.assertIn('otelcol_exporter_sent_spans', panel['targets'][0]['expr'])
+        self.assertIn('and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job="collector"})',
+                      panel['targets'][0]['expr'])
+        self.assertIn('outcome="success"', panel['targets'][1]['expr'])
+        self.assertIn('and on() sum({__name__="otelcol.elasticsearch.docs.processed",'
+                      'job="collector",outcome="success"})', panel['targets'][1]['expr'])
+        self.assertNotIn('otelcol_elasticsearch_docs_processed', panel['targets'][1]['expr'])
+        fixture = json.loads((ROOT / 'dashboard-promql-tests.json').read_text())
+        cases = {case['name']: case for case in fixture['tests']}
+        for query in cases['collector_no_failures_with_success_baseline']['promql_expr_test']:
+            self.assertEqual(query['exp_samples'][0]['value'], 0)
+        for query in cases['collector_failures_are_not_hidden']['promql_expr_test']:
+            self.assertEqual(query['exp_samples'][0]['value'], 1)
+        for query in cases['collector_stale_success_does_not_hide_real_failures']['promql_expr_test']:
+            self.assertEqual(query['exp_samples'][0]['value'], 1)
+        for name in ['collector_down_does_not_reuse_old_success',
+                     'collector_missing_does_not_reuse_old_success',
+                     'collector_missing_output_baseline_is_unknown',
+                     'collector_insufficient_output_samples_is_unknown',
+                     'collector_stale_success_baseline_is_unknown']:
+            for query in cases[name]['promql_expr_test']:
+                self.assertEqual(query['exp_samples'], [], name)
+        rule = yaml_json((ROOT / 'alerts.yaml').read_text())['groups'][0]['rules']
+        exporter_rule = next(item for item in rule if item['alert'] == 'CollectorDroppedSpans')
+        self.assertIn('__name__="otelcol.elasticsearch.docs.processed"', exporter_rule['expr'])
+        self.assertIn('outcome!="success"', exporter_rule['expr'])

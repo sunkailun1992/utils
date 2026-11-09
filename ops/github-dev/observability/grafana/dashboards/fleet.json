@@ -2,7 +2,7 @@
   "uid": "github-dev-fleet",
   "title": "个人 Java 微服务总览",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "15s",
   "time": {
     "from": "now-1h",
@@ -25,10 +25,130 @@
       },
       "targets": [
         {
-          "expr": "up{job=~\"fleet-.*\"}",
-          "legendFormat": "{{application}}"
+          "expr": "min(up{job=\"fleet-gateway\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "gateway",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "min(up{job=\"fleet-user\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "user",
+          "refId": "B",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "min(up{job=\"fleet-message\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "message",
+          "refId": "C",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "ai",
+          "refId": "D",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-agent\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "ai-agent",
+          "refId": "E",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "min(up{job=\"fleet-ai-memory\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "ai-memory",
+          "refId": "F",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "rag",
+          "refId": "G",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "min(up{job=\"fleet-report\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "report",
+          "refId": "H",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "min(up{job=\"fleet-mcp\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "mcp",
+          "refId": "I",
+          "instant": true,
+          "range": false
+        },
+        {
+          "expr": "min(up{job=\"fleet-rag-engine\",environment=\"github-dev\"}) or vector(-1)",
+          "legendFormat": "rag-engine",
+          "refId": "J",
+          "instant": true,
+          "range": false
         }
-      ]
+      ],
+      "description": "显示当前采集状态：1 为采集正常，0 为采集失败，-1 为预期目标未出现在 Prometheus 中。后两者均为红色；采集正常只证明指标端点可读，不等同于所有业务正常。",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "-1": {
+                  "text": "未发现目标",
+                  "color": "red"
+                },
+                "0": {
+                  "text": "采集失败",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "采集正常",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      }
     },
     {
       "id": 2,
@@ -49,7 +169,8 @@
           "expr": "sum by(application)(rate(http_server_requests_seconds_count[5m]))",
           "legendFormat": "{{application}}"
         }
-      ]
+      ],
+      "description": "过去 5 分钟 HTTP 请求速率，单位次/秒。新启动未形成两次采集、未收到 HTTP 请求或该指标未注册时可无数据；先检查上方采集状态。采集失败不会补为 0。"
     },
     {
       "id": 3,
@@ -70,7 +191,8 @@
           "expr": "histogram_quantile(0.95, sum by(application,le)(rate(http_server_requests_seconds_bucket[5m])))",
           "legendFormat": "{{application}}"
         }
-      ]
+      ],
+      "description": "过去 5 分钟 HTTP 请求耗时 P95，单位秒。需要实际 http_server_requests 分桶和窗口内请求样本；无请求或分桶未加载时无数据，不能把缺少延迟样本当成 0 秒。"
     },
     {
       "id": 4,
@@ -91,7 +213,8 @@
           "expr": "sum by(application)(jvm_memory_used_bytes{area=\"heap\"})",
           "legendFormat": "{{application}}"
         }
-      ]
+      ],
+      "description": "Java 各服务当前 JVM 堆已用字节。正常 Java 目标应有该指标；缺失时检查采集状态、JVM 指标绑定与运行制品。Engine 为 Python 进程，不应出现在 JVM 面板。"
     },
     {
       "id": 5,
@@ -109,16 +232,17 @@
       },
       "targets": [
         {
-          "expr": "rate(otelcol_exporter_send_failed_spans[5m])",
+          "expr": "(sum by(exporter)(rate(otelcol_exporter_send_failed_spans{job=\"collector\"}[5m])) or on(exporter) ((0 * sum by(exporter)(rate(otelcol_exporter_sent_spans{job=\"collector\"}[5m]))) and on(exporter) sum by(exporter)(otelcol_exporter_sent_spans{job=\"collector\"}))) and on() (min(up{job=\"collector\"}) == 1)",
           "legendFormat": "{{exporter}}",
           "refId": "A"
         },
         {
-          "expr": "sum by(outcome,error_type)(rate(otelcol_elasticsearch_docs_processed{outcome!=\"success\"}[5m]))",
-          "legendFormat": "ES {{outcome}} {{error_type}}",
+          "expr": "(sum by(outcome)(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome!=\"success\"}[5m])) or on() ((0 * sum(rate({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}[5m]))) and on() sum({__name__=\"otelcol.elasticsearch.docs.processed\",job=\"collector\",outcome=\"success\"}))) and on() (min(up{job=\"collector\"}) == 1)",
+          "legendFormat": "ES {{outcome}}",
           "refId": "B"
         }
-      ]
+      ],
+      "description": "过去 5 分钟 Collector 链路导出失败与 Elasticsearch 逐文档非 success 速率，单位次/秒。错误标签尚未出现时，仅在当前 Collector 采集正常、对应成功输出计数器当前仍存在且有两次以上采集时显示 0；Collector 不可达、成功基线消失或样本不足仍无数据。ES 指标使用实际 UTF-8 带点名称；成功基线只用于补零，不能掩盖已出现的 timeout 等失败。"
     },
     {
       "id": 6,
@@ -139,7 +263,8 @@
           "expr": "sum by(result)(rate(rag_engine_retrievals_total[5m]))",
           "legendFormat": "{{result}}"
         }
-      ]
+      ],
+      "description": "过去 5 分钟 Engine 检索结果速率，按 result 区分。计数器在首次出现相应业务结果后注册；未检索、新启动或尚未形成两次采集时可无数据，先核对 rag-engine 采集状态。无需为了填满看板重传文档或重建图谱。"
     },
     {
       "id": 7,
@@ -160,7 +285,8 @@
           "expr": "sum by(result)(increase(rag_engine_graph_builds_total[1h]))",
           "legendFormat": "{{result}}"
         }
-      ]
+      ],
+      "description": "过去 1 小时 Engine 已认领图谱构建的终态次数。计数器在实际任务终态时注册；当前进程没有构建或窗口内没有样本时可无数据，不代表已发布图谱丢失，也无需为看板重建图谱。"
     },
     {
       "id": 8,
@@ -181,7 +307,8 @@
           "expr": "sum by(application,outcome)(rate({__name__=~\"ai_model_call_count_total|ai_agent_model_call_seconds_count|mcp_protocol_count_total|rag_retrieval_count_total\"}[5m]))",
           "legendFormat": "{{application}} {{outcome}}"
         }
-      ]
+      ],
+      "description": "过去 5 分钟 AI、ai-agent、RAG 与 MCP 的真实业务结果速率。各计数器按实际调用及 outcome 懒注册；从未调用、新启动或采样不足时可无数据。先核对对应目标采集状态，不用模拟业务把未知结果填成成功。"
     },
     {
       "id": 9,
@@ -202,7 +329,8 @@
           "expr": "histogram_quantile(0.95, sum by(stage,le)(rate(rag_engine_stage_duration_seconds_bucket[5m])))",
           "legendFormat": "{{stage}}"
         }
-      ]
+      ],
+      "description": "过去 5 分钟 Engine 各阶段耗时 P95，单位秒。阶段直方图在实际执行后注册，且窗口内需有观测样本；阶段未执行或无请求时可无数据，不能补为 0 秒。"
     }
   ],
   "templating": {
