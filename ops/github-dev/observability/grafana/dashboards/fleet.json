@@ -2,7 +2,7 @@
   "uid": "github-dev-fleet",
   "title": "个人 Java 微服务总览",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 4,
   "refresh": "15s",
   "time": {
     "from": "now-1h",
@@ -368,6 +368,17 @@
       "asDropdown": false,
       "tags": [],
       "tooltip": "按服务、标签和时间搜索；Grafana Jaeger数据源用于Trace ID查询"
+    },
+    {
+      "type": "link",
+      "title": "运行日志（Explore / Elasticsearch）",
+      "url": "/explore?schemaVersion=1&panes=%7B%22logs%22%3A%7B%22datasource%22%3A%22fleet-elasticsearch%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22elasticsearch%22%2C%22uid%22%3A%22fleet-elasticsearch%22%7D%2C%22query%22%3A%22Resource.deployment.environment.name%3A%5C%22github-dev%5C%22%22%2C%22metrics%22%3A%5B%7B%22id%22%3A%221%22%2C%22type%22%3A%22logs%22%2C%22settings%22%3A%7B%22limit%22%3A%22500%22%7D%7D%5D%2C%22bucketAggs%22%3A%5B%5D%2C%22timeField%22%3A%22%40timestamp%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+      "targetBlank": true,
+      "includeVars": false,
+      "keepTime": false,
+      "asDropdown": false,
+      "tags": [],
+      "tooltip": "继承当前时间窗，默认 github-dev，最多500条。服务：Resource.service.name；链路：trace_id；级别：SeverityText。日志展开后点“查看链路”进入Jaeger。"
     }
   ]
 }

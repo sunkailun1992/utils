@@ -98,6 +98,30 @@ class JaegerCompatibilityTest(unittest.TestCase):
             self.assertEqual(parsed.query, '')
         self.assertIn('\nJAEGER_UI_PORT=16686\n', (ROOT / '.env.example').read_text())
 
+    def test_log_navigation_opens_bounded_logs_in_the_current_dashboard_time_window(self):
+        from urllib.parse import parse_qs
+        dashboard = json.loads((ROOT / 'grafana/dashboards/fleet.json').read_text())
+        links = [link for link in dashboard.get('links', []) if 'Elasticsearch' in link.get('title', '')]
+        self.assertEqual(len(links), 1, 'a direct runtime log entry is required')
+        link = links[0]
+        url = link['url'].replace('${__from}', '1794312000000').replace('${__to}', '1794315600000')
+        parsed = urlsplit(url)
+        self.assertFalse(parsed.scheme or parsed.netloc, 'keep the current authenticated Grafana origin')
+        self.assertEqual(parsed.path, '/explore')
+        query = parse_qs(parsed.query)
+        self.assertEqual(query['schemaVersion'], ['1'])
+        panes = json.loads(query['panes'][0])
+        self.assertEqual(len(panes), 1)
+        pane = next(iter(panes.values()))
+        self.assertEqual(pane['datasource'], 'fleet-elasticsearch')
+        self.assertEqual(pane['range'], {'from': '1794312000000', 'to': '1794315600000'})
+        target = pane['queries'][0]
+        self.assertEqual(target['datasource'], {'type': 'elasticsearch', 'uid': 'fleet-elasticsearch'})
+        self.assertEqual(target['query'], 'Resource.deployment.environment.name:"github-dev"')
+        self.assertEqual(target['metrics'], [{'id': '1', 'type': 'logs', 'settings': {'limit': '500'}}])
+        self.assertEqual(target['bucketAggs'], [])
+        self.assertEqual(len(dashboard['panels']), 9)
+
 
 class CollectorRetryBudgetTest(unittest.TestCase):
     def test_retry_intervals_fit_the_bounded_elapsed_budget(self):

@@ -53,9 +53,9 @@ docker compose run --rm --no-deps jaeger validate --config=/etc/jaeger/config.ya
 
 ## Jaeger兼容与完整链路搜索
 
-当前固定Jaeger 2.23.0已移除旧的服务列表与条件搜索HTTP接口；Grafana 13.3.0附带的官方Jaeger插件13.0.5仍有调用旧接口的路径。Compose通过`GF_FEATURE_TOGGLES_ENABLE=jaegerEnableGrpcEndpoint`启用官方实验性v3兼容入口，使数据源健康检查、服务/操作列表和Trace ID查询使用v3。数据源URL保持内部地址`http://jaeger:16686`，不能追加`/api/v3`。
+当前固定Jaeger 2.23.0已移除旧的服务列表与条件搜索HTTP接口；Grafana 13.3.0 的现场只读插件 API 核出官方 Jaeger 插件 13.0.8、Elasticsearch 插件 12.9.5，插件版本与 Grafana 服务版本分别记录。Jaeger 插件仍有调用旧接口的路径。Compose通过`GF_FEATURE_TOGGLES_ENABLE=jaegerEnableGrpcEndpoint`启用官方实验性v3兼容入口，使数据源健康检查、服务/操作列表和Trace ID查询使用v3。数据源URL保持内部地址`http://jaeger:16686`，不能追加`/api/v3`。
 
-该开关没有迁移插件的`Search`和依赖图查询路径，不能据健康检查成功宣称Grafana内完整条件搜索已支持。按服务、标签、耗时和时间范围搜索请使用看板顶部的“完整链路搜索（Jaeger）”，进入Jaeger原生UI；Grafana Explore用于输入已知Trace ID查看链路。保留当前Jaeger版本和数据卷，无需降级或迁移既有trace。兼容范围依据[官方插件13.0.5查询实现](https://github.com/grafana/grafana-jaeger-datasource/blob/v13.0.5/pkg/jaeger/querydata.go)与[服务/操作列表路由](https://github.com/grafana/grafana-jaeger-datasource/blob/v13.0.5/pkg/jaeger/callresource.go)。
+该开关没有迁移插件的`Search`和依赖图查询路径，不能据健康检查成功宣称Grafana内完整条件搜索已支持。按服务、标签、耗时和时间范围搜索请使用看板顶部的“完整链路搜索（Jaeger）”，进入Jaeger原生UI；Grafana Explore用于输入已知Trace ID查看链路。保留当前Jaeger版本和数据卷，无需降级或迁移既有trace。兼容范围依据[官方插件13.0.8查询实现](https://github.com/grafana/grafana-jaeger-datasource/blob/v13.0.8/pkg/jaeger/querydata.go)与[服务/操作列表路由](https://github.com/grafana/grafana-jaeger-datasource/blob/v13.0.8/pkg/jaeger/callresource.go)。
 
 看板的“Jaeger搜索地址”文本变量默认`http://localhost:16686`，这是打开看板的浏览器所在主机。浏览器与观测服务不在同一主机时，填写浏览器可达的已核私网地址或已有受保护入口；改变`JAEGER_UI_PORT`后也要同步填写对应端口。这里不自动读取Compose环境，不在公共模板中保存真实私网地址。Jaeger原生UI默认没有登录保护，保持loopback，或仅向受信私网来源开放；本模板不创建公网入口或新增反向代理。
 
@@ -159,6 +159,10 @@ github-dev的Java/Python应使用非parent-based的全量采样，验证incoming
 `privacy_contract.py`定义两级Collector共同的有界类型合同。HTTP终态使用`summary`、方法、框架路由、状态、耗时、实际读写字节、完整性及安全JSON投影；SSE/AI正文/未知路由自由正文不进入日志。filelog把JSON number解为Double，因此仅在数值精确为非负安全整数时转Long，字符串数字或非法类型删除。ES的`runtime-log-additive-mapping.json`只增加新字段，既有索引先读回类型，冲突须报告；不得重建索引或修改请求审计历史。正文投影存`index:false`仅用于展开查看，不能当全文搜索库。
 
 Grafana的日志message字段为代码生成的`summary`，trace_id仍链接Jaeger。启动日志没有HTTP终态摘要时可能仅有级别元数据，不能为显示方便放开原始`message`。每个HTTP终态恰一条，模型事件继承真实模型child span；无Trace的后台日志不伪造关联。
+
+看板顶部“运行日志（Explore / Elasticsearch）”在当前 Grafana 来源打开固定数据源 `fleet-elasticsearch`，继承点击时看板时间窗，默认仅查 `Resource.deployment.environment.name:"github-dev"`，上限 500 条。按服务追加 `AND Resource.service.name:"rag"`，按链路追加 `AND trace_id:"<32位TraceID>"`，按级别追加 `AND SeverityText:(WARN OR ERROR OR FATAL)`；也可用 `Resource.service.version:"<确定版本>"` 区分新旧进程。HTTP 状态用 `http_status:[400 TO 499]` 或 `[500 TO 599]`，业务终态用 `outcome:"failure"`、`outcome:"cancelled"` 或 `outcome:"timeout"`，不能只凭 HTTP 200 推断业务成功。达到上限时缩小时间窗或条件，不能把前 500 条当成完整记录。展开日志后使用 `trace_id` 的“查看链路”链接；从 trace 回日志则在 Explore 分屏选择 Elasticsearch，使用同一 ID 与时间窗，当前不宣称已配置一键反向关联。
+
+入口采用官方 [Explore URL schema 1](https://grafana.com/docs/grafana/latest/visualizations/explore/get-started-with-explore/#generate-explore-urls-from-external-tools) 与实际 [ES 插件 12.9.5 Logs 查询合同](https://github.com/grafana/grafana-elasticsearch-datasource/blob/v12.9.5/src/dataquery.gen.ts)。它增加一个导航链接，保留 9 个面板、现有 Jaeger 搜索入口和数据源配置；部署后仍需在浏览器点开并确认数据源、时间窗、默认查询及日志→链路跳转，源文件校验不代替 GUI 验收。
 
 可用现有固定0.164.0二进制在应用之外回放四段合成fixture（文件采集、同batch服务隔离、中心日志、业务/GenAI spans）：
 
