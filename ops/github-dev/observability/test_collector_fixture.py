@@ -14,6 +14,24 @@ import verify_collector_native as native
 
 
 class NativeFixtureContractTest(unittest.TestCase):
+    def test_boundary_assertion_rejects_false_native_correlation_level_time_and_flags(self):
+        expected = {'fixture': ('0123456789abcdef0123456789abcdef', '0123456789abcdef', 17, 'ERROR', True, 0)}
+        record = {'traceId': '0123456789abcdef0123456789abcdef', 'spanId': '0123456789abcdef',
+                  'severityNumber': 17, 'severityText': 'ERROR', 'timeUnixNano': '1794182400000000000',
+                  'attributes': native.attributes({'stage': 'fixture', 'trace_id': '0123456789abcdef0123456789abcdef',
+                                                   'span_id': '0123456789abcdef'})}
+        payload = [{'resourceLogs': [{'resource': {'attributes': native.attributes({
+            'service.name': 'fixture-java', 'service.version': '1.2.3',
+            'deployment.environment.name': 'github-dev'})}, 'scopeLogs': [{'logRecords': [record]}]}]}]
+        native.assert_boundaries(payload, expected)
+        mutations = [('traceId', ''), ('spanId', '1111111111111111'), ('severityNumber', 9),
+                     ('severityText', 'INFO'), ('timeUnixNano', '1'), ('flags', 1)]
+        for key, value in mutations:
+            changed = copy.deepcopy(payload)
+            changed[0]['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0][key] = value
+            with self.subTest(key=key), self.assertRaises(AssertionError):
+                native.assert_boundaries(changed, expected)
+
     def test_filelog_persists_offsets_without_replaying_initial_history(self):
         config = (native.ROOT / 'collector-agent.yaml').read_text()
         self.assertIn('storage: file_storage/offsets', config)
@@ -130,7 +148,9 @@ class NativeFixtureContractTest(unittest.TestCase):
             resources.append({'resource': {'attributes': native.attributes({
                 'service.name': name, 'service.version': version,
                 'deployment.environment.name': 'github-dev'})},
-                'scopeLogs': [{'logRecords': [{'attributes': native.attributes(fields)}]}]})
+                'scopeLogs': [{'logRecords': [{'attributes': native.attributes(fields),
+                    'timeUnixNano': '1793923200000000000', 'severityNumber': 9, 'severityText': 'INFO',
+                    **({'traceId': native.TRACE, 'spanId': native.SPAN} if traced else {})}]}]})
         payload = {'resourceLogs': resources}
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / 'output.jsonl'
@@ -146,6 +166,11 @@ class NativeFixtureContractTest(unittest.TestCase):
             missing = copy.deepcopy(payload)
             missing['resourceLogs'].pop()
             mutations.append(missing)
+            for key, wrong in [('traceId', ''), ('spanId', '1111111111111111'),
+                               ('severityNumber', 0), ('timeUnixNano', '1'), ('flags', 1)]:
+                invalid = copy.deepcopy(payload)
+                invalid['resourceLogs'][0]['scopeLogs'][0]['logRecords'][0][key] = wrong
+                mutations.append(invalid)
             for mutated in mutations:
                 output.write_text(json.dumps(mutated) + '\n')
                 with self.assertRaises(AssertionError):

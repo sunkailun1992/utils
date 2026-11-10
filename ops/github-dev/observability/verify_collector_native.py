@@ -1,5 +1,6 @@
 """在固定官方 Collector 中回放合成数据；无网络、无 ES/NAS 或真实日志。"""
 import argparse
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 import subprocess
@@ -7,6 +8,7 @@ import tempfile
 import time
 import uuid
 import os
+import threading
 from privacy_contract import LOG_FIELDS
 
 ROOT = Path(__file__).resolve().parent
@@ -175,6 +177,12 @@ def assert_logs(path):
                     assert str(fields['duration_ms']) == '7' and fields['outcome'] == 'success'
                     assert fields.get('trace_id') == (TRACE if traced else None)
                     assert fields.get('span_id') == (SPAN if traced else None)
+                    assert record.get('traceId', '') == (TRACE if traced else ''), 'missing native TraceID'
+                    assert record.get('spanId', '') == (SPAN if traced else ''), 'missing native SpanID'
+                    assert int(record.get('severityNumber', 0)) == 9, 'INFO must have native severity 9'
+                    assert record.get('severityText') == 'INFO'
+                    assert record.get('timeUnixNano') == '1793923200000000000'
+                    assert record.get('flags', 0) == 0, 'filelog must not invent trace flags'
                     if stage == 'java-call':
                         assert fields['summary'] == 'POST /api/rag/retrievals 200 7ms success'
                         assert fields['request_body'] == '{"topK":3}'
@@ -211,6 +219,133 @@ def assert_traces(path):
                     assert all(event['name'] == 'event' and not event.get('attributes')
                                for event in span.get('events', []))
     assert seen == TRACE_EXPECTED, seen
+
+
+def boundary_inputs():
+    """字面量期望覆盖等级、非法关联和缺关联；不读取任何应用文件。"""
+    cases = [
+        ('trace', TRACE, SPAN, 'TRACE', True, 1),
+        ('debug', TRACE, SPAN, 'DEBUG', True, 5),
+        ('info', TRACE, SPAN, 'INFO', True, 9),
+        ('warn', TRACE, SPAN, 'WARN', True, 13),
+        ('error', TRACE, SPAN, 'ERROR', True, 17),
+        ('fatal', TRACE, SPAN, 'FATAL', True, 21),
+        ('unknown-level', TRACE, SPAN, SECRET, True, 0),
+        ('level-type', TRACE, SPAN, 123, True, 0),
+        ('short-trace', '0123', SPAN, 'INFO', False, 9),
+        ('long-span', TRACE, SPAN + '0', 'INFO', False, 9),
+        ('non-hex', 'g' * 32, SPAN, 'INFO', False, 9),
+        ('upper-hex', TRACE.upper(), SPAN, 'INFO', False, 9),
+        ('zero-trace', '0' * 32, SPAN, 'INFO', False, 9),
+        ('zero-span', TRACE, '0' * 16, 'INFO', False, 9),
+        ('missing-span', TRACE, None, 'INFO', False, 9),
+        ('wrong-type', 123, SPAN, 'INFO', False, 9),
+        ('startup', None, None, 'INFO', False, 9),
+    ]
+    events, expected = [], {}
+    for stage, trace, span, level, traced, severity in cases:
+        event = offset_event(stage)
+        event['log']['level'] = level
+        if trace is not None:
+            event['trace_id'] = trace
+        if span is not None:
+            event['span_id'] = span
+        events.append(event)
+        expected[stage] = (TRACE if traced else '', SPAN if traced else '', severity,
+                           level if severity else '', traced, 0)
+    return events, expected
+
+
+def assert_boundaries(batches, expected):
+    assert SECRET not in json.dumps(batches), 'unknown level/body leaked'
+    seen = {}
+    for batch in batches:
+        for resource in batch.get('resourceLogs', []):
+            metadata = decoded(resource.get('resource', {}).get('attributes', []))
+            assert metadata == {'service.name': 'fixture-java', 'service.version': '1.2.3',
+                                'deployment.environment.name': 'github-dev'}
+            for scope in resource.get('scopeLogs', []):
+                for record in scope.get('logRecords', []):
+                    fields = decoded(record.get('attributes', []))
+                    stage = fields['stage']
+                    trace, span, severity, text, aliases, flags = expected[stage]
+                    assert record.get('traceId', '') == trace, (stage, 'native trace')
+                    assert record.get('spanId', '') == span, (stage, 'native span')
+                    assert fields.get('trace_id') == (trace if aliases else None), (stage, 'trace alias')
+                    assert fields.get('span_id') == (span if aliases else None), (stage, 'span alias')
+                    assert int(record.get('severityNumber', 0)) == severity, (stage, 'severity number')
+                    assert record.get('severityText', '') == text, (stage, 'severity text')
+                    assert int(record.get('flags', 0)) == flags, (stage, 'flags')
+                    assert record.get('timeUnixNano') == '1794182400000000000', (stage, 'timestamp')
+                    assert record.get('body', {}).get('stringValue', '') == ''
+                    assert set(fields) <= set(LOG_FIELDS)
+                    seen[stage] = seen.get(stage, 0) + 1
+    assert seen == {stage: 1 for stage in expected}, seen
+
+
+def run_log_boundaries(directory):
+    events, expected = boundary_inputs()
+    source = directory / 'logs' / 'boundaries.jsonl'
+    source.write_text(''.join(json.dumps(event) + '\n' for event in events))
+    source.chmod(0o644)
+    overlay = {'receivers': {'filelog/runtime': {
+        'include': ['/fixture/logs/boundaries.jsonl'], 'start_at': 'beginning'}},
+        'service': {'pipelines': {'logs': {'exporters': ['file/assertion']}}}}
+    captured, server, thread = [], None, None
+    if COLLECTOR_BIN is not None:
+        # 本机二进制另验真实 OTLP/HTTP JSON 出站；只绑定本次随机 loopback 端口。
+        class Sink(BaseHTTPRequestHandler):
+            def do_POST(self):
+                assert self.path == '/v1/logs'
+                assert self.headers.get('Content-Type') == 'application/json'
+                captured.append(json.loads(self.rfile.read(int(self.headers['Content-Length']))))
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b'{}')
+
+            def log_message(self, *args):
+                pass
+
+        server = ThreadingHTTPServer(('127.0.0.1', 0), Sink)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        overlay['exporters'] = {'otlp_http/assertion': {
+            'endpoint': 'http://127.0.0.1:' + str(server.server_port),
+            'encoding': 'json', 'compression': 'none', 'timeout': '1s',
+            'sending_queue': {'enabled': False}, 'retry_on_failure': {'enabled': False}}}
+        overlay['service']['pipelines']['logs']['exporters'].append('otlp_http/assertion')
+
+    def assertion(path):
+        assert_boundaries(read_batches(path), expected)
+        if server is not None:
+            assert_boundaries(captured, expected)
+
+    try:
+        native_case(directory, 'log-boundaries', 'collector-agent.yaml', overlay, assertion)
+    finally:
+        if server is not None:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+    records = [{'timeUnixNano': '1794182400000000000', 'attributes': attributes(event)} for event in events]
+    for stage, top_trace, top_span, alias_trace, alias_span, aliases in [
+            ('native-match', TRACE, SPAN, TRACE, SPAN, True),
+            ('native-mismatch', TRACE, SPAN, '1' * 32, '2' * 16, True),
+            ('native-invalid-alias', TRACE, SPAN, '0' * 32, SPAN, True),
+            ('partial-native', '1' * 32, '', TRACE, SPAN, True)]:
+        event = offset_event(stage)
+        event.update(trace_id=alias_trace, span_id=alias_span)
+        records.append({'timeUnixNano': '1794182400000000000', 'traceId': top_trace, 'spanId': top_span,
+                        'flags': 1, 'attributes': attributes(event)})
+        expected[stage] = (TRACE, SPAN, 9, 'INFO', aliases, 1)
+    grouping = directory / 'boundaries-grouping.jsonl'
+    grouping.write_text(json.dumps({'resourceLogs': [{'resource': {}, 'scopeLogs': [{'logRecords': records}]}]}) + '\n')
+    grouping.chmod(0o644)
+    native_case(directory, 'log-boundaries-native', 'collector-agent.yaml', {
+        'receivers': {'otlp_json_file/fixture': {'include': ['/fixture/boundaries-grouping.jsonl'], 'start_at': 'beginning'}},
+        'service': {'pipelines': {'logs': {'receivers': ['otlp_json_file/fixture'],
+                                         'exporters': ['file/assertion']}}}},
+        lambda path: assert_boundaries(read_batches(path), expected))
 
 
 def native_case(directory, case, base, overlay, assertion, *, offsets=None, after_start=None):
@@ -369,6 +504,7 @@ def run_native(directory):
                                   'logs': {'receivers': ['otlp_json_file/fixture'],
                                            'exporters': ['file/unused']}}}}, assert_traces)
     run_offset_resume(directory)
+    run_log_boundaries(directory)
 
 
 if __name__ == '__main__':

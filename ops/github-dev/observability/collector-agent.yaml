@@ -37,7 +37,16 @@ processors:
           - set(attributes["deployment.environment.name"], attributes["service"]["environment"]) where attributes["service"]["environment"] != nil
           - set(attributes["duration_ms"], attributes["elapsed_ms"]) where attributes["elapsed_ms"] != nil
           - set(attributes["outcome"], attributes["result"]) where attributes["result"] != nil
-          - set(severity_text, attributes["log"]["level"]) where attributes["log"]["level"] != nil
+          # 只映射有限等级；未知/非法类型保持 UNSPECIFIED，不把自由文本提升为标准字段。
+          - set(severity_text, "") where attributes["log"]["level"] != nil
+          - set(severity_number, SEVERITY_NUMBER_UNSPECIFIED) where attributes["log"]["level"] != nil
+          - set(severity_text, attributes["log"]["level"]) where IsString(attributes["log"]["level"]) and IsMatch(attributes["log"]["level"], "^(TRACE|DEBUG|INFO|WARN|ERROR|FATAL)$")
+          - set(severity_number, SEVERITY_NUMBER_TRACE) where severity_text == "TRACE"
+          - set(severity_number, SEVERITY_NUMBER_DEBUG) where severity_text == "DEBUG"
+          - set(severity_number, SEVERITY_NUMBER_INFO) where severity_text == "INFO"
+          - set(severity_number, SEVERITY_NUMBER_WARN) where severity_text == "WARN"
+          - set(severity_number, SEVERITY_NUMBER_ERROR) where severity_text == "ERROR"
+          - set(severity_number, SEVERITY_NUMBER_FATAL) where severity_text == "FATAL"
           - set(body, "")
           # HTTP/AI投影来自应用有界白名单；保留可读summary，原始message/body始终清空。
           - keep_keys(attributes, ["service.name", "service.version", "deployment.environment.name", "event", "summary", "http_method", "http_route", "request_body", "response_body", "request_body_omitted", "response_body_omitted", "error_type", "error_code", "outcome", "stage", "trace_id", "span_id", "ai_operation", "ai_provider", "ai_model", "ai_response_model", "ai_prompt_key", "ai_prompt_version", "ai_prompt_source", "ai_reasoning_kind", "ai_finish_reason", "ai_input_summary", "ai_output_summary", "request_bytes", "response_bytes", "ai_input_tokens", "ai_output_tokens", "ai_reasoning_tokens", "ai_input_characters", "ai_output_characters", "ai_message_count", "ai_document_count", "request_body_complete", "response_body_complete", "ai_usage_available", "ai_reasoning_present", "duration_ms", "http_status"])
@@ -69,6 +78,19 @@ processors:
           - delete_key(attributes, "trace_id") where IsString(attributes["trace_id"]) and Len(attributes["trace_id"]) > 32
           - delete_key(attributes, "span_id") where attributes["span_id"] != nil and not IsString(attributes["span_id"])
           - delete_key(attributes, "span_id") where IsString(attributes["span_id"]) and Len(attributes["span_id"]) > 16
+          # 关联必须是成对、非零的小写十六进制；不接受截断值或把任意文本交给 TraceID 转换器。
+          - delete_key(attributes, "trace_id") where IsString(attributes["trace_id"]) and (not IsMatch(attributes["trace_id"], "^[0-9a-f]{32}$") or attributes["trace_id"] == "00000000000000000000000000000000")
+          - delete_key(attributes, "span_id") where IsString(attributes["span_id"]) and (not IsMatch(attributes["span_id"], "^[0-9a-f]{16}$") or attributes["span_id"] == "0000000000000000")
+          - delete_key(attributes, "span_id") where attributes["trace_id"] == nil
+          - delete_key(attributes, "trace_id") where attributes["span_id"] == nil
+          # 已有完整 native 上下文优先；alias 最后与它统一，不能覆盖真实上下文或指向另一条链。
+          - set(cache["partial_native"], true) where (trace_id == TraceID(0x00000000000000000000000000000000) and span_id != SpanID(0x0000000000000000)) or (trace_id != TraceID(0x00000000000000000000000000000000) and span_id == SpanID(0x0000000000000000))
+          - set(trace_id, TraceID(0x00000000000000000000000000000000)) where cache["partial_native"] == true
+          - set(span_id, SpanID(0x0000000000000000)) where cache["partial_native"] == true
+          - set(trace_id, TraceID(attributes["trace_id"])) where attributes["trace_id"] != nil and trace_id == TraceID(0x00000000000000000000000000000000)
+          - set(span_id, SpanID(attributes["span_id"])) where attributes["span_id"] != nil and span_id == SpanID(0x0000000000000000)
+          - set(attributes["trace_id"], trace_id.string) where trace_id != TraceID(0x00000000000000000000000000000000) and span_id != SpanID(0x0000000000000000)
+          - set(attributes["span_id"], span_id.string) where trace_id != TraceID(0x00000000000000000000000000000000) and span_id != SpanID(0x0000000000000000)
           - delete_key(attributes, "ai_operation") where attributes["ai_operation"] != nil and not IsString(attributes["ai_operation"])
           - delete_key(attributes, "ai_operation") where IsString(attributes["ai_operation"]) and Len(attributes["ai_operation"]) > 80
           - delete_key(attributes, "ai_provider") where attributes["ai_provider"] != nil and not IsString(attributes["ai_provider"])
