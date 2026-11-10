@@ -1,6 +1,6 @@
 # 个人 Nacos 配置目录
 
-本目录仅维护 `github-dev / DEFAULT_GROUP` 的 26 个模板。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。Yudao 与美联实际配置不在本目录维护范围。
+本目录维护 `github-dev / DEFAULT_GROUP` 的 25 个活跃模板，默认渲染仅遍历 `DEFAULT_GROUP/`。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。`rollback-examples/` 仅保存显式回滚示例，不进入活跃 catalog、默认渲染或自动删除清单。Yudao 与美联实际配置不在本目录维护范围。
 
 每个文件包含职责、导入服务与叶子参数注释；`GITHUB_*` 由私有环境渲染，Spring `${custom.*}` 等引用留给应用解析。[目录清单](catalog.json) 同时记录 dataId 说明、分类和消费者，供 Nacos 配置描述同步与一致性校验。Dubbo 自动生成的 metadata/mapping 不属于人工配置模板，不因数量多而删除。
 
@@ -40,11 +40,15 @@
 |---|---|---|
 | [a2a.yaml](DEFAULT_GROUP/a2a.yaml) | A2A 租户、提供方及协议入口约定 | ai、ai-agent、ai-memory、mcp、rag |
 
-## 共享 AI 模型
+## 历史共享模型回滚示例
 
-| dataId | 用途 | 当前 dev 导入服务 |
+| 历史 dataId | 保留用途 | 当前源码消费者 |
 |---|---|---|
-| [ai-model-secrets.yaml](DEFAULT_GROUP/ai-model-secrets.yaml) | Google GenAI 凭据与模型选择；真实凭据仅在私有渲染结果和 Nacos | ai-agent、ai-memory、rag |
+| [ai-model-secrets.yaml](rollback-examples/ai-model-secrets.yaml) | 仅供旧制品显式回滚；保留原占位符和默认值，不能用示例覆盖远端真实值 | 无 |
+
+`ai-agent 0.3.0`、RAG Java `1.2.6`、`ai-memory 1.1.3` 的主干源码已移除共享模型 import。Google 原生参数现在由 `ai-agent-spring.yaml` 显式提供，沿用 `GITHUB_GOOGLE_API_KEY` / `GITHUB_GOOGLE_CHAT_MODEL`，增加可选 `GITHUB_GOOGLE_BASE_URL`；空基址保持 SDK 官方入口，代理基址必须与本服务 scoped vkey 配套。其它业务服务不因共享基础设施配置而获得这组模型凭据。
+
+本次不删除 NAS/Nacos 的历史 `ai-model-secrets.yaml`，也不将它登记到 `retired-dataids.json`。它只供旧制品在负责人明确回滚时使用：先核对目标环境私有备份、旧参数与 import，再恢复旧制品及其原 import。源码无当前消费者不等于运行中的旧实例已切换；main 发布、实际部署、Nacos 发布和密钥迁移必须分别验证，模板整理不搬移真实密钥。
 
 ## 服务配置
 
@@ -61,6 +65,8 @@
 | [user-spring.yaml](DEFAULT_GROUP/user-spring.yaml) | 用户服务主/灰度数据源与 OAuth 授权服务器公开入口 | user |
 
 ## 合并与旧项清理
+
+以下为此前服务配置合并与退役项的历史操作说明；不适用于上方明确保留的共享模型回滚项。当前默认发布集合以 25 项活跃 catalog 为准。
 
 本轮按实际消费者和键空间核对后，将 `ai.yaml`、`ai-agent.yaml`、`mcp.yaml`、`rag.yaml`、`user.yaml` 合并到对应 `{service}-spring.yaml`；合并前两项在所有 profile 中相邻，均为 `optional`、`refreshEnabled=true`，且没有重复叶子键。移除空映射 `ai-memory.yaml`、`message.yaml`、`report.yaml`。清理清单及替代关系见 [retired-dataids.json](retired-dataids.json)。这次结构调整已单独授权，不能据此把今后的纯注释任务扩大为自动合并。
 

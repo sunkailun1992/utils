@@ -48,6 +48,18 @@ def check_catalog(config, catalog, retired, consumers):
         assert f"# 导入服务：{'、'.join(entry['consumers'])}。" in text, name
 
 
+def check_model_credential_scope(config, catalog, retired):
+    """历史共享模型项不再发布或自动删除；Google 参数由 Agent 显式持有。"""
+    legacy = "ai-model-secrets.yaml"
+    assert legacy not in config and legacy not in {item["dataId"] for item in catalog["entries"]}, "历史共享模型不得重新进入活跃模板或 catalog"
+    assert legacy not in {item["dataId"] for item in retired["retired"]}, "历史共享模型远端保留，不得自动删除"
+    agent = yaml_json(config["ai-agent-spring.yaml"])
+    google = agent["spring"]["ai"]["google"]["genai"]
+    assert google["api-key"] == "${GITHUB_GOOGLE_API_KEY}", "Agent Google 凭据须由本服务私有占位符提供"
+    assert google["chat"]["options"]["model"] == "${GITHUB_GOOGLE_CHAT_MODEL:gemini-3.1-flash-lite}", "Agent Google 模型占位符或默认值改变"
+    assert agent["ai"]["agent"]["google"]["base-url"] == "${GITHUB_GOOGLE_BASE_URL:}", "Agent Google 原生基址必须可选且默认空值"
+
+
 def check_parameter_comments(source):
     """通过 YAML 节点定位参数，避免把字符串中的冒号误识别为键。"""
     result = subprocess.run(["ruby", "-ryaml", "-rjson", "-e", """
@@ -247,6 +259,9 @@ def check():
     check_catalog({file.name: file.read_text() for file in CONFIG.iterdir()},
                   json.loads((CONFIG.parent / "catalog.json").read_text()),
                   json.loads((CONFIG.parent / "retired-dataids.json").read_text()), consumers)
+    check_model_credential_scope({file.name: file.read_text() for file in CONFIG.iterdir()},
+                                 json.loads((CONFIG.parent / "catalog.json").read_text()),
+                                 json.loads((CONFIG.parent / "retired-dataids.json").read_text()))
     gateway = yaml_json((CONFIG / "gateway-spring.yaml").read_text())
     routes = gateway["spring"]["cloud"]["gateway"]["server"]["webflux"]["routes"]
     frontend_paths = check_frontend_routes(ROOT, routes)

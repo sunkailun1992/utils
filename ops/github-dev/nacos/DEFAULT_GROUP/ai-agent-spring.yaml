@@ -2,13 +2,21 @@
 # dataId：ai-agent-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：Agent 模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择。
 # 导入服务：ai-agent。
-# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+# 维护：模型参数由本服务显式持有；真实凭据只由私有环境注入，Git 发布不表示配置已发布。
 
 spring:
   ai:
     model:
-      # Spring AI 聊天模型实现；具体模型与凭据见 ai-model-secrets.yaml。
+      # Spring AI 聊天模型实现；具体 Google 模型与凭据由下方本服务参数提供。
       chat: google-genai
+    google:
+      genai:
+        # Google 原生接口密钥；直连时为提供方密钥，代理时为本服务 scoped vkey，必须与 base-url 配套，真实值不进 Git。
+        api-key: ${GITHUB_GOOGLE_API_KEY}
+        chat:
+          options:
+            # Google 原生模型 ID；沿用旧共享模板占位符和默认值，代理接入须验证原生路由可识别。
+            model: ${GITHUB_GOOGLE_CHAT_MODEL:gemini-3.1-flash-lite}
 
 # 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
 ai:
@@ -30,6 +38,10 @@ ai:
   agent:
     # Agent 执行模型提供方；应与所选模型及其凭据配套。
     provider: google
+    google:
+      # 可选 Google Developer 原生 HTTP(S) 基址，无单位；代理路径止于 /gemini、不带 /v1beta，空值保持 SDK 官方入口。
+      # 仅供 ai-agent；非空时须配套本服务 scoped vkey，恢复直连必须同时恢复对应密钥，不支持 Vertex 代理。
+      base-url: ${GITHUB_GOOGLE_BASE_URL:}
     deepseek:
       # 模型或服务访问密钥；仅由私有环境注入，空占位不表示已完成接入。
       api-key: ${GITHUB_DEEPSEEK_API_KEY}

@@ -1,11 +1,15 @@
 """网关迁移反例：重复前缀、缺少重写和路由优先级不能被单仓编译发现。"""
 import sys
+import copy
+import json
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from verify_configuration import (check_route, route_destination, check_catalog,
                                   check_parameter_comments, effective_configuration)
+import verify_configuration as configuration
+from render_nacos import yaml_json, render_document
 
 
 class RouteContractTests(unittest.TestCase):
@@ -46,6 +50,51 @@ class RouteContractTests(unittest.TestCase):
 
 
 class NacosOrganizationTests(unittest.TestCase):
+    def test_current_catalog_keeps_shared_model_configuration_for_explicit_rollback_only(self):
+        directory = Path(__file__).resolve().parents[1] / "nacos"
+        active = {file.name: file.read_text() for file in (directory / "DEFAULT_GROUP").iterdir()}
+        catalog = json.loads((directory / "catalog.json").read_text())
+        retired = json.loads((directory / "retired-dataids.json").read_text())
+        self.assertNotIn("ai-model-secrets.yaml", set(active))
+        self.assertNotIn("ai-model-secrets.yaml", {entry["dataId"] for entry in catalog["entries"]})
+        self.assertNotIn("ai-model-secrets.yaml", {entry["dataId"] for entry in retired["retired"]})
+        historical = yaml_json((directory / "rollback-examples/ai-model-secrets.yaml").read_text())
+        self.assertEqual(historical, {"spring": {"ai": {"google": {"genai": {
+            "api-key": "${GITHUB_GOOGLE_API_KEY}",
+            "chat": {"options": {"model": "${GITHUB_GOOGLE_CHAT_MODEL:gemini-3.1-flash-lite}"}}
+        }}}}})
+        configuration.check_model_credential_scope(active, catalog, retired)
+
+    def test_agent_model_template_renders_its_google_credentials_and_optional_native_origin(self):
+        source = (configuration.CONFIG / "ai-agent-spring.yaml").read_text()
+        template = yaml_json(source)
+        self.assertIn("google", template["spring"]["ai"])
+        google = template["spring"]["ai"]["google"]["genai"]
+        self.assertEqual(google["api-key"], "${GITHUB_GOOGLE_API_KEY}")
+        self.assertEqual(google["chat"]["options"]["model"], "${GITHUB_GOOGLE_CHAT_MODEL:gemini-3.1-flash-lite}")
+        self.assertEqual(template["ai"]["agent"]["google"], {"base-url": "${GITHUB_GOOGLE_BASE_URL:}"})
+        environment = {"GITHUB_GOOGLE_API_KEY": "SYNTHETIC_GOOGLE_KEY", "GITHUB_DEEPSEEK_API_KEY": "SYNTHETIC_DEEPSEEK_KEY", "GITHUB_QWEN_API_KEY": "SYNTHETIC_QWEN_KEY"}
+        rendered = yaml_json(render_document(source, environment))
+        self.assertEqual(rendered["spring"]["ai"]["google"]["genai"]["api-key"], "SYNTHETIC_GOOGLE_KEY")
+        self.assertEqual(rendered["spring"]["ai"]["google"]["genai"]["chat"]["options"]["model"], "gemini-3.1-flash-lite")
+        self.assertEqual(rendered["ai"]["agent"]["google"]["base-url"], "")
+        proxied = yaml_json(render_document(source, {**environment, "GITHUB_GOOGLE_BASE_URL": "http://127.0.0.1:4567/gemini"}))
+        self.assertEqual(proxied["ai"]["agent"]["google"]["base-url"], "http://127.0.0.1:4567/gemini")
+
+    def test_shared_model_scope_guard_rejects_reactivation_and_automatic_retirement(self):
+        active = {"ai-agent-spring.yaml": (configuration.CONFIG / "ai-agent-spring.yaml").read_text()}
+        catalog = {"entries": [{"dataId": "ai-agent-spring.yaml"}]}
+        retired = {"retired": []}
+        configuration.check_model_credential_scope(active, catalog, retired)
+        with self.assertRaisesRegex(AssertionError, "历史共享模型"):
+            configuration.check_model_credential_scope({**active, "ai-model-secrets.yaml": "{}"}, catalog, retired)
+        altered = copy.deepcopy(catalog)
+        altered["entries"].append({"dataId": "ai-model-secrets.yaml"})
+        with self.assertRaisesRegex(AssertionError, "历史共享模型"):
+            configuration.check_model_credential_scope(active, altered, retired)
+        with self.assertRaisesRegex(AssertionError, "不得自动删除"):
+            configuration.check_model_credential_scope(active, catalog, {"retired": [{"dataId": "ai-model-secrets.yaml"}]})
+
     def test_mapping_merge_preserves_later_override_and_ordered_lists(self):
         templates = {"shared.yaml": "spring:\n  enabled: true\n  ports: [1, 2]\n",
                      "service.yaml": "spring:\n  ports: [2, 1]\nservice:\n  enabled: false\n"}

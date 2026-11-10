@@ -8,7 +8,7 @@
 
 `dev`、`test`、`prod` 三个 profile 当前均连接个人 `github-dev / DEFAULT_GROUP`，统一使用 `GITHUB_NACOS_DEV_*` 引导变量，Git 分支不切换环境，也不回落美联 dev。具体地址、控制台和 SDK 端口的区别见 [个人环境说明](../../ops/github-dev/README.md)。Yudao 与美联实际配置不在个人目录维护范围。
 
-当前 29 个 dataId 的职责和消费者清单见 [配置分类索引](../../ops/github-dev/nacos/README.md)。它来自九个服务的实际 `application-dev.yml` import，不能继续沿用早期五服务清单或公司 `aliyun.yaml` 配置清单。远端生效值仍以目标 Nacos 的当前读回为准，仓库只保存默认值和占位符。
+当前 25 个活跃 dataId 的职责和消费者清单见 [配置分类索引](../../ops/github-dev/nacos/README.md)。它来自九个服务的实际 `application-dev.yml` import，不能继续沿用早期五服务清单或公司 `aliyun.yaml` 配置清单。远端生效值仍以目标 Nacos 的当前读回为准，仓库只保存默认值和占位符。
 
 ## 1. 引导与导入机制
 
@@ -27,10 +27,9 @@
 | 共享基础设施 | `redis.yaml`、`rabbitmq.yaml`、`elasticsearch.yaml`、`qdrant.yaml`、`dubbo.yaml`、`mybatis-plus.yaml`、`seata.yaml`、`storage.yaml` | 中间件连接、隔离边界及模块开关；存储使用 X File Storage / MinIO |
 | 安全与可观测性 | `security-auth.yaml`、`security-jwt.yaml`、`actuator.yaml`、`logging.yml`、`traffic-governance.yaml`、`swagger.yaml`、`zipkin.yaml`、`admin.yaml` | 认证/租户、人员 JWT、管理端点、日志、流量治理及监控 |
 | 共享 AI 协议 | `a2a.yaml` | A2A 租户、协议入口、提供方和注册契约 |
-| 共享 AI 模型 | `ai-model-secrets.yaml` | 模型选择及私有凭据占位符，按实际消费者导入 |
-| 服务配置 | `{service}-spring.yaml` | 同一服务的数据源、模型选择、路由及服务专属参数；共享配置仍独立维护 |
+| 服务配置 | `{service}-spring.yaml` | 同一服务的数据源、模型选择、路由及服务专属参数；Google 凭据、模型与可选原生代理入口由 `ai-agent-spring.yaml` 显式维护 |
 
-分类是维护索引，不是新的目录或 group。当前保留 29 个 dataId 和 `DEFAULT_GROUP`；经单独授权并验证后，5 个服务专属文件合并到相邻的 `{service}-spring.yaml`，3 个空服务文件移除。不得在纯注释任务中擅自再次调整结构。
+分类是维护索引，不是新的目录或 group。当前保留 25 个活跃 dataId 和 `DEFAULT_GROUP`；经单独授权并验证后，5 个服务专属文件合并到相邻的 `{service}-spring.yaml`，3 个空服务文件移除。历史共享模型模板另存于 `ops/github-dev/nacos/rollback-examples/`，不在默认渲染和发布集合中。不得在纯注释任务中擅自再次调整结构。
 
 ## 3. 配置归属与隔离
 
@@ -40,12 +39,14 @@
 - 命名空间隔离之外，继续保持现有数据库、Redis 库号、RabbitMQ vhost、Dubbo group、Qdrant collection、ES 索引和对象存储前缀边界。注释不得暗改这些实际值。
 - `ai-memory.yaml`、`message.yaml`、`report.yaml` 的空映射已从当前模板与 imports 移除；`ai.yaml`、`ai-agent.yaml`、`mcp.yaml`、`rag.yaml`、`user.yaml` 的参数统一由对应 `{service}-spring.yaml` 提供。旧远端项须在消费者切换验证后清理，不能先删导致旧服务刷新缺配置。
 - `catalog.json` 维护 dataId 描述、分类和消费者，`retired-dataids.json` 维护明确的旧项与替代清单；二者位于唯一模板目录的上层。Dubbo 自动 metadata/mapping 不属于人工配置，不在清理清单内。
+- `ai-agent 0.3.0`、RAG Java `1.2.6`、`ai-memory 1.1.3` 的主干源码不再导入 `ai-model-secrets.yaml`；该项没有当前源码消费者，但远端保留供旧制品显式回滚，不得列入 `retired-dataids.json` 自动删除。Agent 的 Google api-key/model 沿用原私有占位符，可选 `ai.agent.google.base-url` 仅供原生 Developer 路由，代理基址与 scoped vkey 必须配套；本条不声明真实密钥已搬移或运行实例已切换。
+- main 提交或模板移出活跃目录不等于部署、Nacos 发布或密钥迁移。旧制品回滚先核目标环境私有备份与原有效配置，再恢复其旧 import；不能直接渲染历史示例覆盖当前远端值。
 
 ## 4. import 顺序与消费者
 
 各服务当前 import 清单及顺序以其三个 profile 文件为准。分类索引只说明谁导入，不要求按表格顺序重排。重复键覆盖、optional 与动态刷新语义均须单独评估，不能只用 YAML 可解析证明重排安全。
 
-在同级 `utils` 中运行 `python3 ops/github-dev/scripts/verify_configuration.py`，检查九个服务的 27 个 profile、29 个 dataId、环境隔离和网关路径契约；新增或删除 import 时同步更新分类索引和受影响消费者。
+在同级 `utils` 中运行 `python3 ops/github-dev/scripts/verify_configuration.py`，检查九个服务的 27 个 profile、25 个活跃 dataId、环境隔离和网关路径契约；活跃模板、catalog 和实际消费者必须严格相等，历史共享模型项既不能重新激活，也不能进入自动删除清单。新增或删除 import 时同步更新分类索引和受影响消费者。
 
 ## 5. 修改与发布
 

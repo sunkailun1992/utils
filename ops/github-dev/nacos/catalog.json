@@ -47,16 +47,6 @@
       ]
     },
     {
-      "dataId": "ai-model-secrets.yaml",
-      "description": "Google GenAI 凭据与模型选择；真实凭据仅在私有渲染结果和 Nacos；个人 github-dev 配置，凭据由私有环境注入。",
-      "category": "共享 AI 模型",
-      "consumers": [
-        "ai-agent",
-        "ai-memory",
-        "rag"
-      ]
-    },
-    {
       "dataId": "ai-spring.yaml",
       "description": "AI 主/灰度数据源、演示种子、文件策略、Agent 发现和客户端签名；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
