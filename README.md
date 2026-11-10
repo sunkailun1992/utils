@@ -56,6 +56,10 @@
 ./gradlew publishToMavenLocal
 ```
 
+真实 Seata 两库提交与回滚使用显式 opt-in 的[跨进程 PostgreSQL 合同](docs/seata-live-contract.md)：
+两个独立 JVM 通过 Triple 调用并连接两个专用测试库，复用公共数据源代理与 XID filter。
+默认测试不连接外部组件；该基础设施合同与 fleet 业务全局事务接入分别验收。
+
 ## 管理端点与私有文件存储
 
 - `ActuatorSecurityConfig` 为已暴露的 Actuator 端点建立独立安全链，与 `security.auth.enabled` 无关。health 及探针保持公开；其它端点需要 `actuatorReq` 请求头匹配运行时 `security.actuator.token`，配置缺失时拒绝访问。令牌每次请求重新读取，轮换无需重启。旧 MVC `ActuatorInterceptor` 已停用，不能再注册为保护措施。
