@@ -95,7 +95,7 @@ privateMavenPassword=<PRIVATE_MAVEN_PASSWORD>
 
 版本与发布规则：
 
-- 只要本次任务修改生产代码、配置、构建脚本或公共示例，就必须提升一次 `build.gradle` 中的 `version`。
+- 只要本次任务修改生产代码、配置、构建脚本或公共示例，就必须提升一次 `build.gradle` 中的 `version`；完全不进入 Maven 制品的独立 `ops/` 部署配置仅按[版本规范的窄边界](docs/ai-coding/VERSIONING_SPEC.md#什么时候改-version)交付，不能据此豁免普通应用配置或安全验证。
 - 同一批未提交改动只提升一次版本号；提交前继续补代码、补测试、补文档或修编译错误时，不得再次提升版本号。
 - 纯 README、AI 规范、注释或说明文档改动不强制提升制品版本；如果同一任务同时改了代码或构建配置，则仍按代码改动规则提升一次。
 - 非 `main` 分支或未提交状态默认只执行 `./gradlew publishToMavenLocal` 做消费者本地验证，不推送远程私有 Maven 制品。

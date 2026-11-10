@@ -24,6 +24,9 @@ services:
   jaeger:
     image: ${JAEGER_IMAGE:-jaegertracing/jaeger:2.23.0}
     command: ["--config=/etc/jaeger/config.yaml"]
+    environment:
+      # Go runtime 软限；Badger mmap/OS 文件页等不全由 Go 管理，不能当作容器 RSS 硬限。
+      GOMEMLIMIT: 768MiB
     ports:
       # 原生 UI 提供完整搜索；默认仅本机，远程访问须显式绑定已核私网并限制来源。
       - "${OBS_BIND_IP:-127.0.0.1}:${JAEGER_UI_PORT:-16686}:16686"
@@ -32,7 +35,8 @@ services:
       # 官方镜像以10001运行且/tmp可写；挂官方VOLUME避免新目录root属主造成Badger拒绝。
       - jaeger-data:/tmp
     # OTLP 仅在编排网络接收；Grafana 仍通过内部 query 地址查询。
-    mem_limit: 768m
+    # 持久化 Badger 持续采集曾触及 768MiB；为 Go 以外内存与短时峰值保留余量。
+    mem_limit: 1536m
     cpus: 0.5
     read_only: true
     cap_drop: [ALL]

@@ -44,6 +44,20 @@ class GrafanaReadAuthorizationTest(unittest.TestCase):
 
 
 class JaegerCompatibilityTest(unittest.TestCase):
+    def test_persistent_badger_has_headroom_beyond_the_go_soft_limit(self):
+        jaeger = yaml_json((ROOT / 'compose.yaml').read_text())['services']['jaeger']
+        self.assertEqual(jaeger['mem_limit'], '1536m',
+                         'the previous 768 MiB container limit caused persistent Badger OOM restarts')
+        self.assertEqual((jaeger.get('environment') or {}).get('GOMEMLIMIT'), '768MiB',
+                         'Go needs a soft budget below the whole-container hard limit')
+        self.assertIn('jaeger-data:/tmp', jaeger['volumes'])
+        storage = yaml_json((ROOT / 'jaeger.yaml').read_text())['extensions']['jaeger_storage']
+        badger = storage['backends']['primary']['badger']
+        self.assertFalse(badger['ephemeral'])
+        self.assertEqual(badger['directories'],
+                         {'keys': '/tmp/jaeger/keys', 'values': '/tmp/jaeger/values'})
+        self.assertEqual(badger['ttl']['spans'], '24h')
+
     def test_v3_mode_and_native_ui_preserve_internal_query_and_storage(self):
         services = yaml_json((ROOT / 'compose.yaml').read_text())['services']
         self.assertEqual(set(services), {'collector', 'jaeger', 'prometheus', 'grafana'})

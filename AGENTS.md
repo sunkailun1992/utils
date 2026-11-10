@@ -68,6 +68,7 @@
 - AI 不得为了兼容单个消费者而破坏公共包职责或恢复旧 `Json` 响应、旧 token 认证、旧数据源常量、`javax.*` 包名。
 - 只要本次任务修改了生产代码、配置、构建脚本或公共示例，就必须按 `docs/ai-coding/VERSIONING_SPEC.md` 提升一次 `build.gradle` 中的 `version`；如果同一批改动尚未提交，版本号只提升一次，后续继续补代码、补测试、补文档不得重复提升。
 - 文档、注释、README、AI 规范等纯文档改动不强制提升制品版本；如果文档改动伴随代码或构建改动，则按 `docs/ai-coding/VERSIONING_SPEC.md` 提升一次版本。
+- 独立运维边界：仅完全不进入 Maven 制品、且不改变 Java、打包资源、依赖或构建产物的 `ops/` 部署配置，可按 Git 提交与配置 SHA 独立交付，不提升 SDK 版本或重复发布同版制品。必须记录目标服务、验证、发布观察和回滚；普通 application/Nacos/Spring 打包资源不属于此边界，任何 SDK 或打包资源行为变化仍强制版本、Maven 发布及必要消费者验证，配置安全门禁不豁免。
 - 公共包版本变化并从 `main` 发布该确定提交时，必须同时执行远程私有 Maven 仓库发布，保证 Git 代码和远程 `com:utils:<version>` 制品一致。
 - 非 `main` 分支或未提交状态默认只允许 `publishToMavenLocal` 做消费者本地验证，不得把试验性 jar 推送到远程私有仓库。
 

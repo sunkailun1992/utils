@@ -10,14 +10,18 @@
 
 可以把以下4个组件单独部署到极空间。固定tag来自官方release，现场解析目标架构digest并写私有.env后再启动，不使用latest。
 
-| 组件 | 固定版本 | 初始硬上限提案 | 持久化 |
+| 组件 | 固定版本 | 模板硬上限 | 持久化 |
 |---|---|---|---|
 | OTel Collector contrib | 0.164.0 | 0.5CPU / 384MiB | 有界内存队列，无业务数据 |
 | Prometheus | 3.16.0 | 0.5CPU / 768MiB | named volume，7天/2GB先到先限 |
 | Grafana | 13.3.0 | 0.5CPU / 512MiB | named volume，禁匿名/注册 |
-| Jaeger v2 | 2.23.0 | 0.5CPU / 768MiB | Badger named volume，24小时TTL |
+| Jaeger v2 | 2.23.0 | 0.5CPU / 1536MiB | Badger named volume，24小时TTL；Go软限768MiB |
 
-合计是2CPU、2432MiB的配置上限提案，不是实测RSS、最低要求或NAS当前余量。部署前核现有进程、可用内存/swap、CPU、磁盘空间与IO、目标架构和端口冲突。若余量不足，先改变观测部署位置或参数，不挤占现有Engine/OCR/Neo4j，不拿旧快照证明当前容量。
+合计是2CPU、3200MiB的配置上限，不是实测RSS、最低要求或NAS当前余量。部署前核现有进程、可用内存/swap、CPU、磁盘空间与IO、目标架构和端口冲突。若余量不足，先改变观测部署位置或参数，不挤占现有Engine/OCR/Neo4j，不拿旧快照证明当前容量。
+
+Jaeger持久化Badger在持续采集时曾触及原768MiB容器上限并被内核OOM终止；重启后的`State.OOMKilled=false`不能代替历史内核与cgroup证据。本模板为Jaeger保留1536MiB硬限，并设置`GOMEMLIMIT=768MiB`。Go软限只约束runtime管理的内存，Badger mmap及OS代持文件页等并不全部计入，不能把它当成进程RSS硬限或“不会再OOM”的保证。[Go官方内存限制说明](https://pkg.go.dev/runtime#hdr-Environment_Variables)
+
+应用前记录权威Compose的SHA、Jaeger容器身份、重启数、`memory.events`的OOM计数及内存基线；只更新Jaeger的这两项预算，保持镜像、Badger数据卷和24小时TTL。观察至少覆盖原故障复现窗口，并包含实际采集和查询，核对新旧Trace ID可读、重启/OOM计数未增长、内存趋势有余量后再报告该窗口通过。回滚仅恢复已审核的配置差异并保留原卷；原768MiB预算已出现OOM，恢复它会重引该风险，需要同时重新评估采集负载或部署位置，不通过删除trace或缩短TTL来伪装稳定。
 
 Java若运行在Mac，NAS上的Collector不能直接读Mac日志。`collector-agent.yaml`用于应用运行主机的轻量文件采集进程；已有采集器优先复用。同宿主时可在中央Collector合入filelog接收，不重复起一套完整监控栈。本仓没有自动安装本机Docker、Collector或任何系统工具。
 

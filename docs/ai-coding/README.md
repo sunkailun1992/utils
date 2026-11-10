@@ -44,7 +44,7 @@
 - 新增或修改功能后必须按 `AI_ENGINEERING_GUARDRAILS.md` 做风险分级、Definition of Done、测试证据、安全检查、风险和回滚说明。
 - 测试按 `TESTING_SPEC.md` 分层；`assertThat` 只是断言工具，公共包以单元/组件测试为主，不把纯对象断言伪装成业务集成测试。
 - 新增或修改 README、AI 规范、配置、脚本、测试、示例和代码时，禁止写入个人电脑绝对路径、本机下载目录、本机 JDK 路径或本机仓库完整路径；需要表达目录关系时使用相对路径、环境变量或 `<PLACEHOLDER>` 占位符。
-- 只要本次任务修改生产代码、配置、构建脚本或公共示例，就必须按 `VERSIONING_SPEC.md` 提升一次 `build.gradle` 的 `version`；同一批未提交改动只提升一次版本号，后续补代码、补测试、补文档不得重复提升。
+- 只要本次任务修改生产代码、配置、构建脚本或公共示例，就必须按 `VERSIONING_SPEC.md` 提升一次 `build.gradle` 的 `version`；完全不进入 Maven 制品的独立 `ops/` 部署配置仅按该规范的窄边界交付，不豁免普通应用配置或安全验证。同一批未提交改动只提升一次版本号，后续补代码、补测试、补文档不得重复提升。
 - 纯 README、AI 规范、注释或说明文档改动不强制提升制品版本；如果同时改了代码或构建配置，则仍按 `VERSIONING_SPEC.md` 提升一次。
 - 分支命名、短分支生命周期、release/hotfix、tag 和分支清理按 `BRANCHING_SPEC.md` 处理。
 - 环境、Nacos namespace、Java profile 和前端/小程序边界按 `ENVIRONMENT_CONFIG_SPEC.md` 处理。
