@@ -5,6 +5,8 @@ import com.aliyun.oss.model.MatchMode;
 import com.aliyun.oss.model.PolicyConditions;
 import com.kellen.aliyun.oss.token.OssTokenUtils;
 import com.kellen.aliyun.oss.token.OssUploadPolicy;
+import com.qcloud.cos.auth.COSSigner;
+import cn.hutool.json.JSONUtil;
 import io.minio.PostPolicy;
 import org.dromara.x.file.storage.core.FileInfo;
 import org.dromara.x.file.storage.core.FileStorageService;
@@ -12,6 +14,7 @@ import org.dromara.x.file.storage.core.constant.Constant;
 import org.dromara.x.file.storage.core.platform.AliyunOssFileStorage;
 import org.dromara.x.file.storage.core.platform.FileStorage;
 import org.dromara.x.file.storage.core.platform.MinioFileStorage;
+import org.dromara.x.file.storage.core.platform.TencentCosFileStorage;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -21,7 +24,9 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -29,7 +34,7 @@ import java.util.Objects;
  * 私有对象存储适配器。业务服务保留所有者、展示 token、持久化和授权职责。
  *
  * <p>上传、存在性检查、GET 签名均由 X File Storage 处理。其 2.3.0 没有 POST policy API，
- * 因而仅表单签名通过同一个平台客户端适配 OSS / MinIO；不另建 SDK 客户端或维护第二套凭据。</p>
+ * 因而仅表单签名按原生协议适配 OSS / MinIO / COS；不另建 SDK 客户端或维护第二套凭据。</p>
  */
 @Service
 public class PrivateObjectStorageService {
@@ -46,7 +51,8 @@ public class PrivateObjectStorageService {
     /** 未配置私有存储时保持服务可启动，实际文件操作失败关闭。 */
     public boolean configured() {
         FileStorage storage = files.getFileStorage(platform());
-        return storage instanceof MinioFileStorage || storage instanceof AliyunOssFileStorage;
+        return storage instanceof MinioFileStorage || storage instanceof AliyunOssFileStorage
+                || storage instanceof TencentCosFileStorage;
     }
 
     /** 显式选择平台后，即使配置不完整也必须走统一入口并报错，不能静默回退旧云存储。 */
@@ -79,6 +85,26 @@ public class PrivateObjectStorageService {
                 String host = minioUploadHost(minio.getPlatform(), minio.getBucketName());
                 return result(fields.get("x-amz-credential"), fields.get("policy"), fields.get("x-amz-signature"),
                         host, expiration, key, type, mime, maxUploadBytes, fields);
+            }
+            if (storage instanceof TencentCosFileStorage cos) {
+                var config = files.getProperties().getTencentCos().stream()
+                        .filter(item -> item.getPlatform().equals(cos.getPlatform())).findFirst().orElseThrow();
+                String keyTime = Instant.now().getEpochSecond() + ";" + expiration.toInstant().getEpochSecond();
+                var conditions = List.of(Map.of("bucket", config.getBucketName()), Map.of("key", key),
+                        Map.of("Content-Type", mime), Map.of("q-sign-algorithm", "sha1"),
+                        Map.of("q-ak", config.getSecretId()), Map.of("q-sign-time", keyTime),
+                        Map.of("success_action_status", "200"), List.of("content-length-range", 1, maxUploadBytes));
+                String policy = JSONUtil.toJsonStr(Map.of("expiration", expiration.toInstant().toString(),
+                        "conditions", conditions));
+                String encoded = Base64.getEncoder().encodeToString(policy.getBytes(StandardCharsets.UTF_8));
+                String signature = new COSSigner().buildPostObjectSignature(config.getSecretKey(), keyTime, policy);
+                Map<String, String> fields = Map.of("key", key, "policy", encoded, "q-signature", signature,
+                        "q-ak", config.getSecretId(), "q-sign-algorithm", "sha1", "q-key-time", keyTime,
+                        "Content-Type", mime, "success_action_status", "200");
+                String host = endpoint("https://" + config.getBucketName() + ".cos."
+                        + config.getRegion() + ".myqcloud.com").toString();
+                return result(config.getSecretId(), encoded, signature, host, expiration,
+                        key, type, mime, maxUploadBytes, fields);
             }
             AliyunOssFileStorage oss = (AliyunOssFileStorage) storage;
             PolicyConditions conditions = new PolicyConditions();
@@ -153,7 +179,8 @@ public class PrivateObjectStorageService {
 
     private FileStorage requiredStorage(String platform) {
         FileStorage storage = files.getFileStorage(platform);
-        if (!(storage instanceof MinioFileStorage) && !(storage instanceof AliyunOssFileStorage)) {
+        if (!(storage instanceof MinioFileStorage) && !(storage instanceof AliyunOssFileStorage)
+                && !(storage instanceof TencentCosFileStorage)) {
             throw new IllegalStateException("未配置可用的私有对象存储平台");
         }
         // key 已含业务根目录，禁止平台基础路径二次拼接后使 POST 与 GET 指向不同对象。
@@ -164,8 +191,9 @@ public class PrivateObjectStorageService {
     }
 
     private static String basePath(FileStorage storage) {
-        return storage instanceof MinioFileStorage minio ? minio.getBasePath()
-                : ((AliyunOssFileStorage) storage).getBasePath();
+        if (storage instanceof MinioFileStorage minio) return minio.getBasePath();
+        if (storage instanceof AliyunOssFileStorage oss) return oss.getBasePath();
+        return ((TencentCosFileStorage) storage).getBasePath();
     }
 
     private String minioUploadHost(String platform, String bucket) {
