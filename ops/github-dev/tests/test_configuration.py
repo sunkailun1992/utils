@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from verify_configuration import (check_route, route_destination, check_catalog,
                                   check_parameter_comments, effective_configuration)
 import verify_configuration as configuration
+from prepare_databases import SCRIPTS
 from render_nacos import yaml_json, render_document
 
 
@@ -51,6 +52,56 @@ class RouteContractTests(unittest.TestCase):
 
 
 class SplitAiRouteContractTests(unittest.TestCase):
+    # 有限语法的合成夹具，不在单仓 CI 中读取相邻服务。
+    # 真实跨仓源码仍由完整 fleet 上的 verify_configuration.py 独立核对。
+    MODULES = {
+        "controlPlane.ts": """
+import { AI_SERVICE_PREFIX } from '@/constants/auth';
+import { request } from '@umijs/max';
+export async function getAiModelControlPlane() {
+  return request<unknown>(`${AI_SERVICE_PREFIX}/api/ai/model-control-plane`, { method: 'GET' });
+}
+""",
+        "storage.ts": """
+import { AI_SERVICE_PREFIX } from '@/constants/auth';
+import { request } from '@umijs/max';
+const root = `${AI_SERVICE_PREFIX}/api/ai`;
+async function storageRequest<T>(path: string, options: unknown) {
+  return request<T>(`${root}${path}`, options);
+}
+export const listStorageConfigurations = () => storageRequest<unknown>('/storage-configurations', { method: 'GET' });
+export const getStorageCapabilities = () => storageRequest<unknown>('/storage-capabilities', { method: 'GET' });
+export const getStorageSettings = () => storageRequest<unknown>('/storage-settings', { method: 'GET' });
+export const createStorageConfiguration = () => storageRequest<unknown>('/storage-configurations', { method: 'POST' });
+export const updateStorageConfiguration = (id: string) => storageRequest<unknown>(`/storage-configurations/${encodeURIComponent(id)}`, { method: 'PUT' });
+export const deleteStorageConfiguration = (id: string) => storageRequest<unknown>(`/storage-configurations/${encodeURIComponent(id)}`, { method: 'DELETE' });
+export const updateStorageSettings = () => storageRequest<unknown>('/storage-settings', { method: 'PUT' });
+export const probeStorageConfiguration = (id: string) => storageRequest<unknown>(`/storage-configurations/${encodeURIComponent(id)}/probes`, { method: 'POST' });
+export const getStorageOperation = (requestId: string) => storageRequest<unknown>(`/storage-operations/${encodeURIComponent(requestId)}`, { method: 'GET' });
+""",
+    }
+    CONTROLLERS = {
+        "ModelControlPlaneController.java": """
+@RestController @RequestMapping("/api/ai/model-control-plane")
+class ModelControlPlaneController { @GetMapping Object current() { return null; } }
+""",
+        "StorageConfigurationController.java": """
+@RestController @RequestMapping("/api/ai")
+class StorageConfigurationController {
+  @GetMapping("/storage-capabilities") Object capabilities() { return null; }
+  @GetMapping("/storage-configurations") Object list() { return null; }
+  @PostMapping("/storage-configurations") Object create() { return null; }
+  @GetMapping("/storage-configurations/{id}") Object current() { return null; }
+  @PutMapping("/storage-configurations/{id}") Object update() { return null; }
+  @DeleteMapping("/storage-configurations/{id}") Object delete() { return null; }
+  @GetMapping("/storage-settings") Object settings() { return null; }
+  @PutMapping("/storage-settings") Object updateSettings() { return null; }
+  @PostMapping("/storage-configurations/{id}/probes") Object probe() { return null; }
+  @GetMapping("/storage-operations/{requestId}") Object operation() { return null; }
+}
+""",
+    }
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory(prefix="fleet-route-contract-")
         self.addCleanup(temporary.cleanup)
@@ -69,10 +120,10 @@ class SplitAiRouteContractTests(unittest.TestCase):
             self.put(f"admin-web/src/services/{module}/index.ts", f"request('{path}');")
             self.put(f"{service}/src/main/java/Legacy.java", f'@RestController @RequestMapping("{path}") class Legacy {{ @GetMapping Object current(){{return null;}} }}')
         self.storage = self.root / "admin-web/src/services/ai/storage.ts"
-        for name in ("controlPlane.ts", "storage.ts"):
-            self.put("admin-web/src/services/ai/" + name, (configuration.ROOT / "admin-web/src/services/ai" / name).read_text())
-        for package, name in (("modelcontrolplane", "ModelControlPlaneController.java"), ("storageconfig", "StorageConfigurationController.java")):
-            self.put("ai/src/main/java/" + name, (configuration.ROOT / "ai/src/main/java/com/kellen" / package / name).read_text())
+        for name, source in self.MODULES.items():
+            self.put("admin-web/src/services/ai/" + name, source)
+        for name, source in self.CONTROLLERS.items():
+            self.put("ai/src/main/java/" + name, source)
 
     def put(self, relative, value):
         path = self.root / relative
@@ -82,7 +133,7 @@ class SplitAiRouteContractTests(unittest.TestCase):
     def check(self):
         return configuration.check_frontend_routes(self.root, self.routes)
 
-    def test_real_split_modules_add_seven_unique_paths_to_the_four_legacy_fixture_paths(self):
+    def test_synthetic_split_modules_add_seven_unique_paths_to_the_four_legacy_fixture_paths(self):
         self.assertEqual(self.check(), 11)
 
     def test_wrong_storage_root_is_not_silently_ignored(self):
@@ -119,7 +170,7 @@ class SplitAiRouteContractTests(unittest.TestCase):
             self.storage.write_text(changed)
             with self.assertRaises(AssertionError): self.check()
 
-    def test_new_path_is_extracted_and_checked_against_actual_controller_annotations(self):
+    def test_new_path_is_extracted_and_checked_against_fixture_controller_annotations(self):
         self.storage.write_text(self.storage.read_text() + "\nexport const added = () => storageRequest<unknown>('/storage-new', {});\n")
         with self.assertRaises(AssertionError): self.check()
         controller = self.root / "ai/src/main/java/StorageConfigurationController.java"
@@ -134,10 +185,27 @@ class SplitAiRouteContractTests(unittest.TestCase):
 
 
 class NacosOrganizationTests(unittest.TestCase):
-    def test_new_database_structure_contains_storage_control_plane_without_data_mutations(self):
-        documents, manifest = configuration.prepare(configuration.ROOT)
-        self.assertTrue({"ai_storage_configuration", "ai_storage_setting", "ai_storage_operation"} <= set(manifest["ai"]["tables"]))
-        self.assertNotIn("INSERT INTO ai_storage_setting", documents["github_dev_ai"])
+    def test_minimal_schema_fixture_preserves_storage_tables_and_rejects_data_mutations(self):
+        # 只证明 prepare 的组合与只读结构门禁；不冒充检查相邻 AI 的真实 DDL。
+        with tempfile.TemporaryDirectory(prefix="fleet-schema-contract-") as temporary:
+            root = Path(temporary)
+            common = root / "utils/src/main/resources/db/postgresql/common-infra-schema.sql"
+            common.parent.mkdir(parents=True)
+            common.write_text("CREATE TABLE IF NOT EXISTS fixture_infra (id bigint);\n")
+            storage_tables = {"ai_storage_configuration", "ai_storage_setting", "ai_storage_operation"}
+            for service, names in SCRIPTS.items():
+                for name in names:
+                    source = root / service / "src/main/resources/db/postgresql" / name
+                    source.parent.mkdir(parents=True, exist_ok=True)
+                    tables = storage_tables if service == "ai" else {"fixture_" + service.replace("-", "_")}
+                    source.write_text("".join(f"CREATE TABLE IF NOT EXISTS {table} (id bigint);\n" for table in sorted(tables)))
+            documents, manifest = configuration.prepare(root)
+            self.assertEqual(set(manifest["ai"]["tables"]), storage_tables | {"fixture_infra"})
+            self.assertNotIn("INSERT INTO ai_storage_setting", documents["github_dev_ai"])
+            ai = root / "ai/src/main/resources/db/postgresql/ai-schema.sql"
+            ai.write_text(ai.read_text() + "INSERT INTO ai_storage_setting VALUES (1);\n")
+            with self.assertRaisesRegex(ValueError, "mutate records"):
+                configuration.prepare(root)
 
     def test_current_catalog_keeps_shared_model_configuration_for_explicit_rollback_only(self):
         directory = Path(__file__).resolve().parents[1] / "nacos"
