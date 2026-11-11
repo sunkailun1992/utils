@@ -1,0 +1,44 @@
+{
+  "checkedDate": "2026-11-10",
+  "sourceCommit": "e6f080fb5633aa71ea81b652bd72069aff1f0228",
+  "release": "https://github.com/BerriAI/litellm/releases/tag/v1.108.4",
+  "recommended": {
+    "image": "ghcr.io/berriai/litellm-non_root:v1.108.4",
+    "indexDigest": "sha256:f14a4cd90546d56a673a3a4240199da54f1912138444c3b7ab9705e01df17cdf",
+    "amd64ManifestDigest": "sha256:37d91f124eeb23b80a19634a5951091639df236b31cfd6ab238f9f9012097d94",
+    "configDigest": "sha256:0ef2826b1caef78f062282b8210ac21603aaba2d5e80b91f45323fe22a83be9a",
+    "user": "65534",
+    "source": "https://github.com/BerriAI/litellm",
+    "revision": "e6f080fb5633aa71ea81b652bd72069aff1f0228",
+    "signaturePayloadVerified": [
+      true
+    ],
+    "compressedBytes": 643870716,
+    "scope": "Fixed official public key ECDSA-SHA256 verified; Rekor/inclusion not verified; no image layers downloaded/run"
+  },
+  "mainImage": {
+    "image": "ghcr.io/berriai/litellm:v1.108.4",
+    "indexDigest": "sha256:17921779153960f086e2660994cc398fc76ed65c531765177803b9ae0a25d97a",
+    "amd64ManifestDigest": "sha256:6786696c8ce30bc1628dd82443f5cbc63f6bf926e9e273ea773aca0f201e9247",
+    "configDigest": "sha256:f41fe317e597bd534dab548fb3031cd850a4f9ea81abfde74610fe2cca51ade9",
+    "user": "root",
+    "signaturePayloadVerified": true
+  },
+  "key": {
+    "url": "https://raw.githubusercontent.com/BerriAI/litellm/e82a3c646908ba0a6ee0beddc4310d7a6cac4065/cosign.pub",
+    "sha256": "e3fe3e08c44b16407fe0b37c43b4f8b603b3a0f4ee74c29e647bc022d762c2c0"
+  },
+  "mainAttestation": {
+    "predicateType": "https://spdx.dev/Document",
+    "subjectDigest": "17921779153960f086e2660994cc398fc76ed65c531765177803b9ae0a25d97a",
+    "dsseSignatureVerified": true
+  },
+  "verificationScope": [
+    "Registry index/amd64 manifest/config content hashes verified",
+    "Official pinned key ECDSA-SHA256 payload signatures verified using existing OpenSSL",
+    "Main image DSSE SPDX SBOM signature verified",
+    "No image layers downloaded or image executed",
+    "No SLSA provenance, Rekor/SCT/inclusion proof or malware/vulnerability scan verified",
+    "No runtime, database migration, provider key or paid model request performed"
+  ]
+}

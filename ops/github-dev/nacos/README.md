@@ -1,6 +1,6 @@
 # 个人 Nacos 配置目录
 
-本目录维护 `github-dev / DEFAULT_GROUP` 的 25 个活跃模板，默认渲染仅遍历 `DEFAULT_GROUP/`。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。`rollback-examples/` 仅保存显式回滚示例，不进入活跃 catalog、默认渲染或自动删除清单。Yudao 与美联实际配置不在本目录维护范围。
+本目录维护 `github-dev / DEFAULT_GROUP` 的 24 个活跃模板，默认渲染仅遍历 `DEFAULT_GROUP/`。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。`rollback-examples/` 仅保存显式回滚示例，不进入活跃 catalog、默认渲染或自动删除清单。Yudao 与美联实际配置不在本目录维护范围。
 
 每个文件包含职责、导入服务与叶子参数注释；`GITHUB_*` 由私有环境渲染，Spring `${custom.*}` 等引用留给应用解析。[目录清单](catalog.json) 同时记录 dataId 说明、分类和消费者，供 Nacos 配置描述同步与一致性校验。Dubbo 自动生成的 metadata/mapping 不属于人工配置模板，不因数量多而删除。
 
@@ -21,7 +21,6 @@
 | [rabbitmq.yaml](DEFAULT_GROUP/rabbitmq.yaml) | RabbitMQ 连接、独立 vhost 与消费监听器开关 | ai、ai-memory、mcp、message、rag、report、user |
 | [redis.yaml](DEFAULT_GROUP/redis.yaml) | 公共 Redis 缓存和 Spring Data Redis 共用连接 | ai、ai-memory、gateway、mcp、message、rag、report、user |
 | [seata.yaml](DEFAULT_GROUP/seata.yaml) | Seata 分布式事务启用状态 | ai、ai-memory、mcp、message、rag、report、user |
-| [storage.yaml](DEFAULT_GROUP/storage.yaml) | X File Storage 统一入口与私有 MinIO 平台 | ai |
 
 ## 安全与可观测性
 
@@ -50,13 +49,21 @@
 
 本次不删除 NAS/Nacos 的历史 `ai-model-secrets.yaml`，也不将它登记到 `retired-dataids.json`。它只供旧制品在负责人明确回滚时使用：先核对目标环境私有备份、旧参数与 import，再恢复旧制品及其原 import。源码无当前消费者不等于运行中的旧实例已切换；main 发布、实际部署、Nacos 发布和密钥迁移必须分别验证，模板整理不搬移真实密钥。
 
+## 历史存储回滚示例
+
+[storage.yaml](rollback-examples/storage.yaml) 保留旧 MinIO 占位模板，只供旧 AI 制品的显式回滚，不进入活跃渲染、catalog 或自动删除清单。AI 1.6.7 的三 profile 移除该 import；运行中的旧版本必须完成连接及策略到 AI 控制台数据库的受控迁移后再替换。ai-spring.yaml 不再维护 ai.oss；业务策略和存储连接归 AI DB，AES-GCM 根密钥与允许 origin 仅放该服务 OS 环境。真实 Nacos 快照另存 Git 外，模板变化不等于远端已删除。
+
+发布顺序是运行约束：先备份旧私密连接及 `ai.oss` 策略。执行删除 `ai.oss` 的前置条件是连接和策略已按原值迁入 AI DB、所有旧 AI 实例已换成 DB 控制台版本，并完成实际新上传及读取验收；存在旧文件时还需按原平台读回，无历史文件时明确记录未覆盖范围与兼容 fixture，不能冒充真实旧文件回归。满足这些条件后，才允许对 `ai-spring.yaml` 删除 `ai.oss` 的私密候选执行单独备份、CAS 发布与读回。不能因 main 已提交新模板而先批量发布到仍运行旧制品的环境；旧 `storage.yaml` 与私密快照继续保留，不自动删除。
+
+路由校验会分别读取旧 service `index.ts` 和新 AI `controlPlane.ts`、`storage.ts`，只解析已支持的前缀、固定 root、相对路径与编码参数，并核对当前控制器注解。无法解析的新表达式直接失败，不忽略后继续报告部分覆盖。输出的路径数量是源码静态校验范围，不代表网关/Nacos 已发布、目标制品已部署或真实接口调用成功。
+
 ## 服务配置
 
 | dataId | 用途 | 当前 dev 导入服务 |
 |---|---|---|
 | [ai-agent-spring.yaml](DEFAULT_GROUP/ai-agent-spring.yaml) | Agent 模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择 | ai-agent |
 | [ai-memory-spring.yaml](DEFAULT_GROUP/ai-memory-spring.yaml) | ai-memory 的主/灰度数据源；均引用个人 schema | ai-memory |
-| [ai-spring.yaml](DEFAULT_GROUP/ai-spring.yaml) | AI 主/灰度数据源、演示种子、文件策略、Agent 发现和客户端签名 | ai |
+| [ai-spring.yaml](DEFAULT_GROUP/ai-spring.yaml) | AI 主/灰度数据源、演示种子、Agent 发现和客户端签名 | ai |
 | [gateway-spring.yaml](DEFAULT_GROUP/gateway-spring.yaml) | 网关路由、Redis 限流和浏览器 CORS 白名单 | gateway |
 | [mcp-spring.yaml](DEFAULT_GROUP/mcp-spring.yaml) | MCP 主/灰度数据源、Agent 注册和 OAuth 资源服务器 | mcp |
 | [message-spring.yaml](DEFAULT_GROUP/message-spring.yaml) | message 的主/灰度数据源；均引用个人 schema | message |
@@ -66,7 +73,7 @@
 
 ## 合并与旧项清理
 
-以下为此前服务配置合并与退役项的历史操作说明；不适用于上方明确保留的共享模型回滚项。当前默认发布集合以 25 项活跃 catalog 为准。
+以下为此前服务配置合并与退役项的历史操作说明；不适用于上方明确保留的共享模型回滚项。当前默认发布集合以 24 项活跃 catalog 为准。
 
 本轮按实际消费者和键空间核对后，将 `ai.yaml`、`ai-agent.yaml`、`mcp.yaml`、`rag.yaml`、`user.yaml` 合并到对应 `{service}-spring.yaml`；合并前两项在所有 profile 中相邻，均为 `optional`、`refreshEnabled=true`，且没有重复叶子键。移除空映射 `ai-memory.yaml`、`message.yaml`、`report.yaml`。清理清单及替代关系见 [retired-dataids.json](retired-dataids.json)。这次结构调整已单独授权，不能据此把今后的纯注释任务扩大为自动合并。
 

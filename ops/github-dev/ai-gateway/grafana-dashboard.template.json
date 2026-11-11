@@ -1,0 +1,354 @@
+{
+  "uid": "github-dev-litellm",
+  "title": "LiteLLM · 运行观测",
+  "description": "候选模板：待actual指标和datasource UID确认；不代表已部署或费用正确。",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "tags": [
+    "github-dev",
+    "litellm",
+    "candidate"
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "抓取状态",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "__ACTUAL_PROMETHEUS_DATASOURCE_UID__"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 5
+      },
+      "description": "up=1仅证明本次抓取成功，不证明模型、预算或业务健康；无target显示暂无数据。",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "抓取失败",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "抓取成功",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "up{job=\"fleet-litellm\"}",
+          "legendFormat": "up",
+          "range": false,
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 2,
+      "title": "请求、失败速率与失败占比",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "__ACTUAL_PROMETHEUS_DATASOURCE_UID__"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 20,
+        "h": 5
+      },
+      "description": "比率仅在总请求速率>0且失败序列存在时绘制；缺失序列不补0。取消需与实际协议终态独立关联。",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "失败占比"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 1
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(litellm_proxy_total_requests_metric_total{job=\"fleet-litellm\"}[$__rate_interval]))",
+          "legendFormat": "请求 / 秒",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(litellm_proxy_failed_requests_metric_total{job=\"fleet-litellm\"}[$__rate_interval]))",
+          "legendFormat": "失败 / 秒",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "expr": "(sum(rate(litellm_proxy_failed_requests_metric_total{job=\"fleet-litellm\"}[$__rate_interval])) / sum(rate(litellm_proxy_total_requests_metric_total{job=\"fleet-litellm\"}[$__rate_interval]))) and on() (sum(rate(litellm_proxy_total_requests_metric_total{job=\"fleet-litellm\"}[$__rate_interval])) > 0)",
+          "legendFormat": "失败占比",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "P95 端到端延迟",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "__ACTUAL_PROMETHEUS_DATASOURCE_UID__"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "description": "源码定义为秒；bucket须actual确认。低流量/无样本不代表低延迟。",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(litellm_request_total_latency_metric_bucket{job=\"fleet-litellm\"}[$__rate_interval])))",
+          "legendFormat": "P95",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "输入与输出 Token 速率",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "__ACTUAL_PROMETHEUS_DATASOURCE_UID__"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "description": "缺usage或缺回调保留无数据，不能补0；该面板不是账单或预算证明。",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: Token/s",
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(litellm_input_tokens_metric_total{job=\"fleet-litellm\"}[$__rate_interval]))",
+          "legendFormat": "输入 Token / 秒",
+          "range": true,
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(litellm_output_tokens_metric_total{job=\"fleet-litellm\"}[$__rate_interval]))",
+          "legendFormat": "输出 Token / 秒",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Callback 失败增量",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "__ACTUAL_PROMETHEUS_DATASOURCE_UID__"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 24,
+        "h": 6
+      },
+      "description": "缺序列表示暂无数据；观测回调失败不等同模型失败，也不由无数据推断0次失败。",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "暂无数据",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(litellm_callback_logging_failures_metric_total{job=\"fleet-litellm\"}[$__rate_interval]))",
+          "legendFormat": "窗口内失败增量",
+          "range": true,
+          "instant": false
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  }
+}

@@ -48,7 +48,7 @@
     },
     {
       "dataId": "ai-spring.yaml",
-      "description": "AI 主/灰度数据源、演示种子、文件策略、Agent 发现和客户端签名；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "AI 主/灰度数据源、演示种子、Agent 发现和客户端签名；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "ai"
@@ -249,14 +249,6 @@
         "rag",
         "report",
         "user"
-      ]
-    },
-    {
-      "dataId": "storage.yaml",
-      "description": "X File Storage 统一入口与私有 MinIO 平台；个人 github-dev 配置，凭据由私有环境注入。",
-      "category": "共享基础设施",
-      "consumers": [
-        "ai"
       ]
     },
     {

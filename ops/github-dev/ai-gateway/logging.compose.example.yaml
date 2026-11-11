@@ -1,0 +1,31 @@
+# Standard overlay; merge into the reviewed existing canonical, never run alone.
+# FIRST merge collector.fragment.json into the full existing Collector config and
+# pass the fixed native Collector validate command. Preserve old pipelines/auth.
+# Persist the exact Collector body/hash in the existing shared init source too;
+# this overlay does not replace that persistence and must not replay shared init.
+# Fluent Forward is not TLS/authenticated here: trusted NAS/container boundary.
+# Non-blocking buffers and local cache do not provide a zero-loss guarantee.
+services:
+  collector:
+    # Append only this TCP loopback binding; preserve every existing port.
+    ports:
+      - target: 24224
+        published: "14324"
+        host_ip: 127.0.0.1
+        protocol: tcp
+        mode: ingress
+  orb-litellm:
+    logging:
+      driver: fluentd
+      options:
+        cache-disabled: "false"
+        cache-max-file: "2"
+        cache-max-size: 1m
+        fluentd-address: 127.0.0.1:14324
+        fluentd-async: "true"
+        fluentd-buffer-limit: "1024"
+        fluentd-retry-wait: 1s
+        fluentd-sub-second-precision: "true"
+        max-buffer-size: 1m
+        mode: non-blocking
+        tag: fleet.litellm.safe

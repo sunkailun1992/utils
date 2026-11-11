@@ -1,0 +1,27 @@
+# Create a private 0600 env outside Git; never copy production values into this example.
+# All REPLACE_* values are deliberately invalid placeholders. Do not print env/inspect.
+LITELLM_MODE=PRODUCTION
+LITELLM_LOG=CRITICAL
+# Independent safe callback still emits INFO/ERROR; native raw provider errors are suppressed.
+# Fixed-version env veto: do not enable optional product telemetry through UI.
+LITELLM_TELEMETRY_DISABLED=true
+# Use the model pricing catalog bundled with the pinned release.
+LITELLM_LOCAL_MODEL_COST_MAP=true
+CHECKPOINT_DISABLE=1
+LITELLM_MASTER_KEY=REPLACE_WITH_DISTINCT_RANDOM_MASTER_BEGINNING_SK_DASH
+LITELLM_SALT_KEY=REPLACE_WITH_PERMANENT_DISTINCT_RANDOM_ENCRYPTION_SECRET
+DATABASE_URL=REPLACE_WITH_DEDICATED_DB_OWNER_URL_NOT_CLUSTER_ADMIN
+UI_USERNAME=REPLACE_WITH_BOOTSTRAP_USERNAME
+UI_PASSWORD=REPLACE_WITH_DISTINCT_BOOTSTRAP_PASSWORD
+# Remove UI credentials and disable_env_credential_login after own admin login works.
+# No OPENAI_API_KEY/GOOGLE_API_KEY/provider credential: enter later through reviewed UI.
+
+# Tracing is OFF until the isolation/privacy fixture has passed.
+LITELLM_OTEL_V2=false
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=NO_CONTENT
+LITELLM_OTEL_INTEGRATION_ENABLE_METRICS=false
+LITELLM_OTEL_INTEGRATION_ENABLE_EVENTS=false
+OTEL_SERVICE_NAME=orb-litellm
+OTEL_ENVIRONMENT_NAME=github-dev
+# After approval ONLY: OTEL_EXPORTER=otlp_http and OTEL_ENDPOINT=<reviewed collector>.
+# No console exporter, external callback credentials, Langfuse/LangSmith or prompt capture.

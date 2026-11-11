@@ -1,0 +1,35 @@
+{
+  "job_name": "fleet-litellm",
+  "metrics_path": "/metrics/",
+  "scrape_interval": "15s",
+  "scrape_timeout": "3s",
+  "sample_limit": 10000,
+  "label_limit": 16,
+  "label_name_length_limit": 128,
+  "label_value_length_limit": 256,
+  "follow_redirects": false,
+  "authorization": {
+    "type": "Bearer",
+    "credentials_file": "/REVIEWED_EXISTING_PRIVATE_MOUNT/litellm_metrics_token"
+  },
+  "static_configs": [
+    {
+      "targets": [
+        "REVIEWED_LITELLM_SERVICE:4000"
+      ],
+      "labels": {
+        "application": "orb-litellm",
+        "environment": "github-dev"
+      }
+    }
+  ],
+  "metric_relabel_configs": [
+    {
+      "source_labels": [
+        "__name__"
+      ],
+      "regex": "(litellm_callback_logging_failures_metric_total|litellm_input_tokens_metric_total|litellm_output_tokens_metric_total|litellm_proxy_failed_requests_metric_total|litellm_proxy_total_requests_metric_total|litellm_request_total_latency_metric_bucket|litellm_request_total_latency_metric_sum|litellm_request_total_latency_metric_count|process_cpu_seconds_total|process_max_fds|process_open_fds|process_resident_memory_bytes|process_start_time_seconds|process_virtual_memory_bytes)",
+      "action": "keep"
+    }
+  ]
+}

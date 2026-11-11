@@ -1,0 +1,74 @@
+# Public bootstrap example: no provider credential, model or business prompt is stored here.
+# v1.108.4 config contract; runtime/migration/privacy fixtures remain required.
+model_list: []
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  store_model_in_db: true
+  supported_db_objects: [models, model_cost_map]
+  encryption_algorithm: aes-256-gcm
+  database_connection_pool_limit: 5
+  background_health_checks: false
+  disable_model_info_refresh: true
+  # Native blocklist rejects selected client endpoints/config; this is not a blanket BYOK ban.
+  # Deployments must not opt in via configurable_clientside_auth_params either.
+  allow_client_side_credentials: false
+  trusted_proxy_ranges: []
+  store_prompts_in_spend_logs: false
+  disable_requester_ip_address_logging: true
+  disable_error_logs: true
+  maximum_spend_logs_retention_period: 7d
+  # Bootstrap only. Enable AFTER a per-user proxy_admin password login is verified.
+  disable_env_credential_login: false
+
+router_settings:
+  num_retries: 0
+  max_fallbacks: 0
+  fallbacks: []
+  default_fallbacks: []
+  context_window_fallbacks: []
+  content_policy_fallbacks: []
+  enable_weighted_failover: false
+  fallback_on_unsupported_params: false
+  cache_responses: false
+  default_litellm_params:
+    max_retries: 0
+
+litellm_settings:
+  num_retries: 0
+  set_verbose: false
+  json_logs: true
+  turn_off_message_logging: true
+  redact_user_api_key_info: true
+  callbacks: [prometheus, fleet_safe_logger.safe_logger]
+  # Fixed-version error-text controls are supplementary; full output auditing is required.
+  redact_messages_in_exceptions: true
+  expose_router_debug_in_errors: false
+  prometheus_metrics_config:
+    - group: request_counts
+      metrics: [litellm_proxy_total_requests_metric]
+      include_labels: [requested_model, api_provider, route, status_code]
+    - group: failures
+      metrics: [litellm_proxy_failed_requests_metric]
+      include_labels: [requested_model, api_provider, route, exception_class]
+    - group: latency
+      metrics: [litellm_request_total_latency_metric]
+      include_labels: [requested_model, api_provider]
+    - group: usage
+      metrics: [litellm_input_tokens_metric, litellm_output_tokens_metric]
+      include_labels: [model, api_provider]
+    - group: callback_health
+      metrics: [litellm_callback_logging_failures_metric]
+      include_labels: [callback_name]
+
+# Kept inert while callbacks excludes otel and LITELLM_OTEL_V2=false.
+# Only enable after the actual stdout/DB/OTLP success+failure no-content fixture.
+callback_settings:
+  otel:
+    message_logging: false
+    capture_message_content: NO_CONTENT
+    enable_events: false
+    baggage_promoted_keys: []
+    baggage_metadata_keys: []
+    baggage_team_metadata_keys: []

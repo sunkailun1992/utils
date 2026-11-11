@@ -1,6 +1,6 @@
 # 配置分类：服务配置
 # dataId：ai-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：AI 主/灰度数据源、演示种子、文件策略、Agent 发现和客户端签名。
+# 用途：AI 主/灰度数据源、演示种子、Agent 发现和客户端签名。
 # 导入服务：ai。
 # 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
@@ -28,15 +28,6 @@ ai:
   bootstrap:
     # 关闭启动演示种子，避免自动创建历史业务数据。
     seed-demo-content: false
-  oss:
-    # 新上传对象的业务前缀；历史对象按已登记平台和路径读取。
-    base-dir: github/ai
-    # 上传授权有效期，单位秒；300 秒为 5 分钟。
-    upload-expire-seconds: 300
-    # 文件查看签名有效期，单位秒；300 秒为 5 分钟。
-    view-expire-seconds: 300
-    # 单次上传大小上限，单位字节；20971520 字节为 20 MiB。
-    max-upload-bytes: 20971520
   agent-registry:
     # 启用当前个人空间内的Agent发现；找不到Agent时业务保持既有失败/回退策略。
     enabled: true

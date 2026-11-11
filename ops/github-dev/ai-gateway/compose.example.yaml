@@ -1,0 +1,49 @@
+# Public standalone bootstrap example; merge only a reviewed delta into the existing canonical.
+# This overlay adds one service; it must never rebuild the existing PostgreSQL service.
+services:
+  orb-litellm:
+    image: ghcr.io/berriai/litellm-non_root@sha256:f14a4cd90546d56a673a3a4240199da54f1912138444c3b7ab9705e01df17cdf
+    platform: linux/amd64
+    restart: unless-stopped
+    user: "65534"
+    command: ["--config", "/etc/litellm.yaml", "--port", "4000", "--num_workers", "1"]
+    env_file:
+      - ${LITELLM_PRIVATE_ENV_FILE:?private env file required after review}
+    # /etc parents must remain root-owned/non-writable by UID 65534.
+    # A read-only file under /app can still be replaced if its parent is writable.
+    configs:
+      - source: fleet-litellm-config
+        target: /etc/litellm.yaml
+        mode: 0444
+      - source: fleet-litellm-safe-logger
+        target: /etc/fleet_safe_logger.py
+        mode: 0444
+    ports:
+      - "127.0.0.1:${LITELLM_REVIEWED_HOST_PORT:?reserve an unused loopback port}:4000"
+    networks: [fleet-existing]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    # /health/liveliness is a process probe. No model/provider health check here.
+    # DB, model catalog, permission and privacy readiness require separate acceptance.
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:4000/health/liveliness', timeout=3).read(256)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+
+networks:
+  fleet-existing:
+    external: true
+    name: ${FLEET_EXISTING_NETWORK:?existing reviewed Docker network required}
+
+configs:
+  fleet-litellm-config:
+    file: ${LITELLM_REVIEWED_CONFIG_FILE:?reviewed configuration required}
+  fleet-litellm-safe-logger:
+    file: ./fleet_safe_logger.py
