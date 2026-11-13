@@ -14,9 +14,11 @@ application.yml 仅保留端口、服务名、默认 APP_ENV=dev 与 GITHUB_NACO
 
 config 与 discovery 共用 custom.nacos-ip/custom.namespace。Dubbo、Nacos AI Registry 和 Prompt SDK 也必须显式引用它们；独立 SDK 的 username/password 不能假设继承 Spring Cloud 配置。Gateway 不承担业务认证。
 
-个人环境的可提交模板、私有渲染、CAS 发布、数据库与统一 X File Storage 入口统一见同级 utils/ops/github-dev/README.md。私有配置保存在 ~/.config/kellen-github/，本机 dev 引导文件为各服务根目录的 config/application-dev.properties，已加入 .gitignore，权限必须为 0600；两者都不进 Git。前端不连接 Nacos，后端 base URL 沿用 http://localhost:7100。
+个人环境的可提交模板、私有渲染、CAS 发布、数据库与统一 X File Storage 入口见 [GitHub 独立开发环境](../../ops/github-dev/README.md)。本机 dev 引导首选各服务仓库根目录的私有 `config/application-dev.yml`（也可用 `.yaml`）。写入前先在服务仓库设置 Git 忽略规则，确认路径已忽略且未跟踪，再保存为当前用户持有的 `0600` 普通文件。`~/.config/kellen-github/` 下的私有输入同样不进 Git。前端通过 `http://localhost:7100` 访问后端。
 
-本机直接启动时，Spring Boot 自动读取 config/application-dev.properties 中的 GITHUB_NACOS_DEV_SERVER_ADDR、GITHUB_NACOS_DEV_NAMESPACE、GITHUB_NACOS_GROUP、GITHUB_NACOS_USERNAME、GITHUB_NACOS_PASSWORD。IDE working directory 必须为当前服务仓库根；bootRun 默认使用该目录，java -jar 也从该目录执行。无需修改 application.yml 或预先 export；OS 环境变量仍可覆盖私有文件。显式启用 test/prod 时不读取 dev 文件，但仍沿用个人 dev 的 Nacos 连接变量与默认值。地址未覆盖时使用 profile 中既有开发服务默认地址，不回落到 localhost。
+本机直接启动时，Spring Boot 从私有引导文件读取 `GITHUB_NACOS_DEV_SERVER_ADDR`、`GITHUB_NACOS_DEV_NAMESPACE`、`GITHUB_NACOS_GROUP`、`GITHUB_NACOS_USERNAME`、`GITHUB_NACOS_PASSWORD`。IDEA、`bootRun` 或本机直接执行 `java -jar` 时，工作目录使用对应服务仓库根。旧 `config/application-dev.properties` 仍可用。同目录两种格式并存时，同名属性以 properties 为准。迁移后将旧文件备份到 Spring 配置搜索路径之外。直接启动时 OS 环境变量可覆盖私有文件。使用个人工作区观测入口且仅保留 YAML 时，Nacos 地址、group、账号和密码从 YAML 读取，启动器继续固定 `dev` 和 `github-dev`。服务器托管 Jar 继续读取目标服务器的私有 env。
+
+显式启用 `test` 或 `prod` 时，Spring 不读取 `dev` 引导文件，连接仍沿用各 profile 中的个人 Nacos 变量与默认值。地址未覆盖时遵循对应 profile 既有约定。
 
 当前个人 Nacos 的控制台使用 18080，Spring Cloud/SDK server-addr 使用 8848，客户端 gRPC 使用 9848；控制台 URL 不能直接作为 server-addr。命名空间 ID 为 github-dev，与显示名一致。真实地址及账号密码只填入上述本机私有文件。
 

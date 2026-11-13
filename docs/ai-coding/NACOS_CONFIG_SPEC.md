@@ -8,7 +8,7 @@
 
 `dev`、`test`、`prod` 三个 profile 当前均连接个人 `github-dev / DEFAULT_GROUP`，统一使用 `GITHUB_NACOS_DEV_*` 引导变量，Git 分支不切换环境，也不回落美联 dev。具体地址、控制台和 SDK 端口的区别见 [个人环境说明](../../ops/github-dev/README.md)。Yudao 与美联实际配置不在个人目录维护范围。
 
-当前 24 个活跃 dataId 的职责和消费者清单见 [配置分类索引](../../ops/github-dev/nacos/README.md)。它来自九个服务的实际 `application-dev.yml` import，不能继续沿用早期五服务清单或公司 `aliyun.yaml` 配置清单。远端生效值仍以目标 Nacos 的当前读回为准，仓库只保存默认值和占位符。
+当前 25 个活跃 dataId 的职责和消费者清单见 [配置分类索引](../../ops/github-dev/nacos/README.md)。它来自九个服务的实际 `application-dev.yml` import，不能继续沿用早期五服务清单或公司 `aliyun.yaml` 配置清单。远端生效值仍以目标 Nacos 的当前读回为准，仓库只保存默认值和占位符。
 
 ## 1. 引导与导入机制
 
@@ -22,19 +22,20 @@
 
 | 分类 | dataId / 入口 | 维护边界 |
 |---|---|---|
-| 本地引导 | `application*.yml`，私有 `config/application-dev.properties` | 连接 Nacos 前需要的服务与环境入口；私有文件不进 Git |
+| 本地引导 | `application*.yml`，私有 `config/application-dev.yml` | 连接 Nacos 前需要的服务与环境入口。私有文件已忽略且未跟踪，兼容旧 `.properties` |
 | 共享变量 | `reuse-configuration.yaml` | 跨文件引用的中间件地址、Dubbo 分组等 `custom.*` 变量 |
 | 共享基础设施 | `redis.yaml`、`rabbitmq.yaml`、`elasticsearch.yaml`、`qdrant.yaml`、`dubbo.yaml`、`mybatis-plus.yaml`、`seata.yaml` | 中间件连接、隔离边界及模块开关 |
-| 安全与可观测性 | `security-auth.yaml`、`security-jwt.yaml`、`actuator.yaml`、`logging.yml`、`traffic-governance.yaml`、`swagger.yaml`、`zipkin.yaml`、`admin.yaml` | 认证/租户、人员 JWT、管理端点、日志、流量治理及监控 |
+| 安全与可观测性 | `security-auth.yaml`、`security-jwt.yaml`、`actuator.yaml`、`logging.yml`、`traffic-governance.yaml`、`local-canary.yaml`、`swagger.yaml` | 认证/租户、人员 JWT、管理端点、日志、流量治理和本地灰度授权 |
 | 共享 AI 协议 | `a2a.yaml` | A2A 租户、协议入口、提供方和注册契约 |
 | 服务配置 | `{service}-spring.yaml` | 同一服务的数据源、模型选择、路由及服务专属参数；Google 凭据、模型与可选原生代理入口由 `ai-agent-spring.yaml` 显式维护 |
 
-分类是维护索引，不是新的目录或 group。当前保留 24 个活跃 dataId 和 `DEFAULT_GROUP`；经单独授权并验证后，5 个服务专属文件合并到相邻的 `{service}-spring.yaml`，3 个空服务文件移除。历史共享模型及存储模板另存于 `ops/github-dev/nacos/rollback-examples/`，不在默认渲染和发布集合中。不得在纯注释任务中擅自再次调整结构。
+分类是维护索引，不是新的目录或 group。当前保留 25 个活跃 dataId 和 `DEFAULT_GROUP`；经单独授权并验证后，5 个服务专属文件合并到相邻的 `{service}-spring.yaml`，3 个空服务文件移除。历史共享模型及存储模板另存于 `ops/github-dev/nacos/rollback-examples/`，不在默认渲染和发布集合中。不得在纯注释任务中擅自再次调整结构。
 
 ## 3. 配置归属与隔离
 
 - 相同配置职责和完整键的归属必须明确，不能靠未说明的重复键覆盖完成迁移；绑定类、消费者、引用关系与必要覆盖顺序一并记录。
 - `reuse-configuration.yaml` 只承载共享变量；Nacos 登录配置来自本地引导，数据库与模型凭据通过私有环境渲染到对应 dataId，不能为省事集中到公开文档。
+- 本机私有 `config/application-dev.yml` 首选用于 Nacos 引导。Spring 同目录读到旧 `.properties` 时，对同名属性优先使用 properties。备份旧文件时移出配置搜索路径。服务器托管 Jar 继续使用服务器私有 env。
 - `storage.yaml` 仅保留在 rollback-examples，AI 新版不再导入；连接和策略在 AI 控制台数据库管理，根密钥仅由服务 OS 环境提供。个人服务不导入公司的 OSS/SMS/钉钉/医疗业务配置。`security-jwt.yaml` 与 `security-auth.yaml` 分别维护签名参数和认证/租户规则，不能因为一个服务不导入后者而宣称它不使用 JWT。
 - 命名空间隔离之外，继续保持现有数据库、Redis 库号、RabbitMQ vhost、Dubbo group、Qdrant collection、ES 索引和对象存储前缀边界。注释不得暗改这些实际值。
 - `ai-memory.yaml`、`message.yaml`、`report.yaml` 的空映射已从当前模板与 imports 移除；`ai.yaml`、`ai-agent.yaml`、`mcp.yaml`、`rag.yaml`、`user.yaml` 的参数统一由对应 `{service}-spring.yaml` 提供。旧远端项须在消费者切换验证后清理，不能先删导致旧服务刷新缺配置。
@@ -46,7 +47,7 @@
 
 各服务当前 import 清单及顺序以其三个 profile 文件为准。分类索引只说明谁导入，不要求按表格顺序重排。重复键覆盖、optional 与动态刷新语义均须单独评估，不能只用 YAML 可解析证明重排安全。
 
-在同级 `utils` 中运行 `python3 ops/github-dev/scripts/verify_configuration.py`，检查九个服务的 27 个 profile、24 个活跃 dataId、环境隔离和网关路径契约；活跃模板、catalog 和实际消费者必须严格相等，历史共享模型及存储项既不能重新激活，也不能进入自动删除清单。新增或删除 import 时同步更新分类索引和受影响消费者。
+在同级 `utils` 中运行 `python3 ops/github-dev/scripts/verify_configuration.py`，检查九个服务的 27 个 profile、25 个活跃 dataId、环境隔离和网关路径契约；活跃模板、catalog 和实际消费者必须严格相等，历史共享模型及存储项既不能重新激活，也不能进入自动删除清单。新增或删除 import 时同步更新分类索引和受影响消费者。
 
 ## 5. 修改与发布
 

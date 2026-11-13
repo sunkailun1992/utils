@@ -14,7 +14,7 @@
 - 长期分支只保留 `main`（正式主干），禁止 force push 和删除，不再创建 `test`、`preprod`。新任务 fetch 后从最新 `origin/main` 的确定 SHA 建独立短分支，续作可复用已核实归属的本功能分支，保留其他会话与无关 dirty。
 - 完整功能包含必要代码、测试、文档、migration、公共契约和依赖。候选按最新 main 加完整功能及必需跨仓配套验证，不逐提交拼装常规交付。
 - 完整功能合入 main、远端 refs 和包含关系核实后，清理本次已结束的本地及远端短分支。未合入、用途不明或被其他 worktree 占用的分支不能删；`main` 永久排除在短分支清理外。详情见 `docs/ai-coding/BRANCHING_SPEC.md`。
-- Git 分支不自动切换 profile 或触发部署。现有 APP_ENV=dev、github-dev 与服务根 config/application-dev.properties 模式保持；base application.yml 不改写，未来环境映射和部署另行配置与验收。
+- Git 分支不自动切换 profile 或触发部署。个人本机继续使用 `APP_ENV=dev` 和 `github-dev`，服务仓库根目录优先配置私有 `config/application-dev.yml`，保留旧 `.properties` 兼容。私有文件须为当前用户持有、权限 `0600`、已忽略且未跟踪。基础 `application.yml` 和服务器 Jar 的私有 env 入口保持既有约定。
 - 按风险执行编译、测试、安全专项检查及必要独立验证；Review 是补充，不新增人工代码审批。只按已有用户授权执行提交、推送、合并、tag、制品和部署；纯规范不升业务版本或重复发布 Maven 制品。
 - 维护者本人，以及维护者本机用维护者账号运行的 Claude / Codex 会话，可以直接合并到 `main`：合并前本机验证命令全过，合并后看 CI，红了马上修。推送后读回精确提交的 CI 结论。
 - 云端会话（`CLAUDE_CODE_REMOTE=true`，或会话里没有本机配置）只推会话分支，由维护者或本机会话合并。其他人的代码走 PR：CI 全绿、维护者审核批准、评审对话解决后再合并。代理不修改 ruleset 与仓库权限，除非用户当场明确要求。

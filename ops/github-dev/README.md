@@ -8,7 +8,7 @@
 
 - `nacos/DEFAULT_GROUP/`：25 个可提交模板。职责、消费者与参数注释见 [配置分类索引](nacos/README.md)。新增/修改时必须遵循 [Nacos 注释与归类规范](../../docs/ai-coding/NACOS_COMMENT_SPEC.md)。
 - `~/.config/kellen-github/dev.env`：本机私有配置，普通文件、权限 `0600`，不进 Git。
-- 各 Java 服务根目录的 `config/application-dev.properties`：本机私有 Nacos 引导配置，权限 `0600`，已加入对应 `.gitignore`。仅保存 Nacos dev 地址、命名空间、group、username/password 五个连接键；不要复制模型、数据库或业务配置进去。
+- 各 Java 服务根目录的 `config/application-dev.yml`：本机私有 Nacos 引导配置。写入前在本机 Git 排除规则中加入对应路径并核对已忽略、未跟踪。使用当前用户持有的 `0600` 普通文件。保存 Nacos dev 地址、命名空间、group、账号及密码；模型、数据库和业务配置仍使用各自入口。
 - `~/.config/kellen-github/nacos-rendered/DEFAULT_GROUP/`：包含真实连接值及通用模型密钥的私有渲染结果，文件权限 `0600`。禁止复制到仓库或 Wiki。
 - 模型密钥经用户明确确认沿用其通用自有密钥；没有复制医院、患者、问卷、报告模板、企微或设备业务配置。微信应用身份未因模型密钥授权而复制。
 - Nacos 引导只接受 `GITHUB_NACOS_*`，不再回落到旧 `NACOS_NAMESPACE`。Spring discovery/config、Dubbo 与未来启用的 AI SDK namespace 都引用同一个 `custom.namespace`。
@@ -70,7 +70,9 @@ python3 ops/github-dev/scripts/sync_nacos.py
 
 ## 本地启动
 
-IDE、`bootRun`、`java -jar` 的工作目录统一为当前服务仓库根目录。Spring Boot 会自动读取本机 `config/application-dev.properties`，`application.yml` 保持原样，默认 profile 为 `dev`。该文件填写 `GITHUB_NACOS_DEV_SERVER_ADDR`、`GITHUB_NACOS_DEV_NAMESPACE=github-dev`、`GITHUB_NACOS_GROUP=DEFAULT_GROUP`、`GITHUB_NACOS_USERNAME`、`GITHUB_NACOS_PASSWORD`；真实值不进 Git，OS 环境变量优先。`test`/`prod` 不读取 dev 文件，但仍使用同一组个人 dev 变量和既有默认值。没有显式地址时使用 profile 中的当前开发服务默认地址，不回落到 localhost。
+本机 IDEA、`bootRun` 和直接执行 `java -jar` 的工作目录统一为对应服务仓库根。默认 profile 为 `dev`，Spring Boot 自动读取私有 `config/application-dev.yml`，也接受 `.yaml`。五个引导键是 `GITHUB_NACOS_DEV_SERVER_ADDR`、`GITHUB_NACOS_DEV_NAMESPACE`（`github-dev`）、`GITHUB_NACOS_GROUP`（`DEFAULT_GROUP`）、`GITHUB_NACOS_USERNAME` 和 `GITHUB_NACOS_PASSWORD`。直接启动时 OS 环境变量优先。显式启用 `test` 或 `prod` 时，Spring 不读取 `dev` 文件，连接仍由对应 profile 的个人 Nacos 变量和既有默认值决定。
+
+旧 `config/application-dev.properties` 仍可用。同目录两种格式并存时，同名属性以 properties 为准。迁移后将旧文件移到 Spring 配置搜索路径之外保留。个人工作区观测入口在仅保留 YAML 时，从 YAML 读取 Nacos 地址、group、账号和密码，并继续固定 `dev`、`github-dev` 和既有观测参数。服务器托管 Jar 继续从目标服务器的私有 env 读取 Nacos 配置。
 
 本机 Nacos 控制台端口是 `18080`，应用端 `server-addr` 使用 `8848`，gRPC 使用 `9848`。命名空间显示名和真实 ID 均为 `github-dev`。控制台 URL 与 SDK 地址分别配置，不能把控制台地址直接填进应用。
 
