@@ -16,3 +16,4 @@ pluginManagement {
 // 设置根项目名称，生成的 Gradle 项目名和发布 artifact 保持一致。
 rootProject.name = 'utils'
 include 'fleet-observability'
+include 'traffic-canary'

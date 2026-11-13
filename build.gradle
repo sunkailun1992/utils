@@ -12,7 +12,7 @@ plugins {
 group = 'com'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '1.6.4'
+version = '1.6.5'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -182,6 +182,7 @@ configurations.configureEach {
 
 // 声明项目依赖。
 dependencies {
+    api project(':traffic-canary')
     // 轻量 HTTP 观测的唯一源码；网关与 Agent 可以单独引用该子制品。
     api project(':fleet-observability')
     // Dubbo：提供 RPC 声明式服务发布、引用和 Triple 协议能力。

@@ -54,6 +54,17 @@ class DubboCanaryRoutingTest {
     }
 
     @Test
+    void scopedCallRestoresAnExistingGrantWhenActionFails() {
+        bindCanary(Instant.now().plusSeconds(30));
+        CanaryContext.Snapshot original = CanaryContext.get();
+        assertThatThrownBy(() -> CanaryContext.callWith(null, () -> {
+            assertThat(CanaryContext.get()).isNull();
+            throw new IllegalStateException("fixture failure");
+        })).hasMessage("fixture failure");
+        assertThat(CanaryContext.get()).isSameAs(original);
+    }
+
+    @Test
     void selectsMatchingProviderAndCarriesGrantBeforeReturningToStableOnSameThread() {
         RecordingProvider stable = new RecordingProvider("stable", 31001, null);
         RecordingProvider canary = new RecordingProvider("canary", 31002, CANARY_TAG);

@@ -1,5 +1,7 @@
 package com.kellen.traffic;
 
+import java.util.function.Supplier;
+
 /**
  * Keeps a verified grant scoped to the current HTTP or RPC operation.
  */
@@ -24,6 +26,17 @@ public final class CanaryContext {
 
     public static void clear() {
         CURRENT.remove();
+    }
+
+    /** Binds only during a synchronous action on the actual execution thread. */
+    public static <T> T callWith(Snapshot snapshot, Supplier<T> action) {
+        Snapshot previous = get();
+        set(snapshot);
+        try {
+            return action.get();
+        } finally {
+            set(previous);
+        }
     }
 
     public record Snapshot(CanaryGrant grant, String token) {

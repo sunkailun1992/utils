@@ -1,0 +1,51 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'com'
+version = '0.1.0'
+description = 'Signed canary request context and Dubbo consumer routing'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.withType(Javadoc).configureEach { options.encoding = 'UTF-8' }
+
+dependencies {
+    compileOnly 'org.apache.dubbo:dubbo-rpc-api:3.3.6'
+    compileOnly 'org.apache.dubbo:dubbo-common:3.3.6'
+    implementation project(':fleet-observability')
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        def target = providers.gradleProperty('privateMavenUrl').orElse(providers.environmentVariable('PRIVATE_MAVEN_URL'))
+        if (target.isPresent()) {
+            maven {
+                name = 'privateRelease'
+                url = uri(target.get())
+                credentials {
+                    username = providers.gradleProperty('privateMavenUsername')
+                            .orElse(providers.environmentVariable('PRIVATE_MAVEN_USERNAME')).orNull
+                    password = providers.gradleProperty('privateMavenPassword')
+                            .orElse(providers.environmentVariable('PRIVATE_MAVEN_PASSWORD')).orNull
+                }
+            }
+        }
+    }
+}
