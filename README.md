@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.6.6`
+- 发布坐标：`com:utils:1.6.7`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -164,3 +164,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `1.6.2` 配套轻库 `0.1.2` 修复 Servlet Security 在 ERROR 分派内再次 `sendError(403)` 时等待不存在后续分派而遗漏终态的问题；同时保留已提交响应上 `sendError` 抛错的一次失败终态。不改变认证规则或 403 响应，也不增加日志字段。真实 Tomcat/Security 回归、异步/取消相邻路径与运行态日志联结分别验收。
 
 `1.6.6` 是第1阶段底座升级：JDK 21、Gradle 9.9.1、Spring Boot 4.0.9、Spring Cloud 2025.1.4、Nacos 客户端 3.3.0、Dubbo 3.3.7、MyBatis-Plus 3.5.18.1 等依赖顺延，公共 API 不变。配套轻库 `0.1.4` 与 `com:traffic-canary:0.1.1` 只改编译基线与依赖版本；OTel API/BOM 对齐 Java agent 2.33.1 内置的 1.67.0，不让应用侧 API 比 agent 新。消费者须运行在 Java 21。
+
+`1.6.7` 修复 `DubboContextPropagationFilter` 拿不到 Spring 绑定配置的问题。Dubbo 3 创建过滤器后按 setter 名（`trafficGovernanceProperties`、`tenantProperties`）到 Spring 容器取 Bean，不按类型查找；`@EnableConfigurationProperties` 注册的 Bean 名对不上，过滤器一直用默认值，结果是提供方拒绝所有灰度授权、灰度实例不带授权也放行、自定义租户头名不生效。新增 `DubboExtensionPropertiesAliasConfig` 给容器里唯一的同类型 Bean 补别名，不新增 Bean；`DubboContextPropagationFilterInjectionTest` 按 Dubbo 真实注入路径覆盖。公共 API 不变，消费者升级后重启生效。

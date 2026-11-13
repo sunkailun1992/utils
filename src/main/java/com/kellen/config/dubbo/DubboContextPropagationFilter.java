@@ -49,10 +49,14 @@ public class DubboContextPropagationFilter implements Filter {
     private static final String LOWER_XID_KEY = "tx_xid";
 
     /**
-     * 租户配置属性。Dubbo SPI 未完成 Spring 注入时使用默认头名兜底。
+     * 租户配置属性。Dubbo 按 setter 名从 Spring 取 Bean，名字由 {@link DubboExtensionPropertiesAliasConfig} 补齐；
+     * 未完成 Spring 注入时使用默认头名兜底。
      */
     private TenantProperties tenantProperties = new TenantProperties();
 
+    /**
+     * 流量治理配置属性。注入方式同上；未注入时为默认值：灰度关闭、没有签名密钥、灰度实例不要求授权。
+     */
     private TrafficGovernanceProperties trafficGovernanceProperties = new TrafficGovernanceProperties();
 
     public void setTrafficGovernanceProperties(TrafficGovernanceProperties properties) {

@@ -99,6 +99,7 @@
 
 - `com.kellen.config.async.AsyncConfig`：异步线程配置。
 - `com.kellen.config.dubbo.DubboContextPropagationFilter`：Dubbo 动态数据源、租户和 Seata XID 透传配置。
+- `com.kellen.config.dubbo.DubboExtensionPropertiesAliasConfig`：给租户、流量治理配置 Bean 补上 Dubbo 扩展按 setter 名查找用的别名，让透传过滤器拿到 Spring 绑定的配置。
 - `com.kellen.config.redis.RedisCacheConfig`：Redis 缓存配置。
 - `com.kellen.config.elasticsearch.ElasticsearchConfig`：Elasticsearch 配置。
 - `com.kellen.config.file.MultipartConfig`：文件上传配置。

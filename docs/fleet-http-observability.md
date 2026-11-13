@@ -1,6 +1,6 @@
 # HTTP安全结构化观测
 
-当前公共包 `1.6.6` 配套独立子制品 `com:fleet-observability:0.1.4`，满足个人服务每个HTTP请求的终态、真实trace关联、有限输入输出投影。共享业务响应、认证、租户、幂等、数据源与RPC契约保持原有职责。
+当前公共包 `1.6.7` 配套独立子制品 `com:fleet-observability:0.1.4`，满足个人服务每个HTTP请求的终态、真实trace关联、有限输入输出投影。共享业务响应、认证、租户、幂等、数据源与RPC契约保持原有职责。
 
 实现与配置见 [轻量观测库](../fleet-observability/README.md)。Servlet与Reactive只加载各自适配器；Java21、Boot4、Jackson3固定版本，公共库不提供第二套OTel SDK。默认关闭，由受信配置显式开启。
 
