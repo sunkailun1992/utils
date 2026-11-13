@@ -20,6 +20,7 @@ LOCAL_CANARY_RPC_SOURCES = {
     "user": {
         "[com.kellen.rpc.user.UserRpcService]": ["message"],
         "[com.kellen.rpc.auth.AuthOpenApiRpcService]": ["ai-agent"],
+        "[com.kellen.rpc.auth.AuthSessionRpcService]": ["ai", "ai-agent"],
     },
 }
 
