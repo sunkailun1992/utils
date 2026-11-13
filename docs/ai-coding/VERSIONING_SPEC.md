@@ -13,7 +13,7 @@ version = '1.5.2'
 
 - 个人 GitHub 公共包统一使用 `com:utils` 和 `com:rpc-api`；美联使用 `com.kellen:utils` 和 `com.kellen:rpc-api`。同一个阿里云 Maven 仓库按 group 隔离制品路径，两边独立递增版本。不得把公司同步过来的 `com.kellen` group 或依赖坐标带入个人项目。
 - 本次按用户要求将个人 utils 从误用的 `com.kellen:utils:1.4.9` 迁回 `com:utils:1.5.1`；所有个人消费者同步精确坐标。Java package `com.kellen.*` 保持不变，它与 Maven group 无关。后续补丁发布保持个人 `com` 坐标。远程个人版本清单已登记 `1.5.0`，本次不重复使用该版本；`1.5.1` 发布前须核对目标不存在。
-- 非 Java 项目没有 Gradle `group`；如果存在 `package.json`、小程序上传版本或其它制品版本，递增规则仍按本规范执行。
+- 非 Java 项目没有 Gradle `group`；如果存在 `package.json` 或其它制品版本，递增规则仍按本规范执行。
 - 构建制品 `version` 不等同于接口版本、Nacos dataId 版本、流量治理头 `X-Release-Version`、数据库乐观锁 `version` 字段。
 
 ## 什么时候改 version
@@ -47,6 +47,6 @@ version = '1.5.2'
 
 ## 修改版本前核对
 
-修改版本前 fetch 并核对构建文件、远端 main/test/preprod、在途功能分支、tag 与已发布制品占用，按本文件规则选择未占用且递增的精确版本；同一批未提交改动只升一次。历史记录、已发布 tag 和同版私库制品不重写或覆盖。纯规范文档不提升业务/公共库版本，也不为文档推送重复发布旧制品；若本仓已接入自动检查，不得绕过；未接入时不宣称已有该能力。
+修改版本前 fetch 并核对构建文件、远端 main、在途功能分支、tag 与已发布制品占用，按本文件规则选择未占用且递增的精确版本；同一批未提交改动只升一次。历史记录、已发布 tag 和同版私库制品不重写或覆盖。纯规范文档不提升业务/公共库版本，也不为文档推送重复发布旧制品；若本仓已接入自动检查，不得绕过；未接入时不宣称已有该能力。
 
 远程发布从已验证的确定 commit 构建，读回 POM、JAR、sourcesJar、javadocJar 与 Maven metadata，核对坐标、版本和 SHA-256；消费者精确版本解析另行验证。Git 推送成功、Maven 发布成功与消费者构建通过分开记录；失败时写明已完成与待处理项。个人公共库保持 `com:utils` / `com:rpc-api`，不恢复公司 `com.kellen` 坐标。

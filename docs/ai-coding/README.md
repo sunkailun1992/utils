@@ -14,7 +14,7 @@
 6. 再读 [AI 自动化开发流程](AI_AUTOMATION_WORKFLOW.md)，按需求说明、验收标准、开发手册、测试说明和交付说明组织自动化开发。
 7. 再读 [AI 工程门禁规范](AI_ENGINEERING_GUARDRAILS.md)，确认风险分级、Definition of Done、测试门禁、安全门禁和交付说明。
 8. 再读 [分支管理规范](BRANCHING_SPEC.md)，确认分支命名、短分支生命周期、release/hotfix、tag 和清理规则。
-9. 再读 [环境配置入口规范](ENVIRONMENT_CONFIG_SPEC.md)，确认环境、Nacos namespace、Java profile 和前端/小程序边界。
+9. 再读 [环境配置入口规范](ENVIRONMENT_CONFIG_SPEC.md)，确认环境、Nacos namespace、Java profile 和前端边界。
 10. 再读 [项目版本变更规范](VERSIONING_SPEC.md)，确认 `group = 'com'`、补丁递增和公共包消费者同步规则。
 11. 再读 [RPC API 协作规范](RPC_API_CODING_SPEC.md)，确认 `utils` 只维护 Dubbo 上下文透传等横切能力，不维护业务 RPC 契约。
 12. 再读 [测试分层规范](TESTING_SPEC.md)，确认公共包单元测试、组件测试、Spring 上下文测试和消费者编译验证边界。
@@ -47,7 +47,7 @@
 - 只要本次任务修改生产代码、配置、构建脚本或公共示例，就必须按 `VERSIONING_SPEC.md` 提升一次 `build.gradle` 的 `version`；完全不进入 Maven 制品的独立 `ops/` 部署配置仅按该规范的窄边界交付，不豁免普通应用配置或安全验证。同一批未提交改动只提升一次版本号，后续补代码、补测试、补文档不得重复提升。
 - 纯 README、AI 规范、注释或说明文档改动不强制提升制品版本；如果同时改了代码或构建配置，则仍按 `VERSIONING_SPEC.md` 提升一次。
 - 分支命名、短分支生命周期、release/hotfix、tag 和分支清理按 `BRANCHING_SPEC.md` 处理。
-- 环境、Nacos namespace、Java profile 和前端/小程序边界按 `ENVIRONMENT_CONFIG_SPEC.md` 处理。
+- 环境、Nacos namespace、Java profile 和前端边界按 `ENVIRONMENT_CONFIG_SPEC.md` 处理。
 - 如果修改公共 API、注解、AOP、认证、租户、异常、返回值、MyBatis-Plus 配置，修改后必须执行 `./gradlew clean build -x test` 和 `./gradlew publishToMavenLocal`。
 - 公共包版本变化并从 `main` 发布该确定提交时，必须执行 `./gradlew publish`，把同版本制品推送到远程私有 Maven 仓库。
 - 非 `main` 分支或未提交状态默认只做 `./gradlew publishToMavenLocal` 本地验证，不推送远程私有 Maven 制品。

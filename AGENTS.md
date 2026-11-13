@@ -11,11 +11,13 @@
 
 ## Git 分支、完整交付与清理
 
-- 长期保护 `main`、`test`、`preprod`：分别为正式主干、集成测试、发布候选；禁止 force push 和删除。新任务 fetch 后从最新 `origin/main` 的确定 SHA 建独立短分支，续作可复用已核实归属的本功能分支，保留其他会话与无关 dirty。
-- 完整功能包含必要代码、测试、文档、migration、公共契约和依赖。进入 test/preprod 后保留源分支；候选按最新 main 加完整功能及必需跨仓配套验证，不默认把混合 test 整条合 main，也不逐提交拼装常规交付。
-- 完整功能合入 main、远端 refs 和包含关系核实后，清理本次已结束的本地及远端短分支。只进 test/preprod、未合入、用途不明或被其他 worktree 占用的分支不能删；三条长期分支永久排除在短分支清理外。详情见 `docs/ai-coding/BRANCHING_SPEC.md`。
+- 长期分支只保留 `main`（正式主干），禁止 force push 和删除，不再创建 `test`、`preprod`。新任务 fetch 后从最新 `origin/main` 的确定 SHA 建独立短分支，续作可复用已核实归属的本功能分支，保留其他会话与无关 dirty。
+- 完整功能包含必要代码、测试、文档、migration、公共契约和依赖。候选按最新 main 加完整功能及必需跨仓配套验证，不逐提交拼装常规交付。
+- 完整功能合入 main、远端 refs 和包含关系核实后，清理本次已结束的本地及远端短分支。未合入、用途不明或被其他 worktree 占用的分支不能删；`main` 永久排除在短分支清理外。详情见 `docs/ai-coding/BRANCHING_SPEC.md`。
 - Git 分支不自动切换 profile 或触发部署。现有 APP_ENV=dev、github-dev 与服务根 config/application-dev.properties 模式保持；base application.yml 不改写，未来环境映射和部署另行配置与验收。
 - 按风险执行编译、测试、安全专项检查及必要独立验证；Review 是补充，不新增人工代码审批。只按已有用户授权执行提交、推送、合并、tag、制品和部署；纯规范不升业务版本或重复发布 Maven 制品。
+- 维护者本人，以及维护者本机用维护者账号运行的 Claude / Codex 会话，可以直接合并到 `main`：合并前本机验证命令全过，合并后看 CI，红了马上修。推送后读回精确提交的 CI 结论。
+- 云端会话（`CLAUDE_CODE_REMOTE=true`，或会话里没有本机配置）只推会话分支，由维护者或本机会话合并。其他人的代码走 PR：CI 全绿、维护者审核批准、评审对话解决后再合并。代理不修改 ruleset 与仓库权限，除非用户当场明确要求。
 
 ## 项目定位
 
@@ -36,7 +38,7 @@
 5. `docs/ai-coding/AI_COMMENT_STYLE_GUIDE.md`：确认注释规范、自解释优先、禁止注释掉死代码和排版要求。
 6. `docs/ai-coding/AI_DESIGN_PATTERN_GUIDE.md`：确认公共包设计模式、公共 API 兼容性和禁止巨型工具类规则。
 7. `docs/ai-coding/BRANCHING_SPEC.md`：确认分支命名、短分支生命周期、release/hotfix、tag 和清理规则。
-8. `docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md`：确认环境、Nacos namespace、Java profile 和前端/小程序边界。
+8. `docs/ai-coding/ENVIRONMENT_CONFIG_SPEC.md`：确认环境、Nacos namespace、Java profile 和前端边界。
 9. `docs/ai-coding/VERSIONING_SPEC.md`：确认 `group = 'com'`、补丁递增和消费者同步规则。
 10. `docs/ai-coding/RPC_API_CODING_SPEC.md`：确认 `utils` 与同级 `../rpc-api` 的 RPC 职责边界。
 11. `docs/ai-coding/TESTING_SPEC.md`：确认公共包单元测试、组件测试、Spring 上下文测试和消费者编译验证边界。
@@ -71,6 +73,7 @@
 - 独立运维边界：仅完全不进入 Maven 制品、且不改变 Java、打包资源、依赖或构建产物的 `ops/` 部署配置，可按 Git 提交与配置 SHA 独立交付，不提升 SDK 版本或重复发布同版制品。必须记录目标服务、验证、发布观察和回滚；普通 application/Nacos/Spring 打包资源不属于此边界，任何 SDK 或打包资源行为变化仍强制版本、Maven 发布及必要消费者验证，配置安全门禁不豁免。
 - 公共包版本变化并从 `main` 发布该确定提交时，必须同时执行远程私有 Maven 仓库发布，保证 Git 代码和远程 `com:utils:<version>` 制品一致。
 - 非 `main` 分支或未提交状态默认只允许 `publishToMavenLocal` 做消费者本地验证，不得把试验性 jar 推送到远程私有仓库。
+- 测试必须稳定可重复，按 `docs/ai-coding/TESTING_SPEC.md`「测试稳定性」：不依赖时序、连接复用或执行顺序；偶发失败按缺陷处理，不用重试、跳过或删除测试掩盖。
 
 ## 多智能体协作规则
 
