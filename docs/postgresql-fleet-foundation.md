@@ -4,7 +4,7 @@
 
 ## 配置合同
 
-- JDBC 驱动由固定 Spring Boot 4.0.4 BOM 管理为 `org.postgresql:postgresql:42.7.10`，不再公开传递 MySQL 驱动。
+- JDBC 驱动由固定 Spring Boot 4.0.9 BOM 管理为 `org.postgresql:postgresql:42.7.14`，不再公开传递 MySQL 驱动。
 - 主库使用 `postgresql.url/username/password/driverClassName`；灰度别名使用 `postgresql-gray.url/username/password/driverClassName`。驱动必须为 `org.postgresql.Driver`，URL 必须使用 `jdbc:postgresql:`。旧 `mysql.*` 不作静默回退。
 - `master`、`gray` 路由别名及原有 Seata 代理保持；两者都连接 PG，同库部署可在私有 Nacos 配置中引用同一组 PG 参数。业务请求不能选择任意连接地址。
 - 原有 `utils.datasource.health.*` 的秒/毫秒单位、`SELECT 1` 校验、借出检查、空闲保活及保活间隔归一化规则保持。

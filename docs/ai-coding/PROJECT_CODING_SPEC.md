@@ -2,7 +2,7 @@
 
 ## 基础规则
 
-- 项目面向 Spring Boot 4 / Java 17，新增代码必须使用 `jakarta.*`，不得引入 `javax.*`。
+- 项目面向 Spring Boot 4 / Java 21，新增代码必须使用 `jakarta.*`，不得引入 `javax.*`。
 - 公共类、配置类、注解、枚举、异常类必须保留稳定包名，修改前先检查消费者项目是否直接依赖。
 - AI 新增或修改 Java 代码时，必须补充能解释公共职责、消费者影响和安全边界的有效注释，不采用机械逐行注释。
 - 新增 Java 代码必须补齐类注释、字段注释、方法 JavaDoc，并在关键逻辑块前说明为什么这样实现。
@@ -137,4 +137,4 @@ cd ../user
 ./gradlew clean compileJava -x test
 ```
 
-个人 XXL-JOB 已退役，不再新增其依赖、配置类或 `xxl-job.yaml` 导入。调度选用 NAS 独立 Conductor OSS，通过 REST 接入；业务 Java 调度接口尚未实现，保持 Java 17，不为此引入要求 Java 21 的最新 SDK。
+个人 XXL-JOB 已退役，不再新增其依赖、配置类或 `xxl-job.yaml` 导入。调度选用 NAS 独立 Conductor OSS，通过 REST 接入；业务 Java 调度接口尚未实现；个人服务已统一 Java 21，需要时再评估 Conductor Java SDK，本轮不引入。

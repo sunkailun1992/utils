@@ -1,6 +1,6 @@
 # AI 目录管理规范
 
-本规范约束 AI 在 `utils` 公共基础包中新增、移动、拆分和命名目录的方式。目录管理必须基于当前 Java 17、Gradle `java-library`、Maven Publish、Spring 生态公共库结构。
+本规范约束 AI 在 `utils` 公共基础包中新增、移动、拆分和命名目录的方式。目录管理必须基于当前 Java 21、Gradle `java-library`、Maven Publish、Spring 生态公共库结构。
 
 ## 核心依据
 

@@ -6,7 +6,7 @@ Git 流程以 `AGENTS.md` 与 `BRANCHING_SPEC.md` 为准：最新 main 起完整
 
 ## 1. 项目定位
 
-`utils` 是面向 Spring Boot 4 / Java 17 的公共基础能力包，为 `user`、`message` 等业务服务提供统一响应、错误码、认证上下文、租户上下文、MyBatis-Plus 基础配置、AOP、请求日志、Redis、HTTP、JSON、文件、Excel、PDF 和第三方 SDK 封装。
+`utils` 是面向 Spring Boot 4 / Java 21 的公共基础能力包，为 `user`、`message` 等业务服务提供统一响应、错误码、认证上下文、租户上下文、MyBatis-Plus 基础配置、AOP、请求日志、Redis、HTTP、JSON、文件、Excel、PDF 和第三方 SDK 封装。
 
 AI 修改本项目时，必须先判断能力归属：
 
@@ -111,4 +111,4 @@ cd ../user
 - 每次代码或构建改动必须说明本次版本号是否已提升；未提交期间同一批改动只提升一次。
 - 公共包版本变化并从 `main` 发布时，交付说明必须包含远程私有 Maven 制品发布结果。
 
-个人 XXL-JOB 已退役，不再新增其依赖、配置类或 `xxl-job.yaml` 导入。调度选用 NAS 独立 Conductor OSS，通过 REST 接入；业务 Java 调度接口尚未实现，保持 Java 17，不为此引入要求 Java 21 的最新 SDK。
+个人 XXL-JOB 已退役，不再新增其依赖、配置类或 `xxl-job.yaml` 导入。调度选用 NAS 独立 Conductor OSS，通过 REST 接入；业务 Java 调度接口尚未实现；个人服务已统一 Java 21，需要时再评估 Conductor Java SDK，本轮不引入。

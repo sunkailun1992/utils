@@ -1,6 +1,6 @@
 # fleet-observability
 
-轻量 Java 17 / Spring Boot 4 HTTP 观测库，坐标 `com:fleet-observability:0.1.2`。`utils` 通过 `api project` 引入；没有数据库、Redis、Seata、Spring starter 或 Servlet/Reactor 运行时传递依赖，适用于独立的 Servlet 与 WebFlux 服务。消费者提供其实际 Spring Web 栈，条件自动配置只启用对应适配器。
+轻量 Java 21 / Spring Boot 4 HTTP 观测库，坐标 `com:fleet-observability:0.1.4`。`utils` 通过 `api project` 引入；没有数据库、Redis、Seata、Spring starter 或 Servlet/Reactor 运行时传递依赖，适用于独立的 Servlet 与 WebFlux 服务。消费者提供其实际 Spring Web 栈，条件自动配置只启用对应适配器。
 
 ## 服务端配置
 

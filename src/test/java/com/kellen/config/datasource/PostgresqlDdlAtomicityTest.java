@@ -46,7 +46,7 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 /**
  * 真实 PostgreSQL 上区分脚本提交、历史提交和启动失败；不以 H2 或 setter 断言代替事务。
  *
- * <p>默认执行生产适配；显式 FLEET_DDL_OFFICIAL_BASELINE=1 可重跑官方 3.5.16 的两项红基线。</p>
+ * <p>默认执行生产适配；显式 FLEET_DDL_OFFICIAL_BASELINE=1 可重跑官方实现的两项红基线（3.5.16 发现，3.5.18.1 仍复现）。</p>
  */
 @EnabledIfEnvironmentVariable(named = "FLEET_PG_TEST_URL", matches = "jdbc:postgresql:.*")
 @ExtendWith(OutputCaptureExtension.class)

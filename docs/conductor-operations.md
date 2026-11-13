@@ -18,7 +18,7 @@
 
 配置、agent、安全日志与 filelog offset 使用各自 named volume。维护不执行 `down -v`、卷清理或全项目重建。现有 MySQL 及其数据继续保留，个人调度替换不删除其它项目或旧 XXL-JOB 的数据。
 
-服务端镜像自带 JRE 21，个人业务服务继续使用 Java 17。本轮通过 REST 和内置 HTTP system task 接入，没有引入 Java SDK、独立 worker 或业务调度 HTTP 接口。后续业务任务按实际授权和幂等要求接入，不复用旧演示任务作为已完成业务能力。
+服务端镜像自带 JRE 21，个人业务服务也已统一使用 Java 21。本轮通过 REST 和内置 HTTP system task 接入，没有引入 Java SDK、独立 worker 或业务调度 HTTP 接口。后续业务任务按实际授权和幂等要求接入，不复用旧演示任务作为已完成业务能力。
 
 ## 访问与认证
 

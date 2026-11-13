@@ -1,8 +1,8 @@
 # HTTP安全结构化观测
 
-当前公共包 `1.6.0` 配套独立子制品 `com:fleet-observability:0.1.1`，满足个人服务每个HTTP请求的终态、真实trace关联、有限输入输出投影。共享业务响应、认证、租户、幂等、数据源与RPC契约保持原有职责。
+当前公共包 `1.6.6` 配套独立子制品 `com:fleet-observability:0.1.4`，满足个人服务每个HTTP请求的终态、真实trace关联、有限输入输出投影。共享业务响应、认证、租户、幂等、数据源与RPC契约保持原有职责。
 
-实现与配置见 [轻量观测库](../fleet-observability/README.md)。Servlet与Reactive只加载各自适配器；Java17、Boot4、Jackson3固定版本，公共库不提供第二套OTel SDK。默认关闭，由受信配置显式开启。
+实现与配置见 [轻量观测库](../fleet-observability/README.md)。Servlet与Reactive只加载各自适配器；Java21、Boot4、Jackson3固定版本，公共库不提供第二套OTel SDK。默认关闭，由受信配置显式开启。
 
 `0.1.1` 修复真实 Boot4 ECS 的同名 MDC/KVP 合流冲突，避免整条 HTTP/AI 事件被编码器丢弃。共享模板必须设置 `logging.structured.json.context.include=false`，由固定成员 SPI 唯一输出受控字段，不能单独发布关闭上下文的配置而保留旧轻库。根公共包同时迁移 PostgreSQL，数据库切换边界见 [PG 底座](postgresql-fleet-foundation.md)。
 

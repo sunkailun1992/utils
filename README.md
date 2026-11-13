@@ -1,17 +1,18 @@
 # utils
 
-`utils` 是面向 Spring Boot 4 / Java 17 的公共基础能力包，是 `user`、`message` 等业务服务复用通用能力的唯一来源。业务项目和网关项目不要复制本仓库里的工具类源码；需要公共能力时，先在本仓库维护并发布 Maven 制品，再让消费者项目升级依赖。
+`utils` 是面向 Spring Boot 4 / Java 21 的公共基础能力包，是 `user`、`message` 等业务服务复用通用能力的唯一来源。业务项目和网关项目不要复制本仓库里的工具类源码；需要公共能力时，先在本仓库维护并发布 Maven 制品，再让消费者项目升级依赖。
 
 当前提供统一响应、错误码、认证上下文、多租户、MyBatis-Plus 基础配置、AOP 通用能力、请求日志、Redis/Redisson、HTTP、JSON、文件、Excel、PDF、阿里云、钉钉、微信等通用工具。
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.6.2`
-- Java 版本：`17`
-- Spring Boot：`4.0.4`
-- Spring Cloud：`2025.1.1`
+- 发布坐标：`com:utils:1.6.6`
+- Java 版本：`21`
+- Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
+- Spring Boot：`4.0.9`
+- Spring Cloud：`2025.1.4`
 - Spring Cloud Alibaba：`2025.1.0.0`
-- Nacos Client：`3.2.2`
+- Nacos Client / Server：`3.3.0`
 - Seata Server：`2.7.0`
 - Seata Client：`2.6.0`
 - Servlet / Validation 包名：统一使用 `jakarta.*`
@@ -161,3 +162,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `1.6.0` 将个人业务 JDBC 驱动、方言与 Boolean 逻辑删除切换为 PostgreSQL，并移除个人 XXL-JOB 依赖；这是需要数据库迁移与配置联动的 minor 变更。配套轻库 `0.1.1` 修复 Boot ECS 中同名 MDC/KVP 导致整条事件丢失的问题，必须与 `logging.structured.json.context.include=false` 一起使用。源码/制品校验通过与实际配置发布、数据库切换、服务及链路验收分别取证。
 
 `1.6.2` 配套轻库 `0.1.2` 修复 Servlet Security 在 ERROR 分派内再次 `sendError(403)` 时等待不存在后续分派而遗漏终态的问题；同时保留已提交响应上 `sendError` 抛错的一次失败终态。不改变认证规则或 403 响应，也不增加日志字段。真实 Tomcat/Security 回归、异步/取消相邻路径与运行态日志联结分别验收。
+
+`1.6.6` 是第1阶段底座升级：JDK 21、Gradle 9.9.1、Spring Boot 4.0.9、Spring Cloud 2025.1.4、Nacos 客户端 3.3.0、Dubbo 3.3.7、MyBatis-Plus 3.5.18.1 等依赖顺延，公共 API 不变。配套轻库 `0.1.4` 与 `com:traffic-canary:0.1.1` 只改编译基线与依赖版本；OTel API/BOM 对齐 Java agent 2.33.1 内置的 1.67.0，不让应用侧 API 比 agent 新。消费者须运行在 Java 21。

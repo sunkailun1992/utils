@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com'
-version = '0.1.0'
+version = '0.1.1'
 description = 'Signed canary request context and Dubbo consumer routing'
 
 repositories {
@@ -13,7 +13,7 @@ repositories {
 }
 
 java {
-    toolchain { languageVersion = JavaLanguageVersion.of(17) }
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
     withSourcesJar()
     withJavadocJar()
 }
@@ -22,8 +22,8 @@ tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 tasks.withType(Javadoc).configureEach { options.encoding = 'UTF-8' }
 
 dependencies {
-    compileOnly 'org.apache.dubbo:dubbo-rpc-api:3.3.6'
-    compileOnly 'org.apache.dubbo:dubbo-common:3.3.6'
+    compileOnly 'org.apache.dubbo:dubbo-rpc-api:3.3.7'
+    compileOnly 'org.apache.dubbo:dubbo-common:3.3.7'
     implementation project(':fleet-observability')
 }
 

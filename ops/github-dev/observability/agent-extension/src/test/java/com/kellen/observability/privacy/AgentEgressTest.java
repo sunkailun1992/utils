@@ -129,7 +129,7 @@ class AgentEgressTest {
             String spanId = java.util.HexFormat.of().formatHex(http.getSpanId().toByteArray());
             assertTrue(traceparent.get().startsWith("00-" + trace + "-" + spanId + "-"));
             assertEquals(1, Integer.parseInt(traceparent.get().substring(53), 16) & 1);
-            System.out.println("PASS actual agent 2.33.1 + API-only 1.59.0: pre-Collector OTLP="
+            System.out.println("PASS actual agent 2.33.1 + API-only 1.67.0: pre-Collector OTLP="
                     + bodies.size() + " requests, spans=" + spans.size() + ", no secrets, HTTP propagation retained");
         } finally {
             receiver.stop(0);
