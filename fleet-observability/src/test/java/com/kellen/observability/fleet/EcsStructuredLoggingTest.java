@@ -48,6 +48,26 @@ class EcsStructuredLoggingTest {
         assertThat(output.path("trace_id").asString()).isEqualTo("11111111111111111111111111111111");
     }
 
+    @Test void routingDecisionKeepsBoundedFieldsAndActiveTrace() throws Exception {
+        var context = io.opentelemetry.api.trace.SpanContext.create(
+                "11111111111111111111111111111111", "2222222222222222",
+                io.opentelemetry.api.trace.TraceFlags.getSampled(), io.opentelemetry.api.trace.TraceState.getDefault());
+        var span = io.opentelemetry.api.trace.Span.wrap(context);
+        JsonNode output = capture("com.kellen.observability.fleet.events", () ->
+                TrafficRouteObservation.record(span, "gateway", "canary", "unavailable"));
+        assertThat(output.path("event").asString()).isEqualTo("traffic.route.decision");
+        assertThat(output.path("traffic_route_hop").asString()).isEqualTo("gateway");
+        assertThat(output.path("traffic_route_mode").asString()).isEqualTo("canary");
+        assertThat(output.path("traffic_route_decision").asString()).isEqualTo("unavailable");
+        assertThat(output.path("trace_id").asString()).isEqualTo(context.getTraceId());
+        assertThat(output.path("span_id").asString()).isEqualTo(context.getSpanId());
+
+        JsonNode invalid = capture("com.kellen.observability.fleet.events", () -> new Slf4jFleetEventSink().emit(Map.of(
+                "event", "traffic.route.decision", "traffic_route_mode", PRIVATE, "grant", PRIVATE)));
+        assertThat(invalid.has("traffic_route_mode")).isFalse();
+        assertThat(invalid.toString()).doesNotContain(PRIVATE);
+    }
+
     @Test void realAiKeyValuesKeepTypedUsageAndDropUnknownMdcAndRawContent() throws Exception {
         JsonNode output = capture("com.kellen.agent.service.AiModelCallObserver", () -> {
             MDC.put("private", PRIVATE);

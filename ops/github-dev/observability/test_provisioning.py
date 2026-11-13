@@ -279,7 +279,7 @@ class StructuredIoContractTest(unittest.TestCase):
             self.assertIn(statement, statements)
 
     def test_additive_schema_never_changes_existing_index_or_audit_fields(self):
-        from privacy_contract import LOG_FIELDS
+        from privacy_contract import LOG_FIELDS, ROUTING_LOG_ENUMS
         addition = json.loads((ROOT / 'es/runtime-log-additive-mapping.json').read_text())
         self.assertEqual(set(addition), {'properties'})
         fields = addition['properties']
@@ -288,6 +288,11 @@ class StructuredIoContractTest(unittest.TestCase):
         self.assertEqual(fields['request_body'], {'type': 'text', 'index': False})
         self.assertEqual(fields['response_body_complete'], {'type': 'boolean'})
         self.assertEqual(fields['ai_input_tokens'], {'type': 'long'})
+        template = json.loads((ROOT / 'es/runtime-log-index-template.json').read_text())
+        template_fields = template['template']['mappings']['properties']
+        for key in ROUTING_LOG_ENUMS:
+            self.assertEqual(fields[key], {'type': 'keyword', 'ignore_above': 32})
+            self.assertEqual(template_fields[key], fields[key])
 
     def test_grafana_displays_generated_summary_and_keeps_trace_join(self):
         sources = yaml_json((ROOT / 'grafana/provisioning/datasources/fleet.yaml').read_text())['datasources']

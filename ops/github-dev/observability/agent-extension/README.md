@@ -1,6 +1,6 @@
 # Java agent 出站隐私扩展
 
-本独立 Gradle 构建只服务于观测启动边界，不被 `com:utils` 或应用构建引用。正式薄 Jar 0.1.1 只有自身类与 SPI 注册；SDK 1.67.0 为 compileOnly，由固定 OTel agent 2.33.1 提供。应用保持 API/BOM 1.59.0。新依赖均来自 Maven Central；OTel 为 Apache-2.0，JUnit 仅测试使用。这里没有安装系统工具、自动发布制品或执行部署。
+本独立 Gradle 构建只服务于观测启动边界，不被 `com:utils` 或应用构建引用。正式薄 Jar 0.1.2 只有自身类与 SPI 注册；SDK 1.67.0 为 compileOnly，由固定 OTel agent 2.33.1 提供。应用保持 API/BOM 1.59.0。新依赖均来自 Maven Central；OTel 为 Apache-2.0，JUnit 仅测试使用。这里没有安装系统工具、自动发布制品或执行部署。
 
 ## 构建、测试与制品
 
@@ -10,7 +10,7 @@
 ./gradlew -p ops/github-dev/observability/agent-extension clean test runtimeChecksums --no-daemon
 ```
 
-`build/runtime/` 只含官方 `opentelemetry-javaagent-2.33.1.jar`、`fleet-privacy-extension-0.1.1.jar` 和 `SHA256SUMS`。构建校验 agent 的官方 SHA-256 `e43a270df53c6f423e0ab157be9c27ccc01d5dc3232e162fe54777573db2f149`（[Maven Central 发布摘要](https://repo.maven.apache.org/maven2/io/opentelemetry/javaagent/opentelemetry-javaagent/2.33.1/opentelemetry-javaagent-2.33.1.jar.sha256)）；扩展摘要来自本次确定源码的可重复薄 Jar。复制到 Git 外固定运行目录后重新核对两个摘要，保存源码 commit 与校验回执。不能给旧扩展重新命名来冒充新版本。
+`build/runtime/` 只含官方 `opentelemetry-javaagent-2.33.1.jar`、`fleet-privacy-extension-0.1.2.jar` 和 `SHA256SUMS`。构建校验 agent 的官方 SHA-256 `e43a270df53c6f423e0ab157be9c27ccc01d5dc3232e162fe54777573db2f149`（[Maven Central 发布摘要](https://repo.maven.apache.org/maven2/io/opentelemetry/javaagent/opentelemetry-javaagent/2.33.1/opentelemetry-javaagent-2.33.1.jar.sha256)）；扩展摘要来自本次确定源码的可重复薄 Jar。复制到 Git 外固定运行目录后重新核对两个摘要，保存源码 commit 与校验回执。不能给旧扩展重新命名来冒充新版本。
 
 实际测试启动子 JVM，应用只依赖 API 1.59.0（确认应用 classpath 没有 SDK），加载真实 agent 与扩展，向 loopback HTTP 端点发送含合成 buildId/KB/secret/js_code 的 GET，并制造异常、未知 attributes/URL/SQL/scope/name/link 内容。loopback OTLP 接收端直接解析原始 protobuf，断言秘密不存在、业务 metadata 保留及自动 HTTP 的 traceparent/父子关系成立。测试专用 verifier SPI 在实际 batch processor 入队前确认 events=0，即使调用方试图设为128。测试 verifier Jar 不进入运行 bundle。
 
@@ -23,7 +23,7 @@
 ```dotenv
 OTEL_JAVAAGENT_PATH=/ABSOLUTE_RUNTIME_DIR/opentelemetry-javaagent-2.33.1.jar
 OTEL_JAVAAGENT_SHA256=e43a270df53c6f423e0ab157be9c27ccc01d5dc3232e162fe54777573db2f149
-FLEET_PRIVACY_EXTENSION_PATH=/ABSOLUTE_RUNTIME_DIR/fleet-privacy-extension-0.1.1.jar
+FLEET_PRIVACY_EXTENSION_PATH=/ABSOLUTE_RUNTIME_DIR/fleet-privacy-extension-0.1.2.jar
 FLEET_PRIVACY_EXTENSION_SHA256=LOCAL_BUILD_SHA256_FROM_SHA256SUMS
 OTEL_EXPORTER_OTLP_ENDPOINT=http://COLLECTOR_PRIVATE_HOST:4318
 OTEL_EXPORTER_OTLP_HEADERS=PRIVATE_AUTHORIZATION_HEADER
@@ -43,3 +43,5 @@ Jar/IDE 入口也先执行同一 `run-observed.py <service> --dry-run` 校验；
 
 
 0.1.1增加有限GenAI模型/Prompt版本/供应商报告用量、reasoning存在性及Dubbo方法元数据；`ai.model.call`为实际供应商调用child。真实agent测试用incoming未采样的remote parent证明全量开发采样仍保留Trace/parent、自动HTTP下游标为sampled=1，并在Collector前原始OTLP中核对metadata正向值及秘密/events清除。正文采集并不因此打开；内部CoT不在协议可见范围。
+
+0.1.2 新增有限的灰度选路属性 `traffic.route.mode`、`traffic.route.decision`、`traffic.route.hop`。真实 agent 测试验证导出合法枚举，同时清除非法类型、未知取值和未经允许的授权属性。

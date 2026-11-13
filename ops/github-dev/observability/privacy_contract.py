@@ -16,8 +16,28 @@ COUNTS = ("request_bytes", "response_bytes", "ai_input_tokens", "ai_output_token
           "ai_reasoning_tokens", "ai_input_characters", "ai_output_characters",
           "ai_message_count", "ai_document_count")
 FLAGS = ("request_body_complete", "response_body_complete", "ai_usage_available", "ai_reasoning_present")
-LOG_FIELDS = tuple(STRING_LIMITS) + COUNTS + FLAGS + ("duration_ms", "http_status")
+ROUTING_ENUMS = {
+    "mode": ("stable", "canary"),
+    "decision": ("selected", "rejected", "unavailable", "failed"),
+    "hop": ("gateway", "http_provider", "dubbo_consumer", "dubbo_provider"),
+}
+ROUTING_LOG_EVENT = "traffic.route.decision"
+ROUTING_LOG_ENUMS = {"traffic_route_" + key: values for key, values in ROUTING_ENUMS.items()}
+ROUTING_SPAN_ENUMS = {"traffic.route." + key: values for key, values in ROUTING_ENUMS.items()}
+LOG_FIELDS = tuple(STRING_LIMITS) + COUNTS + FLAGS + ("duration_ms", "http_status") + tuple(ROUTING_LOG_ENUMS)
 RESOURCE_FIELDS = ("service.name", "service.version", "deployment.environment.name")
+
+
+def routing_enum_statements(enums, *, log=False):
+    statements = []
+    for key, values in enums.items():
+        field = f'attributes["{key}"]'
+        invalid = ' and '.join(f'{field} != {json.dumps(value)}' for value in values)
+        invalid_type_or_value = f'not IsString({field}) or ({invalid})'
+        if log:
+            invalid_type_or_value += f' or attributes["event"] != "{ROUTING_LOG_EVENT}"'
+        statements.append(f'delete_key(attributes, "{key}") where {field} != nil and ({invalid_type_or_value})')
+    return statements
 
 
 def log_statements(include_resource=False):
@@ -36,7 +56,12 @@ def log_statements(include_resource=False):
         result += [f'delete_key(attributes, "{key}") where attributes["{key}"] != nil and not IsBool(attributes["{key}"])']
     result += ['delete_key(attributes, "duration_ms") where attributes["duration_ms"] != nil and not IsInt(attributes["duration_ms"]) and not IsDouble(attributes["duration_ms"])',
                'delete_key(attributes, "duration_ms") where attributes["duration_ms"] != nil and attributes["duration_ms"] < 0']
-    return result
+    # 灰度摘要只保留代码约定的有限格式，避免把未审计内容作为可读摘要。
+    routing_summary = '^traffic route ' + ' '.join(
+        '(' + '|'.join(ROUTING_ENUMS[key]) + ')' for key in ('hop', 'mode', 'decision')) + '$'
+    result.append(f'delete_key(attributes, "summary") where attributes["event"] == "{ROUTING_LOG_EVENT}" '
+                  f'and IsString(attributes["summary"]) and not IsMatch(attributes["summary"], {json.dumps(routing_summary)})')
+    return result + routing_enum_statements(ROUTING_LOG_ENUMS, log=True)
 
 # 与应用SDK/agent薄扩展同步；只允许GenAI标准元数据，不允许prompt/output/URL。
 SPAN_ENUMS = {
@@ -60,7 +85,7 @@ SPAN_COUNTS = ("gen_ai.usage.input_tokens", "gen_ai.usage.output_tokens", "gen_a
                "gen_ai.usage.cache_read.input_tokens", "gen_ai.usage.cache_creation.input_tokens",
                "fleet.ai.input.characters", "fleet.ai.output.characters", "fleet.ai.input.message_count", "fleet.ai.input.document_count")
 SPAN_FLAGS = ("rag.degraded", "rag.graph_augmented", "rag.graph_degraded", "fleet.ai.usage.available", "fleet.ai.usage.final", "fleet.ai.reasoning.present", "fleet.ai.reasoning.summary_present")
-SPAN_FIELDS = ("http.response.status_code", "http.route", "rpc.service", "rpc.method", "error.type", "rag.hit_count") + tuple(SPAN_ENUMS) + SPAN_IDENTIFIERS + SPAN_COUNTS + SPAN_FLAGS + ("gen_ai.response.finish_reasons",)
+SPAN_FIELDS = ("http.response.status_code", "http.route", "rpc.service", "rpc.method", "error.type", "rag.hit_count") + tuple(SPAN_ENUMS) + SPAN_IDENTIFIERS + SPAN_COUNTS + SPAN_FLAGS + ("gen_ai.response.finish_reasons",) + tuple(ROUTING_SPAN_ENUMS)
 
 
 def span_statements():
@@ -94,4 +119,4 @@ def span_statements():
                'delete_key(attributes, "gen_ai.response.finish_reasons") where IsList(attributes["gen_ai.response.finish_reasons"]) and Len(attributes["gen_ai.response.finish_reasons"]) > 8']
     finish_pattern = '^\\["(stop|length|tool_calls|function_call|content_filter|error|cancelled|unknown|max_tokens|safety|recitation|other|STOP|MAX_TOKENS|SAFETY|RECITATION|OTHER|FINISH_REASON_UNSPECIFIED)"(,\\s*"(stop|length|tool_calls|function_call|content_filter|error|cancelled|unknown|max_tokens|safety|recitation|other|STOP|MAX_TOKENS|SAFETY|RECITATION|OTHER|FINISH_REASON_UNSPECIFIED)"){0,7}\\]$'
     result += ['delete_key(attributes, "gen_ai.response.finish_reasons") where IsList(attributes["gen_ai.response.finish_reasons"]) and not IsMatch(String(attributes["gen_ai.response.finish_reasons"]), ' + json.dumps(finish_pattern) + ')']
-    return result
+    return result + routing_enum_statements(ROUTING_SPAN_ENUMS)

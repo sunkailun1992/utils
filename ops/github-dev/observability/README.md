@@ -65,7 +65,7 @@ docker compose run --rm --no-deps jaeger validate --config=/etc/jaeger/config.ya
 
 `kellen-workspace/scripts/run-observed.py`只给选定服务bootRun JVM挂agent，先校验固定官方 agent 与本地构建隐私扩展两个 SHA-256；Gradle daemon、编译器与测试JVM不受影响。缺隐私扩展或任一摘要/版本不匹配均拒绝启用。Jar/IDE直接运行时把相同 agent 和扩展参数配置到服务JVM，不能只修改应用启动后才加载的Nacos。
 
-- 固定 Java agent v2.33.1 内置 SDK 1.67.0，独立 `agent-extension/` 仅以 compileOnly SDK 1.67.0 编译，薄 Jar 版本 0.1.1；应用 API/context/common 继续由 BOM 1.59.0 对齐，不创建第二个 tracing SDK。
+- 固定 Java agent v2.33.1 内置 SDK 1.67.0，独立 `agent-extension/` 仅以 compileOnly SDK 1.67.0 编译，薄 Jar 版本 0.1.2；应用 API/context/common 继续由 BOM 1.59.0 对齐，不创建第二个 tracing SDK。
 - Java 出站前必须加载 privacy extension：强制 `otel.span.event.count.limit=0`，原始异常 events 不进入 batch 队列；exporter 包装器清理 attributes/events/status description/resource/link attributes/scope/tracestate，只保留 trace/span/parent IDs、时间、状态码和有限业务元数据。动态 URL/query、SQL、headers、prompt/body 以及未知字段不出站。自动 span 名称归一成固定 kind 操作名，仅固定业务名称原样保留；动态 route/RPC 名称不保留。中央 Collector 仍是第二道清理。
 - 扩展保留实际 Java `business.outcome`、ai-agent `outcome/operation` 和 Python `rag.result` 的有限值合同；中央 native fixture 同时覆盖 Python 请求、retrieval 与 graph_build 的结果及两种 service resource，不能只用 Java span 推定跨语言合同。
 - `OTEL_SERVICE_NAME`、版本与`deployment.environment.name=github-dev`保持一致。workspace 的服务 JVM 同时从 `project.version` 设置 `SPRING_APPLICATION_VERSION`，供 Boot ECS 输出 `service.version`；共享 `logging.yml` 显式输出环境 `github-dev`。
@@ -152,9 +152,15 @@ CI 还原生校验主机 Collector 配置。回放只覆盖实际配置的处理
 回滚可先移除服务JVM agent/关闭Python观测，保留业务配置；停止独立观测项目不删除卷。旧RAG实现已移除，回退需恢复相互匹配的旧制品/配置；删表后还需备份恢复，不能再使用已删除开关。
 
 
+### 灰度选路排障
+
+在 Grafana 的“运行日志（Explore / Elasticsearch）”中按 `event:"traffic.route.decision"` 查询。追加 `AND traffic_route_mode:"canary"` 查看灰度，追加 `AND traffic_route_decision:"unavailable"` 定位无可用目标。用 `traffic_route_hop` 区分 `gateway`、`http_provider`、`dubbo_consumer` 和 `dubbo_provider`，再沿同一 `trace_id` 打开链路。日志摘要使用固定格式 `traffic route <hop> <mode> <decision>`，不包含授权内容、身份、原始请求头、标签、地址或 URL。
+
+在 Jaeger 原生 UI 选服务后按 `traffic.route.mode=canary` 和 `traffic.route.decision=unavailable` 等标签查询。Grafana 的 Jaeger 数据源可用已知 Trace ID 查看该链路。查看前需要目标 JVM 使用隐私扩展 0.1.2，两级 Collector 使用本版白名单，并核对运行日志索引的三个关键词字段。应用、Collector 和索引分别验收。Prometheus 不使用这些字段作为指标标签。
+
 ### 安全HTTP/AI日志与全量开发跟踪
 
-github-dev的Java/Python应使用非parent-based的全量采样，验证incoming sampled=0仍保留原Trace/parent；不要只把parentbased ratio调成1。薄扩展0.1.1仅允许模型操作、提供方、模型/Prompt有限标识、真实报告的token/finish reason、reasoning存在性和Dubbo协议，原始prompt/completion/events/异常继续删除。`fleet.ai.usage.available/final`区分供应商是否报告及正常终态；缺失token不补0，reasoning输出是output子集而非另加总。
+github-dev的Java/Python应使用非parent-based的全量采样，验证incoming sampled=0仍保留原Trace/parent；不要只把parentbased ratio调成1。薄扩展仅保留有限灰度选路字段及模型操作、提供方、模型/Prompt有限标识、真实报告的token/finish reason、reasoning存在性和Dubbo协议，原始prompt/completion/events/异常继续删除。`fleet.ai.usage.available/final`区分供应商是否报告及正常终态；缺失token不补0，reasoning输出是output子集而非另加总。
 
 `privacy_contract.py`定义两级Collector共同的有界类型合同。HTTP终态使用`summary`、方法、框架路由、状态、耗时、实际读写字节、完整性及安全JSON投影；SSE/AI正文/未知路由自由正文不进入日志。filelog把JSON number解为Double，因此仅在数值精确为非负安全整数时转Long，字符串数字或非法类型删除。ES的`runtime-log-additive-mapping.json`只增加新字段，既有索引先读回类型，冲突须报告；不得重建索引或修改请求审计历史。正文投影存`index:false`仅用于展开查看，不能当全文搜索库。
 

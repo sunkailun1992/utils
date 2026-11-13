@@ -33,6 +33,10 @@ public final class AgentPrivacyProbe {
             span.setAttribute("rpc.method", "SYNTHETIC_RPC_SECRET");
             span.setAttribute("http.route", "/SYNTHETIC_ROUTE_SECRET");
             span.setAttribute("operation", "SYNTHETIC_ENUM_SECRET");
+            span.setAttribute("traffic.route.mode", "SYNTHETIC_ROUTE_MODE_SECRET");
+            span.setAttribute("traffic.route.decision", 123L);
+            span.setAttribute("traffic.route.hop", "SYNTHETIC_ROUTE_HOP_SECRET");
+            span.setAttribute("traffic.route.grant", "SYNTHETIC_ROUTE_GRANT_SECRET");
             span.setAttribute("private", "SYNTHETIC_ATTRIBUTE_SECRET");
             span.setAttribute("db.query.text", "SELECT SYNTHETIC_SQL_SECRET");
             span.setStatus(StatusCode.ERROR, "SYNTHETIC_STATUS_SECRET");
@@ -56,6 +60,9 @@ public final class AgentPrivacyProbe {
             model.setAttribute("rpc.system.name", "apache_dubbo");
             model.setAttribute("rpc.service", "com.kellen.rpc.user.UserRpcService");
             model.setAttribute("rpc.method", "findUser");
+            model.setAttribute("traffic.route.mode", "canary");
+            model.setAttribute("traffic.route.decision", "selected");
+            model.setAttribute("traffic.route.hop", "dubbo_consumer");
             model.setAttribute("fleet.ai.reasoning.present", false);
             model.setAttribute("gen_ai.input.messages", "SYNTHETIC_PROMPT_SECRET");
             model.setAttribute("gen_ai.output.messages", "SYNTHETIC_COMPLETION_SECRET");

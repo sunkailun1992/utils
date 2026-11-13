@@ -1,1 +1,2 @@
 kellenContextPropagation=com.kellen.config.dubbo.DubboContextPropagationFilter
+kellenCanaryProviderGuard=com.kellen.config.dubbo.DubboCanaryProviderGuard

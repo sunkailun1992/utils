@@ -1,7 +1,11 @@
 package com.kellen.config.dubbo;
 
+import com.kellen.observability.fleet.TrafficRouteObservation;
 import com.kellen.security.config.TenantProperties;
 import com.kellen.traffic.TrafficGovernanceContext;
+import com.kellen.traffic.CanaryContext;
+import com.kellen.traffic.CanaryGrant;
+import com.kellen.traffic.TrafficGovernanceProperties;
 import com.kellen.traffic.TrafficGovernanceHeaders;
 import com.kellen.utils.context.DynamicSourceTtl;
 import com.kellen.utils.context.TenantContextHolder;
@@ -18,7 +22,9 @@ import org.apache.dubbo.rpc.RpcContext;
 import org.apache.dubbo.rpc.RpcContextAttachment;
 import org.apache.dubbo.rpc.RpcException;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Dubbo RPC 上下文透传过滤器。
@@ -29,7 +35,7 @@ import java.util.List;
  * @author 孙凯伦
  */
 @Slf4j
-@Activate(group = {CommonConstants.CONSUMER, CommonConstants.PROVIDER}, order = -10000)
+@Activate(group = {CommonConstants.CONSUMER, CommonConstants.PROVIDER}, order = 0)
 public class DubboContextPropagationFilter implements Filter {
 
     /**
@@ -46,6 +52,14 @@ public class DubboContextPropagationFilter implements Filter {
      * 租户配置属性。Dubbo SPI 未完成 Spring 注入时使用默认头名兜底。
      */
     private TenantProperties tenantProperties = new TenantProperties();
+
+    private TrafficGovernanceProperties trafficGovernanceProperties = new TrafficGovernanceProperties();
+
+    public void setTrafficGovernanceProperties(TrafficGovernanceProperties properties) {
+        if (properties != null) {
+            this.trafficGovernanceProperties = properties;
+        }
+    }
 
     /**
      * Dubbo SPI/Spring 扩展注入入口。
@@ -129,6 +143,8 @@ public class DubboContextPropagationFilter implements Filter {
         String previousTenantId = TenantContextHolder.getTenantId();
         boolean previousTenantIgnore = TenantContextHolder.isIgnore();
         TrafficGovernanceContext.Snapshot previousTraffic = TrafficGovernanceContext.get();
+        CanaryContext.Snapshot previousCanary = CanaryContext.get();
+        CanaryContext.clear();
         try {
             String dataSource = firstAttachment(invocation, DATA_SOURCE_KEY);
             if (StringUtils.isNotBlank(dataSource)) {
@@ -148,11 +164,32 @@ public class DubboContextPropagationFilter implements Filter {
             } else if (StringUtils.isNotBlank(xid) && !StringUtils.equals(xid, currentXid)) {
                 log.warn("Dubbo provider received different Seata XID, incoming={}, current={}", xid, currentXid);
             }
+            String token = invocation.getAttachment(CanaryGrant.ATTACHMENT);
+            var config = trafficGovernanceProperties.getCanary();
+            var sources = config.getRpcSources().getOrDefault(invoker.getInterface().getName(), Set.of());
+            if (token == null && config.isRequireGrant()) {
+                TrafficRouteObservation.record("dubbo_provider", "canary", "rejected");
+                throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "Canary provider requires a grant");
+            }
+            if (token != null) {
+                var grant = config.isEnabled()
+                        ? CanaryGrant.verify(token, config.getSigningKey(), Instant.now()) : null;
+                if (grant == null || !grant.tag().equals(invoker.getUrl().getParameter(CommonConstants.TAG_KEY))
+                        || !sources.contains(grant.service())) {
+                    TrafficRouteObservation.record("dubbo_provider", "canary", "rejected");
+                    throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "Invalid canary grant for provider");
+                }
+                CanaryContext.set(new CanaryContext.Snapshot(grant, token));
+                TrafficRouteObservation.record("dubbo_provider", "canary", "selected");
+            } else if (config.isEnabled() && !sources.isEmpty()) {
+                TrafficRouteObservation.record("dubbo_provider", "stable", "selected");
+            }
             trafficBound = bindTrafficGovernanceContext(invocation);
             log.debug("Dubbo provider context bound: method={}, dataSource={}, xidBound={}, tenantBound={}, trafficBound={}",
                     invocation.getMethodName(), dataSource, xidBound, tenantBound, trafficBound);
             return invoker.invoke(invocation);
         } finally {
+            CanaryContext.set(previousCanary);
             if (xidBound) {
                 RootContext.unbind();
             }
@@ -200,8 +237,6 @@ public class DubboContextPropagationFilter implements Filter {
         }
         if (StringUtils.isNotBlank(snapshot.canaryTag())) {
             putAttachment(invocation, TrafficGovernanceHeaders.CANARY_TAG, snapshot.canaryTag());
-            putAttachment(invocation, CommonConstants.TAG_KEY, snapshot.canaryTag());
-            putAttachment(invocation, CommonConstants.DUBBO_TAG_HEADER, snapshot.canaryTag());
         }
         if (snapshot.canaryWeight() != null) {
             String weight = String.valueOf(snapshot.canaryWeight());

@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.Map;
+import java.util.Set;
+
 /**
  * 流量治理配置。
  *
@@ -24,6 +27,19 @@ public class TrafficGovernanceProperties {
      * 请求侧配置。
      */
     private Request request = new Request();
+
+    private Canary canary = new Canary();
+
+    @Getter
+    @Setter
+    public static class Canary {
+        private boolean enabled;
+        private String signingKey;
+        private String service;
+        private String httpTag;
+        private boolean requireGrant;
+        private Map<String, Set<String>> rpcSources = Map.of();
+    }
 
     /**
      * 请求侧配置。

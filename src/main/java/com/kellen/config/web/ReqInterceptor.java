@@ -1,16 +1,23 @@
 package com.kellen.config.web;
 
+import com.kellen.observability.fleet.TrafficRouteObservation;
+
 import com.kellen.security.config.TenantProperties;
 import com.kellen.security.config.SecurityAuthProperties;
 import com.kellen.security.SecurityUser;
 import com.kellen.security.UserContextHolder;
 import com.kellen.traffic.TrafficGovernanceContext;
 import com.kellen.traffic.TrafficGovernanceProperties;
+import com.kellen.traffic.CanaryContext;
+import com.kellen.traffic.CanaryGrant;
 import com.kellen.utils.context.TenantContextHolder;
 import org.apache.commons.lang3.StringUtils;
 import com.kellen.observability.TraceContextSnapshot;
-import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.AsyncHandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
+
+import java.time.Instant;
+import java.util.Collections;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -27,7 +34,7 @@ import java.util.regex.PatternSyntaxException;
  *
  * @author 孙凯伦
  */
-public class ReqInterceptor implements HandlerInterceptor {
+public class ReqInterceptor implements AsyncHandlerInterceptor {
 
     /**
      * 租户配置属性。
@@ -69,16 +76,26 @@ public class ReqInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        CanaryContext.clear();
+        if (!bindCanaryGrant(request)) {
+            TrafficRouteObservation.record("http_provider", "canary", "rejected");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
         if (!initTenantContext(request)) {
             TenantContextHolder.clear();
             TrafficGovernanceContext.clear();
+            CanaryContext.clear();
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return false;
+        }
+        if (CanaryContext.get() != null) {
+            TrafficRouteObservation.record("http_provider", "canary", "selected");
         }
         initTrafficGovernanceContext(request); // 从请求头初始化发布版本、泳道和灰度 tag 上下文。
         String traceId = TraceContextSnapshot.capture().traceId();
         if (traceId != null) response.setHeader("traceId", traceId);
-        return HandlerInterceptor.super.preHandle(request, response, handler); // 继续执行后续处理链。
+        return AsyncHandlerInterceptor.super.preHandle(request, response, handler); // 继续执行后续处理链。
     }
 
     /**
@@ -92,7 +109,7 @@ public class ReqInterceptor implements HandlerInterceptor {
      */
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
-        HandlerInterceptor.super.postHandle(request, response, handler, modelAndView); // 保留 Spring 默认后置处理行为。
+        AsyncHandlerInterceptor.super.postHandle(request, response, handler, modelAndView); // 保留 Spring 默认后置处理行为。
     }
 
     /**
@@ -107,8 +124,31 @@ public class ReqInterceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
         TenantContextHolder.clear(); // 请求完成后清理租户上下文，避免线程复用串租户。
+        CanaryContext.clear();
         TrafficGovernanceContext.clear(); // 请求完成后清理流量治理上下文，避免线程复用串版本或泳道。
-        HandlerInterceptor.super.afterCompletion(request, response, handler, ex); // 保留 Spring 默认完成处理行为。
+        AsyncHandlerInterceptor.super.afterCompletion(request, response, handler, ex); // 保留 Spring 默认完成处理行为。
+    }
+
+    @Override
+    public void afterConcurrentHandlingStarted(HttpServletRequest request, HttpServletResponse response,
+                                               Object handler) {
+        CanaryContext.clear();
+    }
+
+    private boolean bindCanaryGrant(HttpServletRequest request) {
+        var config = trafficGovernanceProperties.getCanary();
+        var tokens = Collections.list(request.getHeaders(CanaryGrant.HEADER));
+        if (tokens.isEmpty()) {
+            return !config.isRequireGrant();
+        }
+        var grant = config.isEnabled() && tokens.size() == 1
+                ? CanaryGrant.verify(tokens.get(0), config.getSigningKey(), Instant.now()) : null;
+        if (grant == null || !grant.service().equals(config.getService())
+                || !grant.tag().equals(config.getHttpTag())) {
+            return false;
+        }
+        CanaryContext.set(new CanaryContext.Snapshot(grant, tokens.get(0)));
+        return true;
     }
 
     /**
@@ -161,10 +201,8 @@ public class ReqInterceptor implements HandlerInterceptor {
         TrafficGovernanceProperties.Request config = trafficGovernanceProperties.getRequest();
         String releaseVersion = sanitize(firstNotBlank(request.getHeader(config.getReleaseVersionHeader()), config.getDefaultReleaseVersion()), config);
         String lane = sanitize(firstNotBlank(request.getHeader(config.getLaneHeader()), config.getDefaultLane()), config);
-        String canaryTag = sanitize(request.getHeader(config.getCanaryTagHeader()), config);
-        if (StringUtils.isBlank(canaryTag) && config.isTagFallbackToReleaseVersion()) {
-            canaryTag = releaseVersion; // 需要按发布版本强制切流时，把版本作为 Dubbo tag 使用。
-        }
+        var canary = CanaryContext.get();
+        String canaryTag = canary == null ? null : canary.grant().tag();
         Integer canaryWeight = null;
         if (config.isAllowClientWeightHeader()) {
             canaryWeight = parseWeight(request.getHeader(config.getCanaryWeightHeader()));

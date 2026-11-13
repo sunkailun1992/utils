@@ -98,6 +98,8 @@ class AgentEgressTest {
             assertEquals(1, business.getLinksCount(), "synthetic valid link must survive without attributes");
             assertEquals("matched", strings(business.getAttributesList()).get("business.outcome"));
             assertEquals("degraded", strings(business.getAttributesList()).get("rag.result"));
+            assertTrue(business.getAttributesList().stream().noneMatch(attribute ->
+                    attribute.getKey().startsWith("traffic.route.")));
             Span model = spans.stream().filter(span -> span.getName().equals("ai.model.call")).findFirst().orElseThrow();
             assertEquals(business.getTraceId(), model.getTraceId());
             assertEquals(business.getSpanId(), model.getParentSpanId());
@@ -112,6 +114,9 @@ class AgentEgressTest {
             assertEquals("apache_dubbo", strings(model.getAttributesList()).get("rpc.system.name"));
             assertEquals("com.kellen.rpc.user.UserRpcService", strings(model.getAttributesList()).get("rpc.service"));
             assertEquals("findUser", strings(model.getAttributesList()).get("rpc.method"));
+            assertEquals("canary", strings(model.getAttributesList()).get("traffic.route.mode"));
+            assertEquals("selected", strings(model.getAttributesList()).get("traffic.route.decision"));
+            assertEquals("dubbo_consumer", strings(model.getAttributesList()).get("traffic.route.hop"));
             for (Span span : spans) {
                 assertEquals(0, span.getEventsCount());
                 assertEquals("", span.getStatus().getMessage());

@@ -9,7 +9,7 @@ import time
 import uuid
 import os
 import threading
-from privacy_contract import LOG_FIELDS
+from privacy_contract import LOG_FIELDS, ROUTING_LOG_ENUMS
 
 ROOT = Path(__file__).resolve().parent
 IMAGE = 'otel/opentelemetry-collector-contrib:0.164.0'
@@ -21,7 +21,13 @@ EXPECTED = {
     'java-call': ('fixture-java', '1.2.3', True),
     'python-call': ('fixture-python', '0.2.4', True),
     'java-startup': ('fixture-java', '1.2.3', False),
+    'route-selected': ('fixture-java', '1.2.3', True),
+    'route-invalid': ('fixture-java', '1.2.3', True),
 }
+ROUTING_LOG_FIELDS = {'traffic_route_mode': 'canary', 'traffic_route_decision': 'selected',
+                      'traffic_route_hop': 'gateway'}
+ROUTING_SPAN_FIELDS = {'traffic.route.mode': 'canary', 'traffic.route.decision': 'unavailable',
+                       'traffic.route.hop': 'dubbo_consumer'}
 
 # 与 rag_engine.observability 的 ObservationBoundary/operation 一致；名称和结果只取生产有限集合。
 PYTHON_CASES = [
@@ -44,6 +50,7 @@ TRACE_EXPECTED = {
     ('fixture-java', 'ai.model.call', ''): MODEL_FIELDS,
     ('fixture-java', 'rag.retrieve', ''): {'business.outcome': 'matched'},
     ('fixture-java', 'mcp.protocol', ''): {'business.outcome': 'protocol_error'},
+    ('fixture-java', 'canary-routing', ''): ROUTING_SPAN_FIELDS,
     **{('fixture-python', name, fields['rag.result']): fields for name, fields in PYTHON_CASES},
 }
 
@@ -91,6 +98,15 @@ def input_logs():
                          ai_output_tokens=11, ai_input_tokens=SECRET, ai_reasoning_present=False,
                          request_bytes=SECRET, request_body_complete=SECRET,
                          ai_input_summary='prompt_source=nacos; system_characters=100; content_capture=disabled')
+        elif stage == 'route-selected':
+            event.update(event='traffic.route.decision', summary='traffic route gateway canary selected',
+                         **ROUTING_LOG_FIELDS)
+        elif stage == 'route-invalid':
+            event.update(event='traffic.route.decision', summary=SECRET, traffic_route_mode=SECRET,
+                         traffic_route_decision=123, traffic_route_hop='unknown')
+        elif stage == 'java-startup':
+            # 合法枚举放在其它事件上也不能伪造选路记录。
+            event.update(**ROUTING_LOG_FIELDS)
         if traced:
             event.update(trace_id=TRACE, span_id=SPAN)
         events.append(event)
@@ -111,7 +127,7 @@ def prepare(directory):
     (logs / 'runtime.jsonl').write_text(''.join(json.dumps(event) + '\n' for event in events))
     records = [{'timeUnixNano': '1793923200000000000', 'body': value(SECRET),
                 'attributes': attributes(event)} for event in events]
-    # 三条日志明确在同一个原始 ResourceLogs 中，不能靠 receiver 预先分服务规避串号。
+    # 多个服务明确在同一个原始 ResourceLogs 中，不能靠 receiver 预先分服务规避串号。
     grouping = {'resourceLogs': [{'resource': {}, 'scopeLogs': [{'logRecords': records}]}]}
     (directory / 'grouping.jsonl').write_text(json.dumps(grouping) + '\n')
     spans = []
@@ -120,7 +136,9 @@ def prepare(directory):
                       'startTimeUnixNano': '1793923200000000000', 'endTimeUnixNano': '1793923200007000000',
                       'attributes': attributes({'business.outcome': outcome, 'private': SECRET, 'gen_ai.response.finish_reasons': [SECRET],
                         'http.request.method': {'secret': SECRET}, 'rpc.service': {'secret': SECRET},
-                        'rag.stage': [SECRET], 'db.system.name': SECRET, 'error.type': SECRET}),
+                        'rag.stage': [SECRET], 'db.system.name': SECRET, 'error.type': SECRET,
+                        'traffic.route.mode': SECRET, 'traffic.route.decision': 123,
+                        'traffic.route.hop': 'unknown', 'traffic.route.grant': SECRET}),
                       'status': {'code': 2, 'message': SECRET},
                       'events': [{'name': SECRET, 'timeUnixNano': '1793923200000000000',
                                   'attributes': attributes({'exception.message': SECRET})}]})
@@ -130,6 +148,9 @@ def prepare(directory):
                   'attributes': attributes({**model_fields, 'gen_ai.input.messages': SECRET,
                                             'gen_ai.output.messages': SECRET, 'gen_ai.usage.cache_read.input_tokens': SECRET,
                                             'fleet.ai.prompt.key': 'https://' + SECRET})})
+    spans.append({'traceId': TRACE, 'spanId': SPAN, 'name': 'canary-routing',
+                  'startTimeUnixNano': '1793923200000000000', 'endTimeUnixNano': '1793923200007000000',
+                  'attributes': attributes({**ROUTING_SPAN_FIELDS, 'traffic.route.grant': SECRET})})
     traces = {'resourceSpans': [{'resource': {'attributes': attributes({
         'service.name': 'fixture-java', 'service.version': '1.2.3',
         'deployment.environment.name': 'github-dev', 'private': SECRET})},
@@ -190,6 +211,15 @@ def assert_logs(path):
                     if stage == 'python-call':
                         assert fields['ai_usage_available'] is True and fields['ai_output_tokens'] == '11'
                         assert not {'ai_input_tokens', 'request_bytes', 'request_body_complete'} & fields.keys()
+                    routing = {key: fields[key] for key in ROUTING_LOG_ENUMS if key in fields}
+                    if stage == 'route-selected':
+                        assert routing == ROUTING_LOG_FIELDS
+                        assert fields['event'] == 'traffic.route.decision'
+                        assert fields['summary'] == 'traffic route gateway canary selected'
+                    else:
+                        assert not routing, (stage, routing)
+                    if stage == 'route-invalid':
+                        assert 'summary' not in fields
                     seen[stage] = seen.get(stage, 0) + 1
     assert seen == {stage: 1 for stage in EXPECTED}, seen
 
@@ -490,9 +520,23 @@ def run_native(directory):
         'receivers': {'otlp_json_file/fixture': {'include': ['/fixture/grouping.jsonl'], 'start_at': 'beginning'}},
         'service': {'pipelines': {'logs': {'receivers': ['otlp_json_file/fixture'],
                                          'exporters': ['file/assertion']}}}}, assert_logs)
-    # 前一阶段真实filelog输出再穿中心端，证明安全I/O正向字段没有被第二道白名单吞掉。
+    # 回放实际 filelog 输出，另外只在合成反例上恢复非法字段，分别验证两道边界。
+    batches = read_batches(directory / 'output-filelog' / 'events.jsonl')
+    for batch in batches:
+        for resource in batch['resourceLogs']:
+            for scope in resource['scopeLogs']:
+                for record in scope['logRecords']:
+                    stage = decoded(record['attributes'])['stage']
+                    if stage == 'route-invalid':
+                        record['attributes'] += attributes({'summary': SECRET, 'traffic_route_mode': SECRET,
+                                                            'traffic_route_decision': False, 'traffic_route_hop': 'unknown'})
+                    elif stage == 'java-startup':
+                        record['attributes'] += attributes(ROUTING_LOG_FIELDS)
+    central_logs = directory / 'central-logs.jsonl'
+    central_logs.write_text(''.join(json.dumps(batch) + '\n' for batch in batches))
+    central_logs.chmod(0o644)
     native_case(directory, 'central-logs', 'collector.yaml', {
-        'receivers': {'otlp_json_file/fixture': {'include': ['/fixture/output-filelog/events.jsonl'], 'start_at': 'beginning'}},
+        'receivers': {'otlp_json_file/fixture': {'include': ['/fixture/central-logs.jsonl'], 'start_at': 'beginning'}},
         'exporters': {'file/unused': {'path': '/output/unused-traces.jsonl', 'format': 'json'}},
         'service': {'pipelines': {'logs': {'receivers': ['otlp_json_file/fixture'], 'exporters': ['file/assertion']},
                                   'traces': {'receivers': ['otlp_json_file/fixture'], 'exporters': ['file/unused']}}}}, assert_logs)

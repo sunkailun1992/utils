@@ -22,4 +22,4 @@
 模板不设置 alias、生命周期或业务数据保留策略。若运行索引已经存在，模板不会回填其 mapping；先 GET 实际 mapping，另审 additive 变更或新索引方案。首次安全合成事件后，读回实际 `_source` 与 mapping，核三项服务 metadata 和无 trace 的启动事件，并在 Grafana 按服务筛选、按真实 trace 跳转。候选文件存在、JSON 可解析与目标已写入分别记录。
 
 
-HTTP/AI投影新字段通过`runtime-log-additive-mapping.json`增量加入已核对的`github_dev_runtime_log`具体索引。先逐字段读回，已存在且类型相同可跳过，任何类型冲突都停止并报告。仅本运行日志索引属于该变更，不改审计/业务/历史索引，不删除/reindex数据。应用已完成脱敏限长的request_body、response_body、summary及AI长度摘要使用text/index:false，保留在_source供Grafana展开；结构筛选仍使用service/event/outcome/Trace Keyword及数值类型。
+HTTP、AI 与灰度选路的新字段通过`runtime-log-additive-mapping.json`增量加入已核对的`github_dev_runtime_log`具体索引。先逐字段读回，已存在且类型相同可跳过，任何类型冲突都停止并报告。仅本运行日志索引属于该变更，不改审计/业务/历史索引，不删除/reindex数据。应用已完成脱敏限长的request_body、response_body、summary及AI长度摘要使用text/index:false，保留在_source供Grafana展开；结构筛选仍使用service/event/outcome/Trace Keyword及数值类型。`traffic_route_mode`、`traffic_route_decision` 和 `traffic_route_hop` 为 Keyword，可按 `event:"traffic.route.decision"` 与同一 `trace_id` 读回合成选路记录。

@@ -1,6 +1,6 @@
 plugins { id 'java' }
 group = 'com.kellen.observability'
-version = '0.1.1'
+version = '0.1.2'
 repositories { mavenCentral() }
 java { toolchain { languageVersion = JavaLanguageVersion.of(17) } }
 // 只给 agent 扩展编译提供 SDK；薄 Jar 不携带 SDK，也不进入应用依赖。

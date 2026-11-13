@@ -126,7 +126,7 @@ class NativeFixtureContractTest(unittest.TestCase):
             payload = json.loads((root / 'grouping.jsonl').read_text())
             self.assertEqual(len(payload['resourceLogs']), 1)
             records = payload['resourceLogs'][0]['scopeLogs'][0]['logRecords']
-            self.assertEqual(len(records), 3)
+            self.assertEqual(len(records), len(native.EXPECTED))
             fields = [native.decoded(record['attributes']) for record in records]
             self.assertEqual(len({json.dumps(item['service']) for item in fields}), 2)
             self.assertNotIn('trace_id', fields[2])
@@ -143,6 +143,11 @@ class NativeFixtureContractTest(unittest.TestCase):
                     fields[key] = str(fields[key])
             for key in ['ai_input_tokens'] + (['request_bytes', 'request_body_complete'] if stage == 'python-call' else []):
                 fields.pop(key, None)
+            if stage != 'route-selected':
+                for key in native.ROUTING_LOG_ENUMS:
+                    fields.pop(key, None)
+            if stage == 'route-invalid':
+                fields.pop('summary')
             if traced:
                 fields.update(trace_id=native.TRACE, span_id=native.SPAN)
             resources.append({'resource': {'attributes': native.attributes({
@@ -191,7 +196,9 @@ class NativeFixtureContractTest(unittest.TestCase):
                 for scope in resource['scopeSpans']:
                     for span in scope['spans']:
                         span['attributes'] = [field for field in span['attributes']
-                                              if native.SECRET not in json.dumps(field)]
+                                              if native.SECRET not in json.dumps(field)
+                                              and (not field['key'].startswith('traffic.route.')
+                                                   or span['name'] == 'canary-routing')]
                         span.get('status', {}).pop('message', None)
                         span['events'] = []
             output = root / 'sanitized.jsonl'

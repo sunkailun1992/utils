@@ -1,8 +1,12 @@
 package com.kellen.config.dubbo;
 
 import com.baomidou.dynamic.datasource.toolkit.DynamicDataSourceContextHolder;
+import com.kellen.observability.fleet.TrafficRouteObservation;
+import com.kellen.traffic.CanaryContext;
+import com.kellen.traffic.CanaryGrant;
 import com.kellen.traffic.TrafficGovernanceContext;
 import com.kellen.traffic.TrafficGovernanceHeaders;
+import com.kellen.traffic.TrafficGovernanceProperties;
 import com.kellen.utils.context.DynamicSourceTtl;
 import com.kellen.utils.context.TenantContextHolder;
 import io.seata.core.context.RootContext;
@@ -17,13 +21,19 @@ import org.apache.dubbo.rpc.RpcInvocation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mockStatic;
 
 class DubboContextPropagationFilterTest {
 
+    private static final String SIGNING_KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     private final DubboContextPropagationFilter filter = new DubboContextPropagationFilter();
 
     @AfterEach
@@ -34,6 +44,7 @@ class DubboContextPropagationFilterTest {
         DynamicSourceTtl.clear();
         TenantContextHolder.clear();
         TrafficGovernanceContext.clear();
+        CanaryContext.clear();
     }
 
     @Test
@@ -57,8 +68,8 @@ class DubboContextPropagationFilterTest {
         assertThat(invocation.getAttachment(TrafficGovernanceHeaders.TRAFFIC_LANE)).isEqualTo("canary");
         assertThat(invocation.getAttachment(TrafficGovernanceHeaders.TRAFFIC_LANE_ATTACHMENT)).isEqualTo("canary");
         assertThat(invocation.getAttachment(TrafficGovernanceHeaders.CANARY_TAG)).isEqualTo("gray");
-        assertThat(invocation.getAttachment(CommonConstants.TAG_KEY)).isEqualTo("gray");
-        assertThat(invocation.getAttachment(CommonConstants.DUBBO_TAG_HEADER)).isEqualTo("gray");
+        assertThat(invocation.getAttachment(CommonConstants.TAG_KEY)).isNull();
+        assertThat(invocation.getAttachment(CommonConstants.DUBBO_TAG_HEADER)).isNull();
         assertThat(invocation.getAttachment(TrafficGovernanceHeaders.CANARY_WEIGHT)).isEqualTo("20");
         assertThat(invocation.getAttachment(TrafficGovernanceHeaders.CANARY_WEIGHT_ATTACHMENT)).isEqualTo("20");
     }
@@ -107,6 +118,33 @@ class DubboContextPropagationFilterTest {
         return new RpcInvocation("test", "TestService", "", new Class<?>[0], new Object[0]);
     }
 
+    @Test
+    void providerObservesSelectedStableAndCanaryRoutesAndRejectedGrant() {
+        var properties = new TrafficGovernanceProperties();
+        var canary = properties.getCanary();
+        canary.setEnabled(true);
+        canary.setSigningKey(SIGNING_KEY);
+        canary.setRpcSources(Map.of(Object.class.getName(), Set.of("report")));
+        filter.setTrafficGovernanceProperties(properties);
+        var stable = new TestInvoker(CommonConstants.PROVIDER, ignored -> new AppResponse("stable"));
+        var tagged = new TestInvoker(CommonConstants.PROVIDER, "gray", ignored -> new AppResponse("canary"));
+        var granted = invocation();
+        granted.setAttachment(CanaryGrant.ATTACHMENT,
+                CanaryGrant.issue("report", "gray", Instant.now().plusSeconds(30), SIGNING_KEY));
+        var forged = invocation();
+        forged.setAttachment(CanaryGrant.ATTACHMENT, "forged");
+
+        try (var observation = mockStatic(TrafficRouteObservation.class)) {
+            assertThat(filter.invoke(stable, invocation()).getValue()).isEqualTo("stable");
+            assertThat(filter.invoke(tagged, granted).getValue()).isEqualTo("canary");
+            assertThatThrownBy(() -> filter.invoke(tagged, forged)).isInstanceOf(RpcException.class);
+            observation.verify(() -> TrafficRouteObservation.record("dubbo_provider", "stable", "selected"));
+            observation.verify(() -> TrafficRouteObservation.record("dubbo_provider", "canary", "selected"));
+            observation.verify(() -> TrafficRouteObservation.record("dubbo_provider", "canary", "rejected"));
+            observation.verifyNoMoreInteractions();
+        }
+    }
+
     private static class TestInvoker implements Invoker<Object> {
 
         private final URL url;
@@ -114,8 +152,13 @@ class DubboContextPropagationFilterTest {
         private final Function<Invocation, Result> handler;
 
         private TestInvoker(String side, Function<Invocation, Result> handler) {
-            this.url = URL.valueOf("tri://127.0.0.1:20880/com.kellen.TestService")
+            this(side, null, handler);
+        }
+
+        private TestInvoker(String side, String tag, Function<Invocation, Result> handler) {
+            URL address = URL.valueOf("tri://127.0.0.1:20880/com.kellen.TestService")
                     .addParameter(CommonConstants.SIDE_KEY, side);
+            this.url = tag == null ? address : address.addParameter(CommonConstants.TAG_KEY, tag);
             this.handler = handler;
         }
 

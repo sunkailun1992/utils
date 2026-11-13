@@ -44,6 +44,10 @@ public final class FleetPrivacyExtension implements AutoConfigurationCustomizerP
                     "failed", "timeout", "protocol_error", "business_error", "disabled", "unmatched", "rejected", "notification"),
             "outcome", Set.of("success", "failure", "cancelled"),
             "operation", Set.of("patient_analysis", "questionnaire_reply", "questionnaire_interpret"));
+    private static final Map<String, Set<String>> ROUTING_ENUMS = Map.of(
+            "traffic.route.mode", Set.of("stable", "canary"),
+            "traffic.route.decision", Set.of("selected", "rejected", "unavailable", "failed"),
+            "traffic.route.hop", Set.of("gateway", "http_provider", "dubbo_consumer", "dubbo_provider"));
     private static final Map<String, Set<String>> AI_ENUMS = Map.of(
             "gen_ai.operation.name", Set.of("chat", "generate_content", "embeddings", "retrieval", "invoke_agent", "execute_tool"),
             "gen_ai.provider.name", Set.of("gcp.gemini", "google", "deepseek", "qwen", "alibaba.dashscope", "openai"),
@@ -86,6 +90,7 @@ public final class FleetPrivacyExtension implements AutoConfigurationCustomizerP
         source.forEach((key, value) -> {
             Set<String> values = ENUMS.get(key.getKey());
             if (values == null) values = AI_ENUMS.get(key.getKey());
+            if (values == null) values = ROUTING_ENUMS.get(key.getKey());
             if (values != null && value instanceof String string && values.contains(string)) {
                 safe.put(AttributeKey.stringKey(key.getKey()), string);
             } else if ("http.response.status_code".equals(key.getKey()) && value instanceof Long number

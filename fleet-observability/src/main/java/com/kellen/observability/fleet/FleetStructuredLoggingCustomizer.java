@@ -31,7 +31,8 @@ public final class FleetStructuredLoggingCustomizer implements StructuredLogging
         private static final String HTTP_LOGGER = "com.kellen.observability.fleet.events";
         private static final String AI_LOGGER = "com.kellen.agent.service.AiModelCallObserver";
         private static final Map<String, Integer> STRINGS = Map.ofEntries(
-                Map.entry("event", 64), Map.entry("summary", 512), Map.entry("http_method", 16), Map.entry("http_route", 200),
+                Map.entry("traffic_route_hop", 32), Map.entry("traffic_route_mode", 16),
+                Map.entry("traffic_route_decision", 16), Map.entry("event", 64), Map.entry("summary", 512), Map.entry("http_method", 16), Map.entry("http_route", 200),
                 Map.entry("request_body", 8192), Map.entry("response_body", 8192),
                 Map.entry("request_body_omitted", 32), Map.entry("response_body_omitted", 32),
                 Map.entry("error_type", 120), Map.entry("error_code", 80), Map.entry("outcome", 32), Map.entry("stage", 80),
@@ -81,7 +82,15 @@ public final class FleetStructuredLoggingCustomizer implements StructuredLogging
                 }
                 String text = string(pair.value, STRINGS.get(key));
                 if (text == null) return null;
-                if (key.equals("event")) return Set.of("http.server.exchange", "ai.model.call").contains(text) ? text : null;
+                if (key.equals("event")) {
+                    return Set.of("http.server.exchange", "ai.model.call", TrafficRouteObservation.EVENT).contains(text)
+                            ? text : null;
+                }
+                if (key.startsWith("traffic_route_")) {
+                    return HTTP_LOGGER.equals(event.getLoggerName())
+                            && TrafficRouteObservation.EVENT.equals(pair(event, "event").value)
+                            && TrafficRouteObservation.allowed(key, text) ? text : null;
+                }
                 if (key.equals("http_method")) return METHODS.contains(text) ? text : null;
                 if (key.equals("http_route")) return text.equals("UNMATCHED") || text.startsWith("/") && text.matches("[/A-Za-z0-9_{}:*?.-]+") && !text.contains("://") ? text : null;
                 if (key.equals("request_body") || key.equals("response_body")) {

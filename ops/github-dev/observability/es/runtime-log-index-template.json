@@ -59,6 +59,18 @@
         "duration_ms": {
           "type": "double"
         },
+        "traffic_route_mode": {
+          "type": "keyword",
+          "ignore_above": 32
+        },
+        "traffic_route_decision": {
+          "type": "keyword",
+          "ignore_above": 32
+        },
+        "traffic_route_hop": {
+          "type": "keyword",
+          "ignore_above": 32
+        },
         "summary": {
           "type": "text",
           "index": false
