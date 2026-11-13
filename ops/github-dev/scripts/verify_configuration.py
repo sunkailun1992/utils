@@ -92,7 +92,7 @@ def check_local_canary_template(source):
             "instance": {"lane": "canary", "tag": "${local-canary.tag}"},
             "canary": {"enabled": True, "service": "${spring.application.name}",
                        "http-tag": "${local-canary.tag}",
-                       "signing-key": "${KELLEN_PERSONAL_CANARY_SIGNING_KEY:}"},
+                       "signing-key": "${GITHUB_PERSONAL_CANARY_SIGNING_KEY}"},
         }},
     }, "个人灰度模板含未核准的共享注册、鉴权或签名设置"
     # Python 比较会把数字 1 当作 True，另外检查布尔类型。

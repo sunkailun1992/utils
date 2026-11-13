@@ -25,5 +25,5 @@ traffic:
       service: ${spring.application.name}
       # 仅接收分配给当前标签的 HTTP 灰度授权。
       http-tag: ${local-canary.tag}
-      # 与可信网关使用同一环境注入的密钥，未注入时灰度授权校验失败。
-      signing-key: ${KELLEN_PERSONAL_CANARY_SIGNING_KEY:}
+      # 网关与各参与服务共用的签名密钥；发布时由私有 dev.env 的 GITHUB_PERSONAL_CANARY_SIGNING_KEY 渲染写入，缺少时渲染失败，不发布空密钥。
+      signing-key: ${GITHUB_PERSONAL_CANARY_SIGNING_KEY}

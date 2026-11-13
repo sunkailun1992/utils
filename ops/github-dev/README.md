@@ -76,7 +76,7 @@ python3 ops/github-dev/scripts/sync_nacos.py
 
 本机 Nacos 控制台端口是 `18080`，应用端 `server-addr` 使用 `8848`，gRPC 使用 `9848`。命名空间显示名和真实 ID 均为 `github-dev`。控制台 URL 与 SDK 地址分别配置，不能把控制台地址直接填进应用。
 
-个人本地灰度启动前，先将 `local-canary.yaml` 单独发布到 `github-dev / DEFAULT_GROUP` 并读回。各服务的 `dev` 启动入口必需导入该配置，`test` 和 `prod` 不导入。通过本机私有进程环境向网关和参与服务注入相同的 `KELLEN_PERSONAL_CANARY_SIGNING_KEY`，保持 Nacos 模板中的 Spring 引用。默认标签是 `kellen-local`，修改 `APP_CANARY_TAG` 时同步修改本地网关 `dev` 的授权映射。未就绪时本地后端不注册或导出参与灰度的 RPC，签名为空时拒绝灰度授权。
+个人本地灰度启动前，先将 `local-canary.yaml` 单独发布到 `github-dev / DEFAULT_GROUP` 并读回。各服务的 `dev` 启动入口必需导入该配置，`test` 和 `prod` 不导入。签名密钥放在私有 `dev.env` 的 `GITHUB_PERSONAL_CANARY_SIGNING_KEY`（32 字节随机数的 base64url，43 个字符），由 `render_nacos.py` 渲染进 `local-canary.yaml`，网关与参与服务因此读到同一把密钥；缺少时渲染失败，不会发布空密钥。当前 github-dev 的 Nacos 未开启客户端鉴权，能访问 Nacos 的人可读到该密钥，属于开发环境风险等级。轮换时更新 `dev.env`，重新渲染并 CAS 发布该 dataId，再重启网关和参与服务（该配置 `refreshEnabled=false`）。默认标签是 `kellen-local`，修改 `APP_CANARY_TAG` 时同步修改本地网关 `dev` 的授权映射。未就绪时本地后端不注册或导出参与灰度的 RPC，签名为空时拒绝灰度授权。
 
 当前已发布的个人公共制品为 `com:utils:1.6.6` 和 `com:rpc-api:1.0.9`（第1阶段底座升级，Java 21），各消费者按自己的依赖锁定精确版本，不会自动升级。与美联共用阿里云 Maven 仓库地址，但美联制品使用 `com.kellen` group，两边独立发布和递增版本。Maven 凭据从私有环境或用户 Gradle 配置注入，不放进本目录；发布前核对目标版本未占用，发布后核对远程 POM、JAR 和本地构建的 SHA-256。历史验收 JSON 中的 `1.4.9` 是当时运行快照，不能作为新构建的坐标。
 
