@@ -284,6 +284,22 @@
       ]
     },
     {
+      "dataId": "local-canary.yaml",
+      "description": "个人本地 dev 的灰度标签、就绪标记和短时授权配置。仅由 dev profile 导入。",
+      "category": "安全与可观测性",
+      "consumers": [
+        "ai",
+        "ai-agent",
+        "ai-memory",
+        "gateway",
+        "mcp",
+        "message",
+        "rag",
+        "report",
+        "user"
+      ]
+    },
+    {
       "dataId": "user-spring.yaml",
       "description": "用户服务主/灰度数据源与 OAuth 授权服务器公开入口；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",

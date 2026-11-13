@@ -9,6 +9,14 @@ from start_service import private_environment
 
 
 def yaml_json(text):
+    documents = yaml_documents(text)
+    if len(documents) != 1:
+        raise ValueError("Nacos YAML 必须恰好包含一个文档")
+    return documents[0]
+
+
+def yaml_documents(text):
+    """保留 Spring profile 的 YAML 文档顺序，拒绝任一文档中的重复键。"""
     result = subprocess.run(["ruby", "-ryaml", "-rjson", "-e",
                              """
       source = STDIN.read
@@ -23,8 +31,14 @@ def yaml_json(text):
         end
         (node.children || []).each { |child| visit.call(child) }
       end
-      visit.call(Psych.parse_stream(source))
-      puts JSON.generate(YAML.safe_load(source, aliases: true))
+      stream = Psych.parse_stream(source)
+      visit.call(stream)
+      documents = stream.children.map do |document|
+        single = Psych::Nodes::Stream.new
+        single.children << document
+        YAML.safe_load(single.to_yaml, aliases: true)
+      end
+      puts JSON.generate(documents)
     """],
                             input=text, capture_output=True, text=True)
     if result.returncode:

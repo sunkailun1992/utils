@@ -6,7 +6,7 @@
 
 ## 配置与凭据
 
-- `nacos/DEFAULT_GROUP/`：26 个可提交模板，只含公共默认值与 `GITHUB_*` 占位符；职责、消费者与参数注释见 [配置分类索引](nacos/README.md)。新增/修改时必须遵循 [Nacos 注释与归类规范](../../docs/ai-coding/NACOS_COMMENT_SPEC.md)。
+- `nacos/DEFAULT_GROUP/`：25 个可提交模板。职责、消费者与参数注释见 [配置分类索引](nacos/README.md)。新增/修改时必须遵循 [Nacos 注释与归类规范](../../docs/ai-coding/NACOS_COMMENT_SPEC.md)。
 - `~/.config/kellen-github/dev.env`：本机私有配置，普通文件、权限 `0600`，不进 Git。
 - 各 Java 服务根目录的 `config/application-dev.properties`：本机私有 Nacos 引导配置，权限 `0600`，已加入对应 `.gitignore`。仅保存 Nacos dev 地址、命名空间、group、username/password 五个连接键；不要复制模型、数据库或业务配置进去。
 - `~/.config/kellen-github/nacos-rendered/DEFAULT_GROUP/`：包含真实连接值及通用模型密钥的私有渲染结果，文件权限 `0600`。禁止复制到仓库或 Wiki。
@@ -73,6 +73,8 @@ python3 ops/github-dev/scripts/sync_nacos.py
 IDE、`bootRun`、`java -jar` 的工作目录统一为当前服务仓库根目录。Spring Boot 会自动读取本机 `config/application-dev.properties`，`application.yml` 保持原样，默认 profile 为 `dev`。该文件填写 `GITHUB_NACOS_DEV_SERVER_ADDR`、`GITHUB_NACOS_DEV_NAMESPACE=github-dev`、`GITHUB_NACOS_GROUP=DEFAULT_GROUP`、`GITHUB_NACOS_USERNAME`、`GITHUB_NACOS_PASSWORD`；真实值不进 Git，OS 环境变量优先。`test`/`prod` 不读取 dev 文件，但仍使用同一组个人 dev 变量和既有默认值。没有显式地址时使用 profile 中的当前开发服务默认地址，不回落到 localhost。
 
 本机 Nacos 控制台端口是 `18080`，应用端 `server-addr` 使用 `8848`，gRPC 使用 `9848`。命名空间显示名和真实 ID 均为 `github-dev`。控制台 URL 与 SDK 地址分别配置，不能把控制台地址直接填进应用。
+
+个人本地灰度启动前，先将 `local-canary.yaml` 单独发布到 `github-dev / DEFAULT_GROUP` 并读回。各服务的 `dev` 启动入口必需导入该配置，`test` 和 `prod` 不导入。通过本机私有进程环境向网关和参与服务注入相同的 `KELLEN_PERSONAL_CANARY_SIGNING_KEY`，保持 Nacos 模板中的 Spring 引用。默认标签是 `kellen-local`，修改 `APP_CANARY_TAG` 时同步修改本地网关 `dev` 的授权映射。未就绪时本地后端不注册或导出参与灰度的 RPC，签名为空时拒绝灰度授权。
 
 当前已发布的个人公共制品为 `com:utils:1.6.6` 和 `com:rpc-api:1.0.9`（第1阶段底座升级，Java 21），各消费者按自己的依赖锁定精确版本，不会自动升级。与美联共用阿里云 Maven 仓库地址，但美联制品使用 `com.kellen` group，两边独立发布和递增版本。Maven 凭据从私有环境或用户 Gradle 配置注入，不放进本目录；发布前核对目标版本未占用，发布后核对远程 POM、JAR 和本地构建的 SHA-256。历史验收 JSON 中的 `1.4.9` 是当时运行快照，不能作为新构建的坐标。
 

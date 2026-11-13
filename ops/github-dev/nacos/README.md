@@ -1,6 +1,6 @@
 # 个人 Nacos 配置目录
 
-本目录维护 `github-dev / DEFAULT_GROUP` 的 24 个活跃模板，默认渲染仅遍历 `DEFAULT_GROUP/`。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。`rollback-examples/` 仅保存显式回滚示例，不进入活跃 catalog、默认渲染或自动删除清单。Yudao 与美联实际配置不在本目录维护范围。
+本目录维护 `github-dev / DEFAULT_GROUP` 的 25 个活跃模板，默认渲染仅遍历 `DEFAULT_GROUP/`。按职责分类，共享配置继续独立维护；服务自身和框架参数统一到 `{service}-spring.yaml`。group、namespace 及保留项的 import 顺序不变。`rollback-examples/` 仅保存显式回滚示例，不进入活跃 catalog、默认渲染或自动删除清单。Yudao 与美联实际配置不在本目录维护范围。
 
 每个文件包含职责、导入服务与叶子参数注释；`GITHUB_*` 由私有环境渲染，Spring `${custom.*}` 等引用留给应用解析。[目录清单](catalog.json) 同时记录 dataId 说明、分类和消费者，供 Nacos 配置描述同步与一致性校验。Dubbo 自动生成的 metadata/mapping 不属于人工配置模板，不因数量多而删除。
 
@@ -28,6 +28,7 @@
 |---|---|---|
 | [actuator.yaml](DEFAULT_GROUP/actuator.yaml) | 管理端点访问令牌、暴露范围与健康详情策略 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [logging.yml](DEFAULT_GROUP/logging.yml) | 全局日志等级与安全结构化元数据白名单 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
+| [local-canary.yaml](DEFAULT_GROUP/local-canary.yaml) | 本地灰度标签、就绪标记和授权，只有 dev 导入 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [security-auth.yaml](DEFAULT_GROUP/security-auth.yaml) | 认证来源、数据权限与租户隔离 | ai-memory、mcp、message、rag、report、user |
 | [security-jwt.yaml](DEFAULT_GROUP/security-jwt.yaml) | 人员访问 JWT 的签名密钥与签发方 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [swagger.yaml](DEFAULT_GROUP/swagger.yaml) | OpenAPI 文档和 Swagger UI 暴露开关 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
@@ -73,7 +74,7 @@
 
 ## 合并与旧项清理
 
-以下为此前服务配置合并与退役项的历史操作说明；不适用于上方明确保留的共享模型回滚项。当前默认发布集合以 24 项活跃 catalog 为准。
+以下为此前服务配置合并与退役项的历史操作说明。当前默认发布集合以活跃 catalog 为准。
 
 本轮按实际消费者和键空间核对后，将 `ai.yaml`、`ai-agent.yaml`、`mcp.yaml`、`rag.yaml`、`user.yaml` 合并到对应 `{service}-spring.yaml`；合并前两项在所有 profile 中相邻，均为 `optional`、`refreshEnabled=true`，且没有重复叶子键。移除空映射 `ai-memory.yaml`、`message.yaml`、`report.yaml`。清理清单及替代关系见 [retired-dataids.json](retired-dataids.json)。这次结构调整已单独授权，不能据此把今后的纯注释任务扩大为自动合并。
 

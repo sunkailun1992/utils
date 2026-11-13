@@ -7,11 +7,21 @@ import subprocess
 import sys
 from pathlib import Path
 from prepare_databases import prepare
-from render_nacos import yaml_json
+from render_nacos import yaml_documents, yaml_json
 
 ROOT = Path(__file__).resolve().parents[4]
 SERVICES = ("gateway", "user", "message", "report", "ai", "ai-agent", "ai-memory", "rag", "mcp")
 CONFIG = Path(__file__).resolve().parents[1] / "nacos/DEFAULT_GROUP"
+LOCAL_CANARY_DATA_ID = "local-canary.yaml"
+LOCAL_CANARY_IMPORT = f"nacos:{LOCAL_CANARY_DATA_ID}?refreshEnabled=false"
+LOCAL_CANARY_RPC_SOURCES = {
+    "ai-memory": {"[com.kellen.rpc.memory.MemoryRetrievalRpcService]": ["ai-agent"]},
+    "rag": {"[com.kellen.rpc.rag.RagRetrievalRpcService]": ["ai"]},
+    "user": {
+        "[com.kellen.rpc.user.UserRpcService]": ["message"],
+        "[com.kellen.rpc.auth.AuthOpenApiRpcService]": ["ai-agent"],
+    },
+}
 
 # 与受审计的两级Collector使用同一字段合同，仍对完整树/类型作精确匹配。
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "observability"))
@@ -25,6 +35,69 @@ def import_dataid(item):
     match = re.fullmatch(r"(?:optional:)?nacos:([^?]+)(?:\?.*)?", item)
     assert match, "只接受显式 Nacos dataId 导入"
     return match[1]
+
+
+def check_local_canary_profile(service, environment, documents):
+    bootstrap = documents[0]
+    imports = bootstrap["spring"]["config"]["import"]
+    if environment != "dev":
+        assert len(documents) == 1 and LOCAL_CANARY_DATA_ID not in map(import_dataid, imports), service
+        return
+    assert len(documents) == 2 and imports[-1] == LOCAL_CANARY_IMPORT, service
+    override = documents[1]
+    assert "config" not in override["spring"], service
+    discovery = override["spring"]["cloud"]["nacos"]["discovery"]
+    canary = override["traffic"]["governance"]["canary"]
+    if service == "gateway":
+        assert discovery == {"register-enabled": False}, service
+        assert canary == {
+            "enabled": "${local-canary.ready:false}",
+            "routes": {backend: {"kellen-local": backend + "-canary-kellen-local"}
+                       for backend in SERVICES if backend != "gateway"},
+        }, service
+        return
+    assert discovery["service"] == "${spring.application.name}-canary-${local-canary.tag:kellen-local}", service
+    assert discovery["register-enabled"] == "${local-canary.ready:false}", service
+    assert discovery["metadata"] == {
+        "[traffic.lane]": "${traffic.governance.instance.lane:canary}",
+        "[canary.tag]": "${local-canary.tag:kellen-local}",
+    }, service
+    assert canary["require-grant"] is True, service
+    assert canary.get("rpc-sources", {}) == LOCAL_CANARY_RPC_SOURCES.get(service, {}), service
+    if service in LOCAL_CANARY_RPC_SOURCES:
+        assert override["dubbo"]["provider"] == {
+            "tag": "${local-canary.tag:kellen-local}", "export": "${local-canary.ready:false}",
+        }, service
+    else:
+        assert "dubbo" not in override, service
+    if service == "ai":
+        assert override["ai"]["bootstrap"]["seed-demo-content"] is False, service
+        assert override["ai"]["agent-client"]["canary"] == {
+            "gateway-base-url": "${LOCAL_CANARY_GATEWAY_BASE_URL:http://127.0.0.1:7100}",
+            "tags": "${local-canary.tag:kellen-local}",
+        }, service
+    if service == "ai-agent":
+        assert override["ai"]["agent"]["registry"]["enabled"] is False, service
+        assert override["ai"]["prompts"]["sync"]["enabled"] is False, service
+    if service == "mcp":
+        assert override["mcp"]["server"]["registry"]["enabled"] is False, service
+        assert override["mcp"]["agent"]["registry"]["enabled"] is False, service
+
+
+def check_local_canary_template(source):
+    value = yaml_json(source)
+    assert value == {
+        "local-canary": {"tag": "${APP_CANARY_TAG:kellen-local}", "ready": True},
+        "traffic": {"governance": {
+            "instance": {"lane": "canary", "tag": "${local-canary.tag}"},
+            "canary": {"enabled": True, "service": "${spring.application.name}",
+                       "http-tag": "${local-canary.tag}",
+                       "signing-key": "${KELLEN_PERSONAL_CANARY_SIGNING_KEY:}"},
+        }},
+    }, "个人灰度模板含未核准的共享注册、鉴权或签名设置"
+    # Python 比较会把数字 1 当作 True，另外检查布尔类型。
+    assert value["local-canary"]["ready"] is True
+    assert value["traffic"]["governance"]["canary"]["enabled"] is True
 
 
 def check_catalog(config, catalog, retired, consumers):
@@ -120,12 +193,23 @@ def check_consolidation_baseline(baseline_file):
     expected_profiles = {f"{service}/src/main/resources/application-{environment}.yml"
                          for service in SERVICES for environment in ("dev", "test", "prod")}
     assert set(before["profiles"]) == expected_profiles, "旧快照必须覆盖全部 27 个 profile"
-    assert set(after) <= set(before["templates"]) and set(before["templates"]) - set(after) <= removed, "旧快照包含缺失或未经登记的 dataId"
+    assert set(after) - set(before["templates"]) <= {LOCAL_CANARY_DATA_ID}, "新增项超出个人灰度 dataId"
+    assert set(before["templates"]) - set(after) <= removed, "旧快照包含缺失或未经登记的 dataId"
     for relative, original in before["profiles"].items():
-        old = yaml_json(original)
-        new = yaml_json((ROOT / relative).read_text())
+        old_documents = yaml_documents(original)
+        new_documents = yaml_documents((ROOT / relative).read_text())
+        old, new = old_documents[0], new_documents[0]
+        added_canary = LOCAL_CANARY_DATA_ID not in before["templates"] and (
+            new["spring"]["config"]["import"][-1:] == [LOCAL_CANARY_IMPORT])
+        if added_canary:
+            assert relative.endswith("application-dev.yml"), relative
+            check_local_canary_profile(relative.split("/", 1)[0], "dev", new_documents)
+        else:
+            assert old_documents[1:] == new_documents[1:], relative + " 附加引导文档发生变化"
         old_imports = old["spring"]["config"].pop("import")
         new_imports = new["spring"]["config"].pop("import")
+        if added_canary:
+            new_imports = new_imports[:-1]
         assert json.dumps(old, sort_keys=True) == json.dumps(new, sort_keys=True), relative + " 引导键发生变化"
         assert new_imports == [item for item in old_imports if import_dataid(item) not in removed], relative + " 导入次序或选项改变"
         old_ids = [import_dataid(item) for item in old_imports]
@@ -366,7 +450,9 @@ def check():
         for environment in ("dev", "test", "prod"):
             file = resources / f"application-{environment}.yml"
             text = file.read_text()
-            value = yaml_json(text)
+            documents = yaml_documents(text)
+            check_local_canary_profile(service, environment, documents)
+            value = documents[0]
             assert value["custom"]["namespace"] == "${GITHUB_NACOS_DEV_NAMESPACE:github-dev}", file
             assert value["custom"]["nacos-ip"].startswith(
                 "${GITHUB_NACOS_DEV_SERVER_ADDR:${GITHUB_NACOS_SERVER_ADDR:"), file
@@ -386,6 +472,7 @@ def check():
         yaml_json(file.read_text())
         check_parameter_comments(file.read_text())
         assert not re.search(r"cfbf4c42-|meilianshuke\.com|hz2y\.com", file.read_text()), file
+    check_local_canary_template((CONFIG / LOCAL_CANARY_DATA_ID).read_text())
     check_catalog({file.name: file.read_text() for file in CONFIG.iterdir()},
                   json.loads((CONFIG.parent / "catalog.json").read_text()),
                   json.loads((CONFIG.parent / "retired-dataids.json").read_text()), consumers)

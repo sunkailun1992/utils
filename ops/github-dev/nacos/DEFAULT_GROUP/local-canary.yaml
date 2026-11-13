@@ -1,0 +1,29 @@
+# dataId：local-canary.yaml | group：DEFAULT_GROUP | namespace：github-dev
+# 配置分类：安全与可观测性
+# 用途：个人本地 dev 的灰度标签、就绪标记和短时授权配置。
+# 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
+
+# 本地灰度实例的公共参数。仅供 个人 github-dev 中明确引入此文件的 dev 进程使用。
+# Nacos 分组为 DEFAULT_GROUP。每个服务自行设置注册名、授权要求和后台任务开关。
+local-canary:
+  # 服务以此确认公共文件已加载，缺省时不注册灰度实例。
+  ready: true
+  # 实例标签须与网关映射和对应 Dubbo provider 一致，默认 kellen-local。
+  tag: ${APP_CANARY_TAG:kellen-local}
+
+traffic:
+  governance:
+    instance:
+      # 写入服务实例元数据，便于核对当前通道。
+      lane: canary
+      # 同一通道的实例和调用使用同一个标签。
+      tag: ${local-canary.tag}
+    canary:
+      # 启用短时灰度授权的验证和已接入调用的传播。
+      enabled: true
+      # 灰度授权绑定原始应用名。
+      service: ${spring.application.name}
+      # 仅接收分配给当前标签的 HTTP 灰度授权。
+      http-tag: ${local-canary.tag}
+      # 与可信网关使用同一环境注入的密钥，未注入时灰度授权校验失败。
+      signing-key: ${KELLEN_PERSONAL_CANARY_SIGNING_KEY:}
