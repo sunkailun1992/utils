@@ -110,7 +110,7 @@ class DubboContextPropagationFilterTest {
         assertThat(RootContext.getXID()).isNull();
         assertThat(TenantContextHolder.getTenantId()).isNull();
         assertThat(TrafficGovernanceContext.get()).isNull();
-        assertThat(DynamicSourceTtl.dataSourceContext.get()).isNull();
+        assertThat(DynamicSourceTtl.peek()).isNull();
         assertThat(DynamicDataSourceContextHolder.peek()).isNull();
     }
 

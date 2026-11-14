@@ -1,36 +1,20 @@
 package com.kellen.utils.verify.check;
 
+import cn.hutool.core.util.PhoneUtil;
 import com.kellen.utils.verify.Phone;
-import org.apache.commons.lang3.StringUtils;
-
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 /**
- * 手机号校验
- * 
+ * {@link Phone} 的校验器：空值通过，其余交给 Hutool {@link PhoneUtil#isMobile(CharSequence)}；
+ * 提示语使用注解自身的 {@code message}。
+ *
+ * @author 孙凯伦
  */
 public class PhoneValidator implements ConstraintValidator<Phone, String> {
 
-    /**
-     * 校验
-     * @param phone
-     * @param constraintValidatorContext
-     * @return
-     */
     @Override
-    public boolean isValid(String phone, ConstraintValidatorContext constraintValidatorContext) {
-
-        if (!StringUtils.isEmpty(phone)) {
-            // 禁用默认提示信息
-            constraintValidatorContext.disableDefaultConstraintViolation();
-            // 设置提示语
-            constraintValidatorContext.buildConstraintViolationWithTemplate("手机号格式错误").addConstraintViolation();
-
-            String regex = "^1(3|4|5|7|8)\\d{9}$";
-            return phone.matches(regex);
-        }
-        return true;
+    public boolean isValid(String phone, ConstraintValidatorContext context) {
+        return phone == null || phone.isEmpty() || PhoneUtil.isMobile(phone);
     }
-
 }

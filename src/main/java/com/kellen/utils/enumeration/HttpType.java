@@ -5,8 +5,8 @@ package com.kellen.utils.enumeration;
  * 
  */
 public enum HttpType {
-    //from
-    FROM("from"),
+    //form
+    FORM("form"),
     //json
     JSON("json"),
     //xml

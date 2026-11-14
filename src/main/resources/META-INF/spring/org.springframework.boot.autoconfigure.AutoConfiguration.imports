@@ -1,1 +1,2 @@
 com.kellen.config.datasource.PostgresqlDdlAutoConfiguration
+com.kellen.config.json.JsonUtilAutoConfiguration
