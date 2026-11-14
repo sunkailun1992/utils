@@ -6,12 +6,8 @@ import com.kellen.utils.json.JsonUtil;
 import okhttp3.*;
 import org.springframework.util.Assert;
 
-import javax.net.ssl.*;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.security.SecureRandom;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -39,69 +35,23 @@ public final class OkHttpUtils {
     public static final String PC_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36";
 
     /**
-     * 复用的 OkHttp 客户端。
+     * 复用的 OkHttp 客户端：类加载时初始化一次，线程安全；使用 JDK 默认的证书与主机名校验。
+     * 访问自签名的内部服务时，应为该服务单独配置信任库，不能在这里放开校验。
      */
-    private static OkHttpClient client = null;
+    private static final class ClientHolder {
+        private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
+                .connectTimeout(10, SECONDS)
+                .readTimeout(60, SECONDS)
+                .build();
+    }
 
     /**
      * 获取 OkHttp 客户端。
      *
-     * @return OkHttp 客户端
+     * @return 全局共享的 OkHttp 客户端
      */
     public static OkHttpClient getOkHttpClient() {
-        if (null == client) {
-            try {
-                TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(
-                            X509Certificate[] chain,
-                            String authType) throws CertificateException {
-                    }
-
-                    @Override
-                    public void checkServerTrusted(
-                            X509Certificate[] chain,
-                            String authType) throws CertificateException {
-                    }
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                }};
-                SSLContext sslContext = SSLContext.getInstance("SSL");
-                sslContext.init(null, trustAllCerts, new SecureRandom());
-                SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-                client = new OkHttpClient.Builder().connectTimeout(10, SECONDS).readTimeout(60, SECONDS)
-                        .sslSocketFactory(sslSocketFactory, new X509TrustManager() {
-                            @Override
-                            public X509Certificate[] getAcceptedIssuers() {
-                                return new X509Certificate[0];
-                            }
-
-                            @Override
-                            public void checkServerTrusted(X509Certificate[] chain, String authType)
-                                    throws CertificateException {
-                            }
-
-                            @Override
-                            public void checkClientTrusted(X509Certificate[] chain, String authType)
-                                    throws CertificateException {
-                            }
-                        })
-                        .hostnameVerifier(new HostnameVerifier() {
-                            @Override
-                            public boolean verify(String hostname, SSLSession session) {
-                                return true;
-                            }
-                        })
-                        .build();
-
-            } catch (Exception e) {
-                throw new IllegalStateException("初始化 OkHttp 客户端失败", e);
-            }
-        }
-        return client;
+        return ClientHolder.CLIENT;
     }
 
     /**

@@ -247,6 +247,10 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    // MockWebServer：为 OkHttpUtils 起本地 HTTP/HTTPS 测试服务。
+    testImplementation "com.squareup.okhttp3:mockwebserver3:${okhttpVersion}"
+    // OkHttp TLS：在测试里签发自签名证书，验证默认证书校验会拒绝它。
+    testImplementation "com.squareup.okhttp3:okhttp-tls:${okhttpVersion}"
     // 对齐 Gradle 测试运行器与 JUnit Platform Launcher 版本，避免测试发现阶段版本错配。
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
