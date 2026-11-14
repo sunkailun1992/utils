@@ -43,30 +43,6 @@ public class ApiExceptionHandler {
     }
 
     /**
-     * 防重复提交异常处理。
-     *
-     * @param e       防重复提交异常
-     * @param request 当前HTTP请求
-     * @return 统一失败响应
-     */
-    @ExceptionHandler(value = PreventRepeatException.class)
-    public ApiResponse<Void> preventRepeatException(PreventRepeatException e, HttpServletRequest request) {
-        return fail(request, "PreventRepeatException", e, ReturnCode.用户重复请求); // 幂等锁命中时返回用户重复请求错误码。
-    }
-
-    /**
-     * 必填参数为空异常处理。
-     *
-     * @param e       参数异常
-     * @param request 当前HTTP请求
-     * @return 统一失败响应
-     */
-    @ExceptionHandler(value = ParameterNullException.class)
-    public ApiResponse<Void> parameterNullException(ParameterNullException e, HttpServletRequest request) {
-        return fail(request, "ParameterNullException", e, ReturnCode.请求必填参数为空); // 参数为空时返回统一参数错误码。
-    }
-
-    /**
      * 业务异常处理。
      *
      * @param e       业务异常
@@ -88,42 +64,6 @@ public class ApiExceptionHandler {
     @ExceptionHandler(RpcException.class)
     public ApiResponse<Void> rpcException(RpcException e, HttpServletRequest request) {
         return fail(request, "RpcException", e, ReturnCode.RPC服务出错); // 下游服务调用失败时返回 RPC 服务错误码。
-    }
-
-    /**
-     * 短信通知异常处理。
-     *
-     * @param e       短信异常
-     * @param request 当前HTTP请求
-     * @return 统一失败响应
-     */
-    @ExceptionHandler(value = SmsException.class)
-    public ApiResponse<Void> smsException(SmsException e, HttpServletRequest request) {
-        return fail(request, "SmsException", e, ReturnCode.通知服务出错); // 短信发送失败归类为通知服务错误。
-    }
-
-    /**
-     * 时间参数异常处理。
-     *
-     * @param e       时间异常
-     * @param request 当前HTTP请求
-     * @return 统一失败响应
-     */
-    @ExceptionHandler(value = DateException.class)
-    public ApiResponse<Void> dateFmtException(DateException e, HttpServletRequest request) {
-        return fail(request, "DateException", e, ReturnCode.非法的时间戳参数); // 时间格式或时间戳异常返回时间戳参数错误。
-    }
-
-    /**
-     * RSA签名异常处理。
-     *
-     * @param e       签名异常
-     * @param request 当前HTTP请求
-     * @return 统一失败响应
-     */
-    @ExceptionHandler(value = SignException.class)
-    public ApiResponse<Void> signException(SignException e, HttpServletRequest request) {
-        return fail(request, "SignException", e, ReturnCode.RSA签名错误); // 签名验签失败返回 RSA 签名错误码。
     }
 
     /**

@@ -52,24 +52,10 @@ public class Swagger {
                                 .url("https://github.com/sunkailun1992")
                                 .email("kl19921210@gmail.com")))
                 .schemaRequirement("Authorization", bearerAuth())
-                .schemaRequirement("dataSource", apiKey("dataSource"))
                 .addSecurityItem(new SecurityRequirement()
-                        .addList("Authorization")
-                        .addList("dataSource"));
+                        .addList("Authorization"));
     }
 
-    /**
-     * 创建请求头API Key安全定义。
-     *
-     * @param name 请求头名称
-     * @return OpenAPI安全定义
-     */
-    private SecurityScheme apiKey(String name) {
-        return new SecurityScheme()
-                .type(SecurityScheme.Type.APIKEY)
-                .in(SecurityScheme.In.HEADER)
-                .name(name); // dataSource 仍作为动态数据源请求头展示。
-    }
 
     /**
      * 创建Bearer JWT安全定义。
