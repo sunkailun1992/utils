@@ -73,14 +73,14 @@ public class MyBatisPlusConfig {
         if (dataPermissionProperties.isEnabled()) {
             interceptor.addInnerInterceptor(new DataPermissionInterceptor(new DataPermissionSqlHandler(dataPermissionProperties))); // 开启数据权限插件后自动为 SQL 拼接部门或本人条件。
         }
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.POSTGRE_SQL)); // 注册 PostgreSQL 分页插件。
+        interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor()); // 注册 @Version 乐观锁插件。
         if (securityProperties.isIllegalSqlEnabled()) {
             interceptor.addInnerInterceptor(new IllegalSQLInnerInterceptor()); // 注册非法 SQL 拦截插件，提前阻断高风险 SQL。
         }
         if (securityProperties.isBlockAttackEnabled()) {
             interceptor.addInnerInterceptor(new BlockAttackInnerInterceptor()); // 注册防全表更新删除插件，避免无条件 update/delete 破坏数据。
         }
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.POSTGRE_SQL)); // 注册 PostgreSQL 分页插件。
-        interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor()); // 注册 @Version 乐观锁插件。
         return interceptor; // 返回完整插件链。
     }
 

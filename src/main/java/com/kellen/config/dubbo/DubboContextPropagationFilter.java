@@ -9,7 +9,7 @@ import com.kellen.traffic.TrafficGovernanceProperties;
 import com.kellen.traffic.TrafficGovernanceHeaders;
 import com.kellen.utils.context.DynamicSourceTtl;
 import com.kellen.utils.context.TenantContextHolder;
-import io.seata.core.context.RootContext;
+import org.apache.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.common.constants.CommonConstants;

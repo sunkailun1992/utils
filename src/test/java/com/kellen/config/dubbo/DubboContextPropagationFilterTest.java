@@ -9,7 +9,7 @@ import com.kellen.traffic.TrafficGovernanceHeaders;
 import com.kellen.traffic.TrafficGovernanceProperties;
 import com.kellen.utils.context.DynamicSourceTtl;
 import com.kellen.utils.context.TenantContextHolder;
-import io.seata.core.context.RootContext;
+import org.apache.seata.core.context.RootContext;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.rpc.AppResponse;

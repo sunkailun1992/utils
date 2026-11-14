@@ -15,16 +15,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Actuator 访问保护测试使用的最小 Web 应用。
  *
- * <p>和消费者一样通过组件扫描装配 utils 的 actuator、web、security 配置，只排除会在启动时直连 Redis 的
- * {@link ConfigClientController} 和测试类内部的专用配置。</p>
+ * <p>和消费者一样通过组件扫描装配 utils 的 web、security 配置，只排除测试类内部的专用配置；
+ * Redis 连接由 Spring Boot 与 Redisson 自动配置提供，这里不启用自动配置，所以不连 Redis。</p>
  */
 @SpringBootConfiguration
 @Import(ActuatorInfrastructureTestConfiguration.class)
 @ComponentScan(
-        basePackages = {"com.kellen.config.actuator", "com.kellen.config.web", "com.kellen.security.config"},
+        basePackages = {"com.kellen.config.web", "com.kellen.security.config"},
         excludeFilters = {
-                @ComponentScan.Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
-                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = ConfigClientController.class)
+                @ComponentScan.Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class)
         }
 )
 class ActuatorProtectionTestApplication {

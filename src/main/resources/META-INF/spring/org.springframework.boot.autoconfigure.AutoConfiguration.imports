@@ -1,2 +1,3 @@
 com.kellen.config.datasource.PostgresqlDdlAutoConfiguration
 com.kellen.config.json.JsonUtilAutoConfiguration
+com.kellen.config.redis.RedisLockAutoConfiguration
