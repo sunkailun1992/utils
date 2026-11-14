@@ -4,6 +4,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * 基于 Redisson 的分布式锁实现。
@@ -34,7 +35,9 @@ public class RedissonLocker implements Locker {
     @Override
     public void unlock(String lockKey) {
         RLock lock = redissonClient.getLock(lockKey);
-        lock.unlock();
+        if (lock.isHeldByCurrentThread()) { // 只释放当前线程持有的锁，租约到期或被他人持有时不抛 IllegalMonitorStateException。
+            lock.unlock();
+        }
     }
 
     @Override
@@ -67,4 +70,34 @@ public class RedissonLocker implements Locker {
         return lock.isLocked();
     }
 
+
+    @Override
+    public <T> T executeWithLock(String lockKey, long waitTime, TimeUnit unit, Supplier<T> action) {
+        RLock lock = redissonClient.getLock(lockKey);
+        boolean acquired;
+        try {
+            acquired = lock.tryLock(waitTime, unit); // 不传租约，由 Redisson 看门狗续期，与 mcp 现有用法一致。
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt(); // 恢复中断标记，交给调用方决定是否继续。
+            throw new LockAcquireException(lockKey, exception);
+        }
+        if (!acquired) {
+            throw new LockAcquireException(lockKey);
+        }
+        try {
+            return action.get();
+        } finally {
+            if (lock.isHeldByCurrentThread()) { // 只释放自己持有的锁。
+                lock.unlock();
+            }
+        }
+    }
+
+    @Override
+    public void runWithLock(String lockKey, long waitTime, TimeUnit unit, Runnable action) {
+        executeWithLock(lockKey, waitTime, unit, () -> {
+            action.run();
+            return null;
+        });
+    }
 }

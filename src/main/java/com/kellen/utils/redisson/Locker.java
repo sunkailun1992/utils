@@ -1,6 +1,7 @@
 package com.kellen.utils.redisson;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * 分布式锁操作接口。
@@ -67,4 +68,28 @@ public interface Locker {
      * @return true 表示锁当前被持有
      */
     boolean isLocked(String lockKey);
+
+    /**
+     * 在等待时间内加锁并执行操作，执行完在 finally 里释放自己持有的锁；不传租约，由 Redisson 看门狗续期。
+     *
+     * @param lockKey  锁键
+     * @param waitTime 最长等待时间
+     * @param unit     等待时间单位
+     * @param action   持锁期间执行的操作
+     * @param <T>      操作返回值类型
+     * @return 操作返回值
+     * @throws LockAcquireException 等待超时或等待被中断（中断时先恢复线程中断标记）
+     */
+    <T> T executeWithLock(String lockKey, long waitTime, TimeUnit unit, Supplier<T> action);
+
+    /**
+     * 无返回值版本的 {@link #executeWithLock(String, long, TimeUnit, Supplier)}。
+     *
+     * @param lockKey  锁键
+     * @param waitTime 最长等待时间
+     * @param unit     等待时间单位
+     * @param action   持锁期间执行的操作
+     * @throws LockAcquireException 等待超时或等待被中断
+     */
+    void runWithLock(String lockKey, long waitTime, TimeUnit unit, Runnable action);
 }
