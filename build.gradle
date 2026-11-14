@@ -64,24 +64,16 @@ ext {
     jjwtVersion = '0.9.1'
     // OkHttp 版本，5.x 稳定线；RequestBody.create 参数顺序调整为 (content, MediaType)。
     okhttpVersion = '5.5.1'
-    // Guava 版本，用于集合辅助和不可变集合能力。
+    // Guava 版本：utils 不再直接使用，但 Seata 仍传递引入；锁定为原先显式声明的版本，避免 BOM 规则降到旧版。
     guavaVersion = '33.8.0-jre'
-    // Apache Commons Collections 版本，用于集合工具能力。
-    commonsCollectionsVersion = '4.5.0'
     // Apache POI 版本，用于 Hutool Excel 运行时和 Office 文档处理。
     poiVersion = '5.5.1'
     // Dozer 版本，用于通用对象属性映射能力。
     dozerVersion = '6.5.2'
     // Seata 客户端版本，用于分布式事务代理和 XID 透传；当前已发布 starter 最新为 2.6.0，可注册到 Seata Server 2.7.0。
     seataVersion = '2.6.0'
-    // Aviator 版本，用于通用表达式和公式计算能力。
-    aviatorVersion = '5.4.4'
     // TTL 版本，用于线程池场景下的 ThreadLocal 上下文传递。
     ttlVersion = '2.14.5'
-    // Javax Mail 版本，当前 Hutool Mail 仍依赖 javax.mail 体系。
-    javaxMailVersion = '1.4.7'
-    // Orika 版本，用于 BeanMapper 对象映射能力。
-    orikaVersion = '1.5.4'
 }
 
 // 项目级仓库配置是依赖拉取的唯一入口，避免 settings.gradle 覆盖私库注入策略。
@@ -153,6 +145,11 @@ dependencyManagement {
         mavenBom "com.alibaba.cloud:spring-cloud-alibaba-dependencies:${springCloudAlibabaVersion}"
         // API/context/common 必须同版；覆盖 Boot BOM 的旧 OTel 版本，避免 API 混装。
         mavenBom 'io.opentelemetry:opentelemetry-bom:1.67.0'
+    }
+    // 单独锁定的传递依赖版本，优先于上面 BOM 的管理版本。
+    dependencies {
+        // Guava 只由 Seata 传递引入，保持不低于原先显式声明的版本。
+        dependency "com.google.guava:guava:${guavaVersion}"
     }
 }
 
@@ -232,24 +229,14 @@ dependencies {
     api "io.jsonwebtoken:jjwt:${jjwtVersion}"
     // OkHttp：提供 HTTP 客户端请求能力。
     api "com.squareup.okhttp3:okhttp:${okhttpVersion}"
-    // Guava：提供 Google 通用集合和工具能力。
-    api "com.google.guava:guava:${guavaVersion}"
-    // Apache Commons Collections：提供集合增强工具能力。
-    api "org.apache.commons:commons-collections4:${commonsCollectionsVersion}"
     // Apache POI：提供 Office 文档和 Excel 处理能力。
     api "org.apache.poi:poi-ooxml:${poiVersion}"
     // Dozer：提供对象之间的属性映射能力。
     api "com.github.dozermapper:dozer-core:${dozerVersion}"
     // Spring Cloud Alibaba Seata：提供 Spring Cloud Alibaba 体系下的 Seata 集成能力。
     api 'com.alibaba.cloud:spring-cloud-starter-alibaba-seata'
-    // Aviator：提供表达式公式计算能力。
-    api "com.googlecode.aviator:aviator:${aviatorVersion}"
     // TTL：提供线程池场景下的 ThreadLocal 上下文传递能力。
     api "com.alibaba:transmittable-thread-local:${ttlVersion}"
-    // Javax Mail：提供历史邮件发送能力，当前代码仍依赖 javax.mail 包。
-    api "javax.mail:mail:${javaxMailVersion}"
-    // Orika：提供 BeanMapper 使用的对象映射能力。
-    api "ma.glasnost.orika:orika-core:${orikaVersion}"
     // Nacos Discovery：提供服务注册发现和优雅停机端点依赖的 Nacos 注册对象。
     api 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery'
     // Lombok 编译期注解：源码中使用 @Getter、@Data、@Slf4j 等注解。

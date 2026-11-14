@@ -1,6 +1,5 @@
 package com.kellen.config.redis;
 
-import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +12,7 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -38,7 +38,7 @@ public class RedisCacheConfig {
      */
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory factory) {
-        Map<String, RedisCacheConfiguration> cacheConfigurations = Maps.newHashMap();
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         String [] cacheNamesList = cacheNames.split(",");
         for (String name : cacheNamesList) {
             String cache = name.split("-")[0];
