@@ -38,7 +38,7 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler(value = UserException.class)
     public ApiResponse<Void> userException(UserException e, HttpServletRequest request) {
-        ReturnCode returnCode = Objects.nonNull(e.getReturnCode()) ? e.getReturnCode() : ReturnCode.用户端错误; // 优先使用业务主动传入的错误码。
+        ReturnCode returnCode = Objects.nonNull(e.getReturnCode()) ? e.getReturnCode() : ReturnCode.CLIENT_ERROR; // 优先使用业务主动传入的错误码。
         return fail(request, "UserException", e, returnCode); // 统一记录日志并组装 ApiResponse。
     }
 
@@ -51,7 +51,7 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public ApiResponse<Void> businessException(BusinessException e, HttpServletRequest request) {
-        return fail(request, "BusinessException", e, ReturnCode.系统执行出错); // 未细分业务异常默认归类为系统执行错误。
+        return fail(request, "BusinessException", e, ReturnCode.SYSTEM_EXECUTION_ERROR); // 未细分业务异常默认归类为系统执行错误。
     }
 
     /**
@@ -63,7 +63,7 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler(RpcException.class)
     public ApiResponse<Void> rpcException(RpcException e, HttpServletRequest request) {
-        return fail(request, "RpcException", e, ReturnCode.RPC服务出错); // 下游服务调用失败时返回 RPC 服务错误码。
+        return fail(request, "RpcException", e, ReturnCode.RPC_SERVICE_ERROR); // 下游服务调用失败时返回 RPC 服务错误码。
     }
 
     /**
@@ -75,7 +75,7 @@ public class ApiExceptionHandler {
      */
     @ExceptionHandler({SQLException.class})
     public ApiResponse<Void> sqlException(SQLException e, HttpServletRequest request) {
-        return fail(request, "SQLException", e, ReturnCode.数据库服务出错); // 数据库访问异常统一转换为数据库服务错误。
+        return fail(request, "SQLException", e, ReturnCode.DATABASE_SERVICE_ERROR); // 数据库访问异常统一转换为数据库服务错误。
     }
 
     /**
@@ -92,7 +92,7 @@ public class ApiExceptionHandler {
         for (ConstraintViolation<?> next : constraintViolations) { // 逐条提取校验提示。
             msgList.add(next.getMessageTemplate()); // 保留注解里配置的稳定提示文案。
         }
-        return fail(request, "ConstraintViolationException", e, ReturnCode.请求必填参数为空, msgList.toString()); // 返回统一参数错误响应。
+        return fail(request, "ConstraintViolationException", e, ReturnCode.REQUIRED_PARAMETER_MISSING, msgList.toString()); // 返回统一参数错误响应。
     }
 
     /**
@@ -105,7 +105,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     protected ApiResponse<Void> handlerMethodArgumentnotvalidException(MethodArgumentNotValidException e, HttpServletRequest request) {
         List<String> msgList = dealBindResult(e.getBindingResult()); // 从 Spring BindingResult 中提取字段错误提示。
-        return fail(request, "MethodArgumentNotValidException", e, ReturnCode.请求必填参数为空, msgList.toString()); // 返回统一参数错误响应。
+        return fail(request, "MethodArgumentNotValidException", e, ReturnCode.REQUIRED_PARAMETER_MISSING, msgList.toString()); // 返回统一参数错误响应。
     }
 
     /**
@@ -118,7 +118,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler(BindException.class)
     protected ApiResponse<Void> handlerBindException(BindException e, HttpServletRequest request) {
         List<String> msgList = dealBindResult(e.getBindingResult()); // 从 Spring BindingResult 中提取字段错误提示。
-        return fail(request, "BindException", e, ReturnCode.请求必填参数为空, msgList.toString()); // 返回统一参数错误响应。
+        return fail(request, "BindException", e, ReturnCode.REQUIRED_PARAMETER_MISSING, msgList.toString()); // 返回统一参数错误响应。
     }
 
     /**

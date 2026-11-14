@@ -29,13 +29,13 @@ public class ApiResponse<T> {
      * 统一错误码
      */
     @Schema(name = "code", description = "统一错误码")
-    private String code = ReturnCode.成功.getState();
+    private String code = ReturnCode.SUCCESS.getCode();
 
     /**
      * 错误码默认提示
      */
     @Schema(name = "msg", description = "错误码默认提示")
-    private String msg = ReturnCode.成功.getName();
+    private String msg = ReturnCode.SUCCESS.getMessage();
 
     /**
      * 业务响应数据
@@ -63,7 +63,7 @@ public class ApiResponse<T> {
      * @author 孙凯伦
      */
     public ApiResponse() {
-        init(ReturnCode.成功, null, null); // 默认对象表示成功空响应，保证 success、code、msg 三者一致。
+        init(ReturnCode.SUCCESS, null, null); // 默认对象表示成功空响应，保证 success、code、msg 三者一致。
     }
 
     /**
@@ -85,7 +85,7 @@ public class ApiResponse<T> {
      */
     public static <T> ApiResponse<T> success(T data) {
         ApiResponse<T> response = new ApiResponse<>(); // 创建标准响应对象，避免外部直接拼装返回结构。
-        response.init(ReturnCode.成功, data, null); // 成功响应使用统一成功码，并写入业务数据。
+        response.init(ReturnCode.SUCCESS, data, null); // 成功响应使用统一成功码，并写入业务数据。
         return response; // 返回完整统一响应对象。
     }
 
@@ -124,10 +124,10 @@ public class ApiResponse<T> {
      * @author 孙凯伦
      */
     private void init(ReturnCode returnCode, T data, String error) {
-        ReturnCode actualCode = returnCode == null ? ReturnCode.系统执行出错 : returnCode; // 返回码为空时兜底为系统错误，避免空指针响应。
-        this.success = ReturnCode.成功 == actualCode; // success 只由统一返回码决定，避免调用方传入矛盾状态。
-        this.code = actualCode.getState(); // code 使用 ReturnCode 中稳定编码，方便前端和日志定位。
-        this.msg = actualCode.getName(); // msg 使用 ReturnCode 默认中文说明，保持所有服务文案一致。
+        ReturnCode actualCode = returnCode == null ? ReturnCode.SYSTEM_EXECUTION_ERROR : returnCode; // 返回码为空时兜底为系统错误，避免空指针响应。
+        this.success = ReturnCode.SUCCESS == actualCode; // success 只由统一返回码决定，避免调用方传入矛盾状态。
+        this.code = actualCode.getCode(); // code 使用 ReturnCode 中稳定编码，方便前端和日志定位。
+        this.msg = actualCode.getMessage(); // msg 使用 ReturnCode 默认中文说明，保持所有服务文案一致。
         this.data = this.success ? data : null; // 失败响应不返回业务数据，避免前端误读失败结果。
         this.errorMessage = this.success ? null : defaultError(actualCode, error); // 成功不输出错误信息，失败优先输出业务提示。
         this.timestamp = LocalDateTime.now(); // 每次构造响应时记录服务端响应时间。
@@ -142,6 +142,6 @@ public class ApiResponse<T> {
      * @author 孙凯伦
      */
     private String defaultError(ReturnCode returnCode, String error) {
-        return error == null || error.isBlank() ? returnCode.getName() : error; // 自定义提示为空时使用错误码默认提示。
+        return error == null || error.isBlank() ? returnCode.getMessage() : error; // 自定义提示为空时使用错误码默认提示。
     }
 }
