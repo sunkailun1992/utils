@@ -7,9 +7,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -90,7 +92,23 @@ public class RedisCacheConfig {
      * @return GenericJackson2JsonRedisSerializer
      */
     private RedisSerializationContext.SerializationPair<Object> valuePair() {
-        return RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer());
+        return RedisSerializationContext.SerializationPair.fromSerializer(valueSerializer());
+    }
+
+    /**
+     * 缓存值序列化器：Spring Data Redis 4 的 Jackson 3 实现，写入 {@code @class} 类型信息以便按原类型读回。
+     * 多态类型只放行本项目与 JDK 的类，避免反序列化任意类；Jackson 3 自带 java.time 支持。
+     *
+     * @return 带类型信息的 JSON 序列化器
+     */
+    static RedisSerializer<Object> valueSerializer() {
+        return GenericJacksonJsonRedisSerializer.builder()
+                .enableSpringCacheNullValueSupport()
+                .enableDefaultTyping(BasicPolymorphicTypeValidator.builder()
+                        .allowIfSubType("com.kellen.")
+                        .allowIfSubType("java.")
+                        .build())
+                .build();
     }
 
 }
