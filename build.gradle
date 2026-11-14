@@ -66,8 +66,6 @@ ext {
     okhttpVersion = '5.5.1'
     // Guava 版本：utils 不再直接使用，但 Seata 仍传递引入；锁定为原先显式声明的版本，避免 BOM 规则降到旧版。
     guavaVersion = '33.8.0-jre'
-    // Apache POI 版本，用于 Hutool Excel 运行时和 Office 文档处理。
-    poiVersion = '5.5.1'
     // Seata 客户端版本，用于分布式事务代理和 XID 透传；当前已发布 starter 最新为 2.6.0，可注册到 Seata Server 2.7.0。
     seataVersion = '2.6.0'
     // TTL 版本，用于线程池场景下的 ThreadLocal 上下文传递。
@@ -174,8 +172,6 @@ dependencies {
     api "org.apache.dubbo:dubbo-spring-boot-starter:${dubboVersion}"
     // Dubbo Nacos Registry：让 Dubbo 服务复用当前 Nacos 3.2.2 注册中心。
     api "org.apache.dubbo:dubbo-registry-nacos:${dubboVersion}"
-    // WebSocket：提供 WebSocket 会话和消息推送能力。
-    api 'org.springframework.boot:spring-boot-starter-websocket'
     // Validation：提供 jakarta.validation 参数校验能力。
     api 'org.springframework.boot:spring-boot-starter-validation'
     // Spring Web：提供 Spring MVC、Servlet、HTTP 请求处理能力。
@@ -227,8 +223,6 @@ dependencies {
     api "io.jsonwebtoken:jjwt:${jjwtVersion}"
     // OkHttp：提供 HTTP 客户端请求能力。
     api "com.squareup.okhttp3:okhttp:${okhttpVersion}"
-    // Apache POI：提供 Office 文档和 Excel 处理能力。
-    api "org.apache.poi:poi-ooxml:${poiVersion}"
     // Spring Cloud Alibaba Seata：提供 Spring Cloud Alibaba 体系下的 Seata 集成能力。
     api 'com.alibaba.cloud:spring-cloud-starter-alibaba-seata'
     // TTL：提供线程池场景下的 ThreadLocal 上下文传递能力。
