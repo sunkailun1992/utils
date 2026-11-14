@@ -5,7 +5,6 @@ import com.kellen.observability.TraceContextSnapshot;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
-import com.kellen.aliyun.dingding.DingDingUtil;
 import com.kellen.idempotent.PreventRepeatInit;
 import com.kellen.log.entity.ElasticSearchRequestLog;
 import com.kellen.log.service.ElasticSearchRequestLogService;
@@ -29,7 +28,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -80,7 +78,6 @@ public class RequestRequiredAspect {
         DynamicSourceTtl.push(dataSource); // 写入动态数据源上下文。
     }
 
-
     /**
      * 方法正常完成后清理上下文。
      *
@@ -113,7 +110,6 @@ public class RequestRequiredAspect {
         return o; // 返回业务方法结果。
     }
 
-
     /**
      * 异常增强
      *
@@ -136,7 +132,6 @@ public class RequestRequiredAspect {
         DynamicSourceTtl.clear();
     }
 
-
     /**
      * 拦截器,设置日志
      *
@@ -157,38 +152,7 @@ public class RequestRequiredAspect {
         entry.setRequest("{\"omitted\":\"policy\"}");
         entry.setResults("{\"omitted\":\"policy\"}");
         elasticSearchRequestLogService.insert(entry);
-        dingDing(proceedingJoinPoint, httpServletRequest, time, map, o);
     }
-
-    /**
-     * 请求耗时超限钉钉提醒
-     *
-     * @param proceedingJoinPoint: aop拦截类
-     * @param httpServletRequest:  当前请求
-     * @param time:                接口耗时
-     * @param map:                 请求参数
-     * @param o:                   返回结果
-     * @return void
-     * @author 孙凯伦
-     */
-    @Async
-    public void dingDing(ProceedingJoinPoint proceedingJoinPoint, HttpServletRequest httpServletRequest, long time, Map<String, String> map, Object o) {
-        if (time >= 3000) {
-            try {
-                TraceContextSnapshot trace = TraceContextSnapshot.capture();
-                String json = DingDingUtil.markdown(false, "请求超长",
-                        "#### 路由：" + safeRoute(httpServletRequest) + "\n"
-                                + "#### trace ID：" + (trace.traceId() == null ? "unavailable" : trace.traceId()) + "\n"
-                                + "#### 耗时：" + Math.max(0, time) + " ms",
-                        Arrays.asList(""));
-                DingDingUtil.sendReboot(json);
-            } catch (Exception e) {
-                log.warn("慢请求提醒发送失败"); // 钉钉发送失败不影响业务响应。
-            }
-        }
-    }
-
-
 
     /** 审计只采用框架路由模板，不把动态 URI、查询参数或客户端 trace ID 提升为元数据。 */
     private String safeRoute(HttpServletRequest request) {
@@ -211,7 +175,6 @@ public class RequestRequiredAspect {
         return attributes.getRequest();
     }
 
-
     /**
      * 从请求头读取动态数据源。
      *
@@ -226,7 +189,6 @@ public class RequestRequiredAspect {
         }
         return dataSource; // 返回最终数据源。
     }
-
 
     /**
      * 校验可能参与 SQL 拼接的请求参数。

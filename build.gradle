@@ -58,8 +58,6 @@ ext {
     tencentCosVersion = '5.6.283'
     // 阿里云 OSS SDK 版本，用于对象存储上传、下载和签名能力。
     aliyunOssVersion = '3.18.5'
-    // 阿里云 Java Core SDK 版本，用于短信、STS、函数工作流等基础客户端能力。
-    aliyunCoreVersion = '4.7.8'
     // Redisson 版本，4.x 适配 Spring Boot 4 自动配置包名。
     redissonVersion = '4.8.0'
     // JJWT 版本，当前代码使用 0.9.x API，暂不跨到 0.12+ 新 API。
@@ -88,8 +86,6 @@ ext {
     ttlVersion = '2.14.5'
     // Javax Mail 版本，当前 Hutool Mail 仍依赖 javax.mail 体系。
     javaxMailVersion = '1.4.7'
-    // 阿里云 FNF SDK 版本，用于函数工作流调用能力。
-    aliyunFnfVersion = '1.9.0'
     // Orika 版本，用于 BeanMapper 对象映射能力。
     orikaVersion = '1.5.4'
 }
@@ -236,8 +232,6 @@ dependencies {
     api "com.qcloud:cos_api:${tencentCosVersion}"
     // Aliyun OSS：提供阿里云对象存储上传、下载、签名能力。
     api "com.aliyun.oss:aliyun-sdk-oss:${aliyunOssVersion}"
-    // Aliyun Core：提供阿里云短信、STS、函数工作流等 SDK 基础客户端。
-    api "com.aliyun:aliyun-java-sdk-core:${aliyunCoreVersion}"
     // Hutool：提供常用集合、转换、加密、Spring、Excel 等工具能力。
     api "cn.hutool:hutool-all:${hutoolVersion}"
     // Redisson：提供 Redis 分布式锁和 RedissonClient 自动配置能力。
@@ -270,8 +264,6 @@ dependencies {
     api "com.alibaba:transmittable-thread-local:${ttlVersion}"
     // Javax Mail：提供历史邮件发送能力，当前代码仍依赖 javax.mail 包。
     api "javax.mail:mail:${javaxMailVersion}"
-    // Aliyun FNF：提供阿里云函数工作流 API。
-    api "com.aliyun:aliyun-java-sdk-fnf:${aliyunFnfVersion}"
     // Orika：提供 BeanMapper 使用的对象映射能力。
     api "ma.glasnost.orika:orika-core:${orikaVersion}"
     // Nacos Discovery：提供服务注册发现和优雅停机端点依赖的 Nacos 注册对象。
