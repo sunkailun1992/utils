@@ -70,12 +70,6 @@ ext {
     commonsCollectionsVersion = '4.5.0'
     // Apache POI 版本，用于 Hutool Excel 运行时和 Office 文档处理。
     poiVersion = '5.5.1'
-    // iText 7 版本，PdfUtils 改用 kernel/io/layout/forms 新 API。
-    itextVersion = '7.2.5'
-    // iText font-asian 版本，替代 iText 5 的 itext-asian，提供 STSong-Light 等 CJK 字体 CMap。
-    fontAsianVersion = '7.2.5'
-    // PDFBox 版本，3.x 线；加载入口由 PDDocument.load 改为 Loader.loadPDF。
-    pdfboxVersion = '3.0.8'
     // Dozer 版本，用于通用对象属性映射能力。
     dozerVersion = '6.5.2'
     // Seata 客户端版本，用于分布式事务代理和 XID 透传；当前已发布 starter 最新为 2.6.0，可注册到 Seata Server 2.7.0。
@@ -185,8 +179,6 @@ dependencies {
     api "org.apache.dubbo:dubbo-spring-boot-starter:${dubboVersion}"
     // Dubbo Nacos Registry：让 Dubbo 服务复用当前 Nacos 3.2.2 注册中心。
     api "org.apache.dubbo:dubbo-registry-nacos:${dubboVersion}"
-    // Spring AMQP：提供 RabbitMQ 消息队列支持。
-    api 'org.springframework.boot:spring-boot-starter-amqp'
     // WebSocket：提供 WebSocket 会话和消息推送能力。
     api 'org.springframework.boot:spring-boot-starter-websocket'
     // Validation：提供 jakarta.validation 参数校验能力。
@@ -246,12 +238,6 @@ dependencies {
     api "org.apache.commons:commons-collections4:${commonsCollectionsVersion}"
     // Apache POI：提供 Office 文档和 Excel 处理能力。
     api "org.apache.poi:poi-ooxml:${poiVersion}"
-    // iText 7 core：提供 kernel/io/layout/forms 等 PDF 生成与表单处理能力。
-    api "com.itextpdf:itext7-core:${itextVersion}"
-    // iText font-asian：提供 STSong-Light 等 CJK 字体的 CMap 资源。
-    api "com.itextpdf:font-asian:${fontAsianVersion}"
-    // PDFBox：提供 PDF 渲染、读取和页面处理能力。
-    api "org.apache.pdfbox:pdfbox:${pdfboxVersion}"
     // Dozer：提供对象之间的属性映射能力。
     api "com.github.dozermapper:dozer-core:${dozerVersion}"
     // Spring Cloud Alibaba Seata：提供 Spring Cloud Alibaba 体系下的 Seata 集成能力。
