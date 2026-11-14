@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 /**
  * {@link com.kellen.utils.annotations.Methods @Methods} 注解与字段反射的承载对象。
  *
- * <p>保存单个注解元数据及其对应字段的名称、类型与取值，供 {@code MethodsInit}/{@code MethodsJudge} 解析使用。</p>
+ * <p>保存单个注解元数据及其对应字段的名称、类型与取值，供 {@code MethodsInit} 解析使用。</p>
  *
  * @author 孙凯伦
  * @since 1.0.0
