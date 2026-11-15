@@ -19,9 +19,6 @@ class PostgresqlConfigurationTests(unittest.TestCase):
     def structure_fixture(self, directory):
         """独立仓 CI 只需临时 DDL；真实七仓表清单由集成命令另验。"""
         root = Path(directory)
-        common = root / "utils/src/main/resources/db/postgresql/common-infra-schema.sql"
-        common.parent.mkdir(parents=True)
-        common.write_text((ROOT / "utils/src/main/resources/db/postgresql/common-infra-schema.sql").read_text())
         for service, name, count in (("ai", "ai-schema.sql", 1),
                                      ("ai-memory", "ai-memory-schema.sql", 1),
                                      ("message", "message-schema.sql", 1),
@@ -68,10 +65,10 @@ class PostgresqlConfigurationTests(unittest.TestCase):
             documents, manifest = prepare(self.structure_fixture(directory))
         self.assertEqual(set(documents), {"github_dev_" + name.replace("-", "_") for name in SERVICES})
         self.assertEqual(set(manifest), set(SERVICES))
-        self.assertEqual(sum(len(row["tables"]) for row in manifest.values()), 18)
+        self.assertEqual(sum(len(row["tables"]) for row in manifest.values()), 4)
         for database, source in documents.items():
             with self.subTest(database=database):
-                self.assertIn("CREATE TABLE IF NOT EXISTS public.undo_log", source)
+                self.assertNotIn("undo_log", source)
                 self.assertNotRegex(source, r"(?im)^\s*(?:USE|CREATE DATABASE|INSERT|UPDATE|DELETE|TRUNCATE|DROP)\b")
                 self.assertNotIn("ENGINE=InnoDB", source)
                 self.assertNotIn("AUTO_INCREMENT", source)

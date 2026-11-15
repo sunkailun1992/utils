@@ -18,11 +18,10 @@ SCRIPTS = {
 
 def prepare(root):
     documents, manifest = {}, {}
-    common = root / "utils/src/main/resources/db/postgresql/common-infra-schema.sql"
     for service, names in SCRIPTS.items():
         database = "github_dev_" + service.replace("-", "_")
         tables, parts = set(), []
-        sources = [common] + [root / service / "src/main/resources/db/postgresql" / name for name in names]
+        sources = [root / service / "src/main/resources/db/postgresql" / name for name in names]
         for source in sources:
             text = source.read_text()
             if re.search(r"(?im)^\s*(?:USE|CREATE DATABASE|INSERT|UPDATE|DELETE|DROP|TRUNCATE)\b", text):

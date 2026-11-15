@@ -193,6 +193,10 @@ dependencies {
     api 'org.postgresql:postgresql'
     // Spring JDBC：提供 DataSource、JdbcTemplate 和事务基础能力。
     api 'org.springframework.boot:spring-boot-starter-jdbc'
+    // Flyway：各服务表结构只由自己 db/migration 下的迁移管理，版本由固定 Spring Boot BOM 管理；utils 不放迁移脚本。
+    api 'org.springframework.boot:spring-boot-starter-flyway'
+    // Flyway PostgreSQL 模块：Flyway 10 起各数据库支持拆成独立模块，缺少时连接 PostgreSQL 即报不支持该数据库。
+    api 'org.flywaydb:flyway-database-postgresql'
     // Druid：提供 Spring Boot 4 下的 Druid 数据库连接池。
     api "com.alibaba:druid-spring-boot-4-starter:${druidVersion}"
     // Dynamic Datasource：提供 Spring Boot 4 动态数据源切换能力。

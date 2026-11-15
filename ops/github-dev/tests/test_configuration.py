@@ -189,9 +189,6 @@ class NacosOrganizationTests(unittest.TestCase):
         # 只证明 prepare 的组合与只读结构门禁；不冒充检查相邻 AI 的真实 DDL。
         with tempfile.TemporaryDirectory(prefix="fleet-schema-contract-") as temporary:
             root = Path(temporary)
-            common = root / "utils/src/main/resources/db/postgresql/common-infra-schema.sql"
-            common.parent.mkdir(parents=True)
-            common.write_text("CREATE TABLE IF NOT EXISTS fixture_infra (id bigint);\n")
             storage_tables = {"ai_storage_configuration", "ai_storage_setting", "ai_storage_operation"}
             for service, names in SCRIPTS.items():
                 for name in names:
@@ -200,7 +197,7 @@ class NacosOrganizationTests(unittest.TestCase):
                     tables = storage_tables if service == "ai" else {"fixture_" + service.replace("-", "_")}
                     source.write_text("".join(f"CREATE TABLE IF NOT EXISTS {table} (id bigint);\n" for table in sorted(tables)))
             documents, manifest = configuration.prepare(root)
-            self.assertEqual(set(manifest["ai"]["tables"]), storage_tables | {"fixture_infra"})
+            self.assertEqual(set(manifest["ai"]["tables"]), storage_tables)
             self.assertNotIn("INSERT INTO ai_storage_setting", documents["github_dev_ai"])
             ai = root / "ai/src/main/resources/db/postgresql/ai-schema.sql"
             ai.write_text(ai.read_text() + "INSERT INTO ai_storage_setting VALUES (1);\n")

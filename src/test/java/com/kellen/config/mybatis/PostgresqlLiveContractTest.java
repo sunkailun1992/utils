@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
-import com.baomidou.mybatisplus.extension.ddl.DdlHelper;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.TenantLineInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,6 +19,8 @@ import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.session.RowBounds;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -51,52 +52,54 @@ class PostgresqlLiveContractTest {
         return connection;
     }
 
-    @Test void officialDdlHelperSelectsPgHistoryAndCommonScriptIsRepeatable() throws Exception {
-        String script = "db/postgresql/common-infra-schema.sql";
+    @Test void seataUndoLogFixtureIsRepeatableAndKeepsMicroseconds() throws Exception {
+        String schema = "undo_log_" + UUID.randomUUID().toString().replace("-", "");
         try (Connection connection = connection()) {
-            for (int run = 0; run < 2; run++) {
-                DdlHelper.runScript(null, connection, List.of(script), runner -> {
-                    runner.setStopOnError(true);
-                    runner.setLogWriter(null);
-                    runner.setErrorLogWriter(null);
-                }, true, (name, error) -> { throw new IllegalStateException("PG fixture DDL failed", error); });
-            }
-            try (var query = connection.prepareStatement("SELECT count(*) FROM public.ddl_history WHERE script = ?")) {
-                query.setString(1, script);
-                try (var rows = query.executeQuery()) { rows.next(); assertThat(rows.getLong(1)).isEqualTo(1); }
-            }
-            String xid = "synthetic-" + UUID.randomUUID();
-            LocalDateTime preciseTime = LocalDateTime.of(2026, 1, 1, 0, 0, 0, 123456000);
+            connection.createStatement().execute("CREATE SCHEMA " + schema);
             try {
-                try (var insert = connection.prepareStatement("""
-                        INSERT INTO public.undo_log
-                        (branch_id, xid, context, rollback_info, log_status, log_created, log_modified)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                        """, Statement.RETURN_GENERATED_KEYS)) {
-                    insert.setLong(1, 7L);
-                    insert.setString(2, xid);
-                    insert.setString(3, "synthetic");
-                    insert.setBytes(4, new byte[] {1, 2, 3});
-                    insert.setInt(5, 0);
-                    insert.setTimestamp(6, Timestamp.valueOf(preciseTime));
-                    insert.setTimestamp(7, Timestamp.valueOf(preciseTime));
-                    assertThat(insert.executeUpdate()).isEqualTo(1);
-                    try (var keys = insert.getGeneratedKeys()) { assertThat(keys.next()).isTrue(); assertThat(keys.getLong(1)).isPositive(); }
+                connection.setSchema(schema);
+                for (int run = 0; run < 2; run++) {
+                    ScriptUtils.executeSqlScript(connection, new ClassPathResource("db/test/undo_log.sql"));
                 }
-                try (var select = connection.prepareStatement("SELECT rollback_info, log_created, log_modified FROM public.undo_log WHERE xid = ? AND branch_id = 7")) {
-                    select.setString(1, xid);
-                    try (var rows = select.executeQuery()) {
-                        assertThat(rows.next()).isTrue();
-                        assertThat(rows.getBytes(1)).containsExactly(1, 2, 3);
-                        assertThat(rows.getTimestamp(2).toLocalDateTime()).isEqualTo(preciseTime);
-                        assertThat(rows.getTimestamp(3).toLocalDateTime()).isEqualTo(preciseTime);
-                    }
-                }
+                undoLogKeepsMicroseconds(connection);
             } finally {
-                try (var delete = connection.prepareStatement("DELETE FROM public.undo_log WHERE xid = ? AND branch_id = 7")) {
-                    delete.setString(1, xid);
-                    delete.executeUpdate();
+                connection.createStatement().execute("DROP SCHEMA IF EXISTS " + schema + " CASCADE");
+            }
+        }
+    }
+
+    private static void undoLogKeepsMicroseconds(Connection connection) throws Exception {
+        String xid = "synthetic-" + UUID.randomUUID();
+        LocalDateTime preciseTime = LocalDateTime.of(2026, 1, 1, 0, 0, 0, 123456000);
+        try {
+            try (var insert = connection.prepareStatement("""
+                    INSERT INTO undo_log
+                    (branch_id, xid, context, rollback_info, log_status, log_created, log_modified)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, Statement.RETURN_GENERATED_KEYS)) {
+                insert.setLong(1, 7L);
+                insert.setString(2, xid);
+                insert.setString(3, "synthetic");
+                insert.setBytes(4, new byte[] {1, 2, 3});
+                insert.setInt(5, 0);
+                insert.setTimestamp(6, Timestamp.valueOf(preciseTime));
+                insert.setTimestamp(7, Timestamp.valueOf(preciseTime));
+                assertThat(insert.executeUpdate()).isEqualTo(1);
+                try (var keys = insert.getGeneratedKeys()) { assertThat(keys.next()).isTrue(); assertThat(keys.getLong(1)).isPositive(); }
+            }
+            try (var select = connection.prepareStatement("SELECT rollback_info, log_created, log_modified FROM undo_log WHERE xid = ? AND branch_id = 7")) {
+                select.setString(1, xid);
+                try (var rows = select.executeQuery()) {
+                    assertThat(rows.next()).isTrue();
+                    assertThat(rows.getBytes(1)).containsExactly(1, 2, 3);
+                    assertThat(rows.getTimestamp(2).toLocalDateTime()).isEqualTo(preciseTime);
+                    assertThat(rows.getTimestamp(3).toLocalDateTime()).isEqualTo(preciseTime);
                 }
+            }
+        } finally {
+            try (var delete = connection.prepareStatement("DELETE FROM undo_log WHERE xid = ? AND branch_id = 7")) {
+                delete.setString(1, xid);
+                delete.executeUpdate();
             }
         }
     }

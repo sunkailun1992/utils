@@ -137,7 +137,7 @@ class SeataDubboPostgresqlLiveContractTest {
         try (var statement = connection.createStatement();
              var rows = statement.executeQuery("SELECT to_regclass('public.undo_log') IS NOT NULL")) {
             rows.next();
-            assertThat(rows.getBoolean(1)).as("common-infra-schema.sql must run before RM startup").isTrue();
+            assertThat(rows.getBoolean(1)).as("undo_log (db/test/undo_log.sql) must exist before RM startup").isTrue();
         }
     }
 
