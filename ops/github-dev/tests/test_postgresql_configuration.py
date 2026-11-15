@@ -51,6 +51,27 @@ class PostgresqlConfigurationTests(unittest.TestCase):
                     key: "${postgresql." + key + "}" for key in primary})
                 check_parameter_comments(source)
 
+    def test_dynamic_datasource_keys_mirror_postgresql_without_timeout_options(self):
+        """utils 1.6.9 起读 dynamic-datasource 原生键；与旧键同库同账号，URL 去掉 Druid 会误读的超时参数。"""
+        for service in SERVICES:
+            with self.subTest(service=service):
+                source = (CONFIG / f"{service}-spring.yaml").read_text()
+                value = yaml_json(source)
+                old = value["postgresql"]
+                pools = value["spring"]["datasource"]["dynamic"]["datasource"]
+                self.assertEqual(set(pools), {"master", "gray"})
+                master = pools["master"]
+                self.assertEqual(master["url"], old["url"].replace("connectTimeout=3&socketTimeout=30&", ""))
+                self.assertNotRegex(master["url"], r"(?i)(connect|socket)Timeout")
+                self.assertEqual(master["username"], old["username"])
+                self.assertEqual(master["password"], old["password"])
+                self.assertEqual(master["driver-class-name"], "org.postgresql.Driver")
+                self.assertEqual(pools["gray"], {key: "${spring.datasource.dynamic.datasource.master." + key + "}"
+                                                 for key in master})
+                check_parameter_comments(source)
+        seata = yaml_json((CONFIG / "seata.yaml").read_text())["seata"]
+        self.assertIs(seata["enable-auto-data-source-proxy"], False)
+
     def test_shared_connection_and_boolean_sql_contract_are_postgresql(self):
         shared = yaml_json((CONFIG / "reuse-configuration.yaml").read_text())["custom"]
         self.assertEqual(shared["infra-postgresql-host"], "${GITHUB_POSTGRESQL_HOST}")

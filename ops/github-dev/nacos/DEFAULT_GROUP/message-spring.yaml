@@ -4,7 +4,7 @@
 # 导入服务：message。
 # 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
-# message 主数据源，由 utils 的动态数据源配置读取。
+# message 主数据源旧键，utils 1.6.8 及以前的版本读取；全部服务升级到 utils 1.6.9 并验证后删除。
 postgresql:
   # 个人 PostgreSQL JDBC URL；连接超时3秒、socket超时30秒，库名与服务匹配。
   url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_message?connectTimeout=3&socketTimeout=30&tcpKeepAlive=true
@@ -24,3 +24,31 @@ postgresql-gray:
   password: ${postgresql.password}
   # 灰度数据源复用主数据源的PostgreSQL JDBC 驱动类。
   driverClassName: ${postgresql.driverClassName}
+# 数据源新键，utils 1.6.9 起由 dynamic-datasource 原生配置读取；连接池、Seata 等参数在服务 application.yml。
+spring:
+  # Spring 数据源配置。
+  datasource:
+    # dynamic-datasource 多数据源配置。
+    dynamic:
+      # 数据源清单，名称与灰度路由的 master、gray 一致。
+      datasource:
+        # message 主库。
+        master:
+          # 个人 PostgreSQL JDBC URL，库名与服务匹配；不带 connectTimeout、socketTimeout（Druid 初始化时会把其中的秒数当毫秒），连接与读取超时由 application.yml 的 druid 毫秒参数提供。
+          url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_message?tcpKeepAlive=true
+          # 主库数据库账号；仅授予对应个人独立库所需权限。
+          username: ${GITHUB_POSTGRESQL_MESSAGE_USERNAME}
+          # 主库数据库密码；真实值仅在私有配置中。
+          password: ${GITHUB_POSTGRESQL_MESSAGE_PASSWORD}
+          # PostgreSQL JDBC 驱动类。
+          driver-class-name: org.postgresql.Driver
+        # 灰度库；当前与主库同库，按灰度标签切换时使用。
+        gray:
+          # 灰度库复用主库的 JDBC URL。
+          url: ${spring.datasource.dynamic.datasource.master.url}
+          # 灰度库复用主库的数据库账号。
+          username: ${spring.datasource.dynamic.datasource.master.username}
+          # 灰度库复用主库的数据库密码；真实值仅在私有配置中。
+          password: ${spring.datasource.dynamic.datasource.master.password}
+          # 灰度库复用主库的 PostgreSQL JDBC 驱动类。
+          driver-class-name: ${spring.datasource.dynamic.datasource.master.driver-class-name}

@@ -8,3 +8,5 @@
 seata:
   # 关闭 Seata；启用前需准备对应事务分组、服务端和 undo_log。
   enabled: false
+  # 不让 Seata 自动给 DataSource Bean 包代理：AT 代理由 dynamic-datasource 按 seata 开关给各池包，再包一层会重复代理路由数据源。
+  enable-auto-data-source-proxy: false
