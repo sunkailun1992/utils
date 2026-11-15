@@ -66,7 +66,6 @@ public class ApiResponse<T> {
     /**
      * 无参构造器
      *
-     * @return
      * @author 孙凯伦
      */
     public ApiResponse() {
@@ -76,7 +75,7 @@ public class ApiResponse<T> {
     /**
      * 成功空响应
      *
-     * @return com.kellen.utils.response.ApiResponse<java.lang.Void>
+     * @return 空数据的成功响应
      * @author 孙凯伦
      */
     public static ApiResponse<Void> success() {
@@ -87,7 +86,7 @@ public class ApiResponse<T> {
      * 成功数据响应
      *
      * @param data: 返回给前端的业务数据
-     * @return com.kellen.utils.response.ApiResponse<T>
+     * @return 带数据的成功响应
      * @author 孙凯伦
      */
     public static <T> ApiResponse<T> success(T data) {
@@ -101,7 +100,7 @@ public class ApiResponse<T> {
      *
      * @param returnCode: 失败业务返回码
      * @param <T>         接口声明的数据类型，失败时 data 恒为 null
-     * @return com.kellen.utils.response.ApiResponse<T>
+     * @return 失败响应，data 恒为 null
      * @author 孙凯伦
      */
     public static <T> ApiResponse<T> fail(ReturnCode returnCode) {
@@ -114,7 +113,7 @@ public class ApiResponse<T> {
      * @param returnCode: 失败业务返回码
      * @param error:      返回给前端的稳定错误提示
      * @param <T>         接口声明的数据类型，失败时 data 恒为 null
-     * @return com.kellen.utils.response.ApiResponse<T>
+     * @return 失败响应，data 恒为 null
      * @author 孙凯伦
      */
     public static <T> ApiResponse<T> fail(ReturnCode returnCode, String error) {

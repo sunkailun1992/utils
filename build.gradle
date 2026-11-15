@@ -120,8 +120,8 @@ tasks.withType(Javadoc).configureEach {
     options.charSet = 'UTF-8'
     // 指定 JavaDoc 输出语言为 UTF-8。
     options.docEncoding = 'UTF-8'
-    // 忽略 JavaDoc 严格检查，避免历史注释格式阻断发布。
-    failOnError = false
+    // JavaDoc 报错即构建失败，避免注释格式问题带进发布的 javadoc 制品。
+    failOnError = true
 }
 
 // 禁用 Gradle Module Metadata，避免消费者优先读取缺少 Spring BOM 版本映射的 .module 文件。

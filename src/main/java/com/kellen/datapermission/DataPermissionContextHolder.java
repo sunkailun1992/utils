@@ -25,7 +25,6 @@ public class DataPermissionContextHolder {
     /**
      * 标记当前线程忽略数据权限。
      *
-     * @return void
      * @author sunkailun
      */
     public static void ignore() {
@@ -45,7 +44,6 @@ public class DataPermissionContextHolder {
     /**
      * 清理当前线程忽略数据权限标记。
      *
-     * @return void
      * @author sunkailun
      */
     public static void clear() {
