@@ -6,23 +6,22 @@
 
 核心类：
 
-- `com.kellen.utils.response.ApiResponse`：统一响应对象。
-- `com.kellen.utils.enumeration.ReturnCode`：统一错误码枚举。
-- `com.kellen.utils.exception.ApiExceptionHandler`：全局异常处理器。
+- `com.kellen.utils.response.ApiResponse`：统一响应对象，字段为 `success`、`code`、`data`、`errorMessage`、`traceId`、`timestamp`；`traceId` 取当前 OTel 链路（与响应头同值），没有时不输出；`timestamp` 固定按 GMT+8 取值；`fail(...)` 为泛型，可直接用于有类型的接口。
+- `com.kellen.utils.enumeration.ReturnCode`：统一错误码枚举。编码按阿里巴巴 Java 开发手册分 A/B/C 三类，成功为 `"0"`；常量为英文大写下划线（如 `SUCCESS`、`USER_PASSWORD_ERROR`），属性为 `getCode()`、`getMessage()`；编码与文案一经发布不再修改，`ReturnCodeTest` 按快照逐项比对。
+- `com.kellen.utils.exception.ApiExceptionHandler`：全局异常处理基类，继承 Spring 的 `ResponseEntityExceptionHandler`，服务用 `@RestControllerAdvice` 子类启用。
 - `com.kellen.utils.exception.BusinessException`：业务异常。
-- `com.kellen.utils.exception.ParameterNullException`：参数为空异常。
-- `com.kellen.utils.exception.PreventRepeatException`：防重复提交异常。
 - `com.kellen.utils.exception.RpcException`：RPC 调用异常。
-- `com.kellen.utils.exception.SignException`：签名异常。
-- `com.kellen.utils.exception.SmsException`：短信异常。
-- `com.kellen.utils.exception.UserException`：用户异常。
+- `com.kellen.utils.exception.UserException`：携带 `ReturnCode` 的用户异常。
 
 使用原则：
 
 - 新接口统一返回 `ApiResponse`。
-- 新业务错误统一选择 `ReturnCode`。
+- 新业务错误统一选择 `ReturnCode`，不要新增中文或拼音常量。
 - 不恢复旧 `Json` 返回对象。
 - 异常处理统一进入 `ApiExceptionHandler`，避免 Controller 重复拼失败响应。
+- HTTP 状态码约定：业务与参数校验异常回 200 加 `success=false`；Spring MVC 标准异常保留 Spring 的状态码（400 回 `A0400`，其他 4xx 回 `A0001`）；未知异常回 500 加 `B0001`；Spring Security 的鉴权异常原样抛出，由 Spring Security 回 401 或 403。
+- 子类不要再为 `Exception`、`HttpMessageNotReadableException` 等基类已处理的异常写处理方法，否则 Spring 启动时报 `Ambiguous @ExceptionHandler`。
+- SQL 与 RPC 异常只返回错误码默认文案，底层报错原文不交给客户端。
 
 ## 二、认证、安全与上下文
 
@@ -33,8 +32,8 @@
 - `com.kellen.security.config.ActuatorSecurityConfig`：独立 Actuator 安全链，health 公开，其余端点使用外置 `security.actuator.token` 与 `actuatorReq` 校验，缺失时失败关闭。
 - `com.kellen.security.SecurityAuthenticationFilter`：认证过滤器。
 - `com.kellen.security.SecurityUser`：当前登录用户模型。
-- `com.kellen.security.UserContextHolder`：用户上下文 ThreadLocal。
-- `com.kellen.utils.auth.JwtUtils`：JWT 生成与解析工具。
+- `com.kellen.security.UserContextHolder`：用户上下文（TransmittableThreadLocal）。
+- `com.kellen.utils.auth.JwtUtils`：JWT 生成与解析工具（jjwt 0.9.1，第5阶段由 Keycloak 取代）。
 
 使用原则：
 
@@ -47,17 +46,16 @@
 
 核心类：
 
-- `com.kellen.utils.context.TenantContextHolder`：租户上下文 ThreadLocal。
+- `com.kellen.utils.context.TenantContextHolder`：租户上下文（TransmittableThreadLocal）。
 - `com.kellen.security.config.TenantProperties`：租户请求头配置。
 - `com.kellen.config.dubbo.DubboContextPropagationFilter`：Dubbo RPC 上下文透传。
 - `com.kellen.config.web.ReqInterceptor`：HTTP 请求租户上下文初始化。
-- `com.kellen.utils.context.DynamicSourceTtl`：动态数据源上下文。
-- `com.kellen.config.datasource.DynamicDataSourceConfig`：Druid 动态数据源配置。
-- `com.kellen.utils.datasource.DataSourceUtil`：数据源工具。
-- `com.kellen.utils.annotations.DynamicDataSource`：动态数据源注解。
+- `com.kellen.utils.context.DynamicSourceTtl`：动态数据源上下文，`peek()` 只读不补位。
+- `com.kellen.config.datasource.DynamicDataSourceConfig`：Druid 动态数据源配置，主库与灰度库接入 Seata（`org.apache.seata.*`）。
 - `com.kellen.config.mybatis.MyBatisPlusConfig`：MyBatis-Plus 插件配置。
 - `com.kellen.config.mybatis.MybatisPlusSecurityProperties`：MyBatis-Plus SQL 安全插件开关配置。
 - `com.kellen.config.mybatis.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器。
+- `com.kellen.datapermission.DataPermissionSqlHandler`：数据权限条件，直接构造 JSqlParser 表达式（本人与部门为等值条件，部门树与自定义为 `IN`），内部异常不吞掉。
 - `com.kellen.entity.EntityBase`：通用实体基类。
 
 当前边界：
@@ -65,52 +63,33 @@
 - 只保留 `master` 与 `gray` 两个数据源。
 - Druid 数据源默认启用借出前有效性校验、空闲检测和最小连接保活；消费者可通过 `utils.datasource.health.*` 覆盖校验语句、超时、检测间隔和最小空闲连接数。
 - `version` 只作为 MyBatis-Plus 乐观锁字段。
-- `MyBatisPlusConfig` 默认注册租户、数据权限、非法 SQL、防全表更新删除、分页和乐观锁插件。
+- `MyBatisPlusConfig` 按 MyBatis-Plus 官方顺序注册插件：多租户、数据权限 → 分页、乐观锁 → 非法 SQL 检查、防全表更新删除。
 - `IllegalSQLInnerInterceptor` 与 `BlockAttackInnerInterceptor` 属于默认安全边界，关闭前必须补充原因、替代防护和测试。
 - MyBatis-Plus `SqlInjector` 只允许作为 Mapper 通用方法扩展点，不作为 SQL 注入防护能力。
 - 需要租户隔离的调用必须显式维护 `TenantContextHolder` 生命周期。
 - Dubbo 透传只透传可信上下文，不把业务参数当作租户隔离依据。
 
-## 四、AOP、幂等与请求日志
+## 四、AOP 与幂等
 
-核心类：
-
-- `com.kellen.aop.RequestRequiredAspect`：请求切面。
-- `com.kellen.idempotent.PreventRepeatInit`：防重复提交初始化与清理。
-- `com.kellen.utils.annotations.PreventRepeat`：防重复提交注解。
-- `com.kellen.utils.annotations.RequestRequired`：请求校验注解。
-- `com.kellen.utils.annotations.Methods`：方法组合校验注解。
-- `com.kellen.utils.methods.MethodsInit`：方法校验初始化。
-- `com.kellen.utils.methods.MethodsJudge`：方法条件判断。
-- `com.kellen.utils.methods.MethodsParam`：方法参数模型。
-- `com.kellen.utils.methods.MethodsBean`：方法校验配置模型。
-- `com.kellen.log.*`：请求日志、RPC 日志、Elasticsearch 日志相关实体、Mapper、Service。
-- ES 请求日志索引由 `elasticsearch.request-log-index` 指定，未配置时保留 `request_log`；个人开发环境使用 `github_dev_request_log`，不能仅依赖 Nacos namespace 隔离共享 ES 数据。
-
-使用原则：
-
-- SQL 参数校验、动态数据源、日志、幂等锁属于切面职责。
-- 新增切面逻辑必须保证正常返回、异常返回都清理上下文。
-- 请求日志不得记录敏感密钥、完整 token 或密码。
+utils 当前没有切面。原有的请求日志切面与防重复提交从未生效，已在 1.6.8 删除（见文末）。以后需要防重复提交时，按芋道 ruoyi-vue-pro `@Idempotent` 的切面写法新增，键名包含租户、用户与方法，异常时释放。
 
 ## 五、Spring Boot 基础配置
 
 核心类：
 
-- `com.kellen.config.async.AsyncConfig`：异步线程配置。
+- `com.kellen.config.async.AsyncConfig`：异步线程池（线程名前缀 `async-`），任务装饰器见「可观测性」。
 - `com.kellen.config.dubbo.DubboContextPropagationFilter`：Dubbo 动态数据源、租户和 Seata XID 透传配置。
 - `com.kellen.config.dubbo.DubboExtensionPropertiesAliasConfig`：给租户、流量治理配置 Bean 补上 Dubbo 扩展按 setter 名查找用的别名，让透传过滤器拿到 Spring 绑定的配置。
-- `com.kellen.config.redis.RedisCacheConfig`：Redis 缓存配置。
-- `com.kellen.config.elasticsearch.ElasticsearchConfig`：Elasticsearch 配置。
-- `com.kellen.config.file.MultipartConfig`：文件上传配置。
+- `com.kellen.config.redis.RedisCacheConfig`：Redis 缓存配置，值序列化器为 Spring Data Redis 4 的 Jackson 3 `GenericJacksonJsonRedisSerializer`，多态类型只放行 `com.kellen.` 与 `java.` 包。
+- `com.kellen.config.redis.RedisLockAutoConfiguration`：自动配置，有 `RedissonClient` 时装配 `RedissonLocker` 并设入 `LockUtil`。
+- `com.kellen.config.json.JsonUtilAutoConfiguration`：自动配置，容器启动后让 `JsonUtil` 改用 Spring Boot 配好的 `JsonMapper`。
 - `com.kellen.config.swagger.Swagger`：OpenAPI 配置。
-- `com.kellen.config.actuator.ActuatorInterceptor`：deprecated 历史类，未注册且调用时失败关闭；不能替代 Actuator 专用安全链。
-- `com.kellen.config.actuator.ServiceShutDownEndpoint`：服务停机端点。
-- `com.kellen.config.actuator.ConfigClientController`：配置客户端控制器。
-- `com.kellen.config.sensitive.SensitiveStrategyConfig`：敏感字段处理配置。
 
 使用原则：
 
+- Redis 连接、`StringRedisTemplate` 与 `RedissonClient` 由 Spring Boot 与 `redisson-spring-boot-starter` 按 `spring.data.redis.*` 自动配置，不在 utils 里手工建连接。
+- 上传大小用 `spring.servlet.multipart.*` 配置，由需要上传的服务自己声明。
+- 优雅停机用 Spring Boot 自带的 `server.shutdown=graceful`（3.4 起默认），需要先下线再停机时用 Spring Cloud 自带的 `serviceregistry` 端点。
 - 配置类应只负责框架装配，不混入业务流程。
 - 新增配置属性要写清楚默认值、来源和消费者。
 - 对外暴露的运维端点必须明确安全边界。
@@ -119,57 +98,41 @@
 
 核心类：
 
-- `com.kellen.utils.json.JsonUtil`：基于 Spring Boot 4 默认 Jackson 3 的 JSON 序列化与反序列化工具。
-- `com.kellen.utils.http.OkHttpUtils`：OkHttp HTTP 调用工具。
-- `com.kellen.utils.http.RequestUtil`：请求工具。
-- `com.kellen.utils.http.IpUtils`：IP 工具。
-- `com.kellen.utils.convert.GeneralConvertor`：通用转换工具（基于 Dozer）。
-- `com.kellen.utils.reflect.ReflectionUtils`：反射工具。
-- `com.kellen.utils.file.PdfUtils`：PDF 工具。
+- `com.kellen.utils.json.JsonUtil`：JSON 工具，方法名对照 Hutool `JSONUtil`：`toJsonStr`、`toBean`、`toList`；容器内使用 Spring Boot 配好的 `JsonMapper`。
+- `com.kellen.utils.http.OkHttpUtils`：OkHttp 调用工具，共享单例客户端，使用 JDK 默认证书与主机名校验；`send` 返回响应体文本，非 2xx 抛 `IOException`。
+- `com.kellen.utils.http.IpUtils`：`getClientIp`（Hutool `JakartaServletUtil.getClientIP`，回环统一为 `127.0.0.1`）、`getLocalIp`、`isInnerIp`（Hutool `NetUtil.isInnerIP`）。
+- `com.kellen.utils.convert.GeneralConvertor`：通用转换工具（基于 Hutool `BeanUtil`，嵌套对象与集合深拷贝，行为与原 Dozer 实现一致）。
 
 使用原则：
 
-- 优先复用已有工具类，不新增功能重复的 `CommonUtils`。
+- 优先复用已有工具类，不新增功能重复的 `CommonUtils`；能直接用 Hutool、Spring、OkHttp 等现成能力的不自己实现。
 - HTTP、Redis、JSON 工具涉及外部系统或序列化边界，修改后必须增加调用方验证。
-- 文件、PDF、Excel 工具容易受依赖版本影响，修改后要做最小样例验证。
+- 访问自签名的内部服务时，为该服务单独配置信任库，不在 `OkHttpUtils` 里放开校验。
 
 ## 七、分布式锁
 
 核心类：
 
 - `com.kellen.utils.redisson.Locker`：锁接口。
-- `com.kellen.utils.redisson.RedissonLocker`：Redisson 锁实现。
+- `com.kellen.utils.redisson.RedissonLocker`：Redisson 锁实现，`unlock` 只释放当前线程持有的锁。
 - `com.kellen.utils.redisson.LockUtil`：锁工具门面。
+- `com.kellen.utils.redisson.LockAcquireException`：等待超时或被中断时抛出。
 
 使用原则：
 
+- 优先用回调式 `executeWithLock` / `runWithLock`：在等待时间内加锁，不传租约由 Redisson 看门狗续期，`finally` 里只释放自己持有的锁。
 - 分布式锁 key 必须包含业务域、租户、用户或资源 ID，避免不同业务互相阻塞。
-- 加锁和解锁必须成对出现，异常路径必须释放锁。
-- 锁等待时间和持有时间必须按业务风险设置，不使用无界等待。
+- 锁等待时间必须按业务风险设置，不使用无界等待。
 
 ## 八、第三方平台封装
 
-阿里云：
+对象存储：
 
 - `com.kellen.aliyun.AliyunKey`：阿里云密钥配置。
 - `com.kellen.aliyun.Oss`：OSS 配置。
-- `com.kellen.aliyun.oss.OssUtils`：OSS 操作工具。
+- `com.kellen.aliyun.oss.token.*`：OSS 直传策略与签名访问地址（官方 SDK 写法）。
 - `com.kellen.storage.PrivateObjectStorageService`：X File Storage 私有存储门面，统一 OSS / MinIO 的 POST 策略、对象存在性、短时 GET 签名与服务端上传；所有者与 token 授权由业务服务维护。
 - `com.kellen.storage.ObjectStorageConfig`：加载官方 `dromara.x-file-storage` 平台配置，不复制业务文件服务或保存另一套存储凭据。
-- `com.kellen.aliyun.Sms`：短信配置。
-- `com.kellen.aliyun.sms.SmsUtils`：短信发送工具。
-- `com.kellen.aliyun.LiveStreaming`：直播配置。
-- `com.kellen.aliyun.live.CreateLiveUtils`：直播创建工具。
-- `com.kellen.aliyun.workflow.WorkflowRegion`：工作流地域枚举。
-- `com.kellen.aliyun.workflow.WorkflowUtils`：工作流工具。
-
-钉钉：
-
-- `com.kellen.aliyun.DingDing`：钉钉配置。
-- `com.kellen.aliyun.dingding.DingDingUtil`：钉钉发送工具。
-- `com.kellen.aliyun.dingding.SendRebootUtil`：钉钉机器人发送工具。
-- `com.kellen.aliyun.dingding.markdown.*`：Markdown 消息模型与构造器。
-- `com.kellen.aliyun.dingding.text.*`：文本消息模型。
 
 使用原则：
 
@@ -181,10 +144,9 @@
 
 核心类：
 
-- `com.kellen.utils.enumeration.HttpType`：HTTP 类型枚举。
+- `com.kellen.utils.enumeration.HttpType`：HTTP 请求体类型（`FORM`、`JSON`、`XML`）。
 - `com.kellen.utils.enumeration.HttpWay`：HTTP 方式枚举。
-- `com.kellen.utils.enumeration.SmsEnum`：短信枚举。
-- `com.kellen.utils.verify.Phone`：手机号校验注解。
+- `com.kellen.utils.verify.Phone`：手机号校验注解，按 Hutool `PhoneUtil.isMobile`（13–19 号段），使用注解自身提示语，空值通过，可标在字段、方法、参数与容器元素上。
 - `com.kellen.utils.verify.check.PhoneValidator`：手机号校验器。
 
 使用原则：
@@ -195,10 +157,20 @@
 
 ## 十、收敛原则
 
-- 如果类只服务单个业务项目，应迁回业务项目。
-- 如果类是多个项目共享的基础能力，应补齐注释、异常边界、示例和归类。
+- 如果类只服务单个业务项目，应迁回业务项目；只有个别服务用到的依赖或配置，由该服务自己声明。
+- 过时、小众、从未生效或已被替代且无人使用的工具直接删除，不为「以后可能用」保留；判断在用要看服务实际引用，以及 Spring 组件是否真正生效（注解要有切面驱动）。
+- 保留的工具，写法与命名对照同类里 GitHub 关注度最高的项目（如 Hutool、OkHttp、Redisson、MyBatis-Plus、Spring Boot、芋道 ruoyi-vue-pro）。
 - 删除或迁移前必须先用 `rg` 检查 `utils` 与消费者项目引用。
-- 请求日志只保留采集、存储与服务能力，不在公共包内自动暴露查询 Controller。
+
+### 已移除（1.6.8）
+
+- 钉钉机器人、阿里云短信、直播、函数工作流、旧 `OssUtils`，以及 `CommonAliyunProperties`、`CommonWechatProperties`、`SmsEnum`：无人使用，告警已由 Grafana 负责。
+- 请求日志写 ES（`RequestRequiredAspect`、`@RequestRequired`、`com.kellen.log.*`、`ElasticsearchConfig`、`RequestUtil`、`MethodsBean`、`MethodsJudge`）：切面从未生效，日志已由 OTel 进 ES，参数校验用 Bean Validation。
+- 防重复提交（`@PreventRepeat`、`PreventRepeatInit`、`PreventRepeatException`、`@Methods`、`MethodsInit`、`MethodsParam`、`ReflectionUtils`）：唯一驱动者是上面的切面，从未生效。
+- `PdfUtils`（PDF 由 rag 引擎、OCR 与 Gotenberg 处理）、`RabbitMqConfig`（第4阶段换 RocketMQ）、`ActuatorInterceptor`、`@DynamicDataSource`（用 dynamic-datasource 自带的 `@DS`）。
+- `DateException`、`ParameterNullException`、`SignException`、`SmsException`：无人抛出。
+- `ServiceShutDownEndpoint`、`MultipartConfig`、`DataSourceUtil`、`SensitiveStrategyConfig`、`ConfigClientController`：分别改用 Spring Boot 优雅停机与 `serviceregistry` 端点、服务自配 `spring.servlet.multipart.*`、`DynamicSourceTtl`、mybatis-mate 默认策略、Spring Boot 与 Redisson 自动配置。
+- 依赖：Dozer（换 Hutool）、Orika、Aviator、javax.mail、commons-collections4、Guava 的显式声明（Guava 仍由 Seata 传递引入并锁定版本）、Jedis、iText、font-asian、PDFBox、`spring-boot-starter-amqp`、`spring-boot-starter-data-elasticsearch`、`aliyun-java-sdk-core` 的显式声明、`aliyun-java-sdk-fnf`；`spring-boot-starter-websocket` 与 `poi-ooxml` 改由使用它们的服务声明。
 
 ### 已移除的重复工具类（1.3.0）
 
@@ -216,7 +188,7 @@
 以下零引用的工具类也已删除，需要时改用 Hutool 或迁回业务项目：
 
 - 邮件：`cn.hutool.extra.mail.MailUtil`（原 `email.EmailUtils`/`email.EmailAccount`）。
-- Excel：`cn.hutool.poi.excel.ExcelUtil`（原 `excel.ExcelExportUtil`）。
+- Excel：`cn.hutool.poi.excel.ExcelUtil`（原 `excel.ExcelExportUtil`；POI 需由使用的服务自行声明）。
 - RSA：`cn.hutool.crypto.asymmetric.RSA`（原 `auth.RsaUtils`）。
 - Redis：直接用 `StringRedisTemplate` / `RedisCacheConfig`（原 `redis.RedisUtils`）。
 - 文件类型：`cn.hutool.core.io.FileTypeUtil`（原 `file.FileFormat`）。
@@ -225,7 +197,7 @@
 ## 可观测性
 
 - `com.kellen.observability.TraceContextSnapshot`：捕获有效 OTel trace/span 标识，无活动 span 返回空字段，不回退业务 MDC。
-- `com.kellen.observability.TraceContextTaskDecorator`：提交线程捕获、工作线程作用域恢复，适用于公共异步池；不传播或伪造业务身份。
+- `com.kellen.observability.TraceContextTaskDecorator`：提交时捕获 OTel 上下文与租户、用户、数据源等 TransmittableThreadLocal 上下文（`TtlRunnable`），执行后恢复工作线程原值，不复制 MDC；没有它，线程池复用线程时会沿用创建该线程那次请求的租户。
 
 ## 轻量HTTP观测子制品
 

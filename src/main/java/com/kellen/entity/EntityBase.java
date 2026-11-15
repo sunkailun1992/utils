@@ -22,7 +22,7 @@ public class EntityBase implements Serializable {
     /**
      * 主键ID。
      */
-    @Schema(description = "序列")
+    @Schema(description = "主键ID")
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
 
@@ -91,7 +91,7 @@ public class EntityBase implements Serializable {
      * MyBatis-Plus 乐观锁版本号。
      */
     @Version
-    @Schema(hidden = true, description = "版本号")
+    @Schema(description = "版本号（乐观锁，更新时回传查询到的值）")
     private Integer version;
 
     /**

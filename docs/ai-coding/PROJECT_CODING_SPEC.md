@@ -15,7 +15,7 @@
 - public 类型使用 PascalCase，文件名必须与 public 类型名完全一致。
 - 工具类使用 `XxxUtils`，例如 `JwtUtils`、`OkHttpUtils`。
 - 配置类使用 `XxxConfig`，例如 `DynamicDataSourceConfig`、`MyBatisPlusConfig`。
-- AOP 切面使用业务语义命名，例如 `RequestRequiredAspect`。
+- AOP 切面使用业务语义命名，例如 `IdempotentAspect`。
 - 缩写保持项目当前写法：`JwtUtils`、`OkHttpUtils`、`MyBatisPlusConfig`、`ApiResponse`。
 - 不新增含糊类名，例如 `TestUtil`、`CommonUtil`、`BaseUtil2`。
 
@@ -24,7 +24,8 @@
 - Controller 或全局异常处理统一返回 `ApiResponse<T>`。
 - 成功返回使用 `ApiResponse.success()` 或 `ApiResponse.success(data)`。
 - 失败返回使用 `ApiResponse.fail(returnCode)` 或 `ApiResponse.fail(returnCode, error)`。
-- 响应字段统一为 `success`、`code`、`msg`、`data`、`errorMessage`、`timestamp`。
+- 响应字段统一为 `success`、`code`、`data`、`errorMessage`、`traceId`、`timestamp`；`traceId` 没有时不输出，`timestamp` 固定 GMT+8。
+- 错误码常量用英文大写下划线，由文案意译；编码与文案一经发布不再修改。
 - 不得恢复或新增旧 `Json` 统一返回对象。
 
 ## 错误码与异常
@@ -82,9 +83,8 @@
 
 ## AOP 与幂等
 
-- 请求切面统一由 `RequestRequiredAspect` 承载。
 - 切面当前负责 SQL 参数校验、动态数据源上下文、请求日志、幂等锁生命周期。
-- 幂等锁由 `PreventRepeatInit` 处理。
+- utils 当前没有切面与防重复提交；需要时按芋道 `@Idempotent` 的切面写法新增，并在异常时释放。
 - 幂等 key 应包含租户、用户、类名、方法名，避免跨租户或跨用户互相影响。
 - 异常路径必须释放幂等锁并清理线程上下文。
 

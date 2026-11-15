@@ -2,11 +2,11 @@
 
 `utils` 是面向 Spring Boot 4 / Java 21 的公共基础能力包，是 `user`、`message` 等业务服务复用通用能力的唯一来源。业务项目和网关项目不要复制本仓库里的工具类源码；需要公共能力时，先在本仓库维护并发布 Maven 制品，再让消费者项目升级依赖。
 
-当前提供统一响应、错误码、认证上下文、多租户、MyBatis-Plus 基础配置、AOP 通用能力、请求日志、Redis/Redisson、HTTP、JSON、文件、Excel、PDF、阿里云、钉钉、微信等通用工具。
+当前提供统一响应、错误码、统一异常处理、认证上下文、多租户、数据权限、MyBatis-Plus 基础配置、Redis/Redisson、HTTP、JSON、对象存储等通用工具；写法对照同类里 GitHub 关注度最高的项目，过时或无人使用的工具直接删除。
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.6.7`
+- 发布坐标：`com:utils:1.6.8`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -32,8 +32,8 @@
 - `JsonUtil.getJsonMapper()` 的返回类型由 Jackson 2
   `com.fasterxml.jackson.databind.ObjectMapper` 调整为 Jackson 3
   `tools.jackson.databind.ObjectMapper`，直接调用该方法的消费者必须重新编译。
-- `JsonUtil.json(...)`、`bean(...)`、`list(...)` 的方法签名及空值、日期、
-  单引号、未知字段和高精度小数规则保持不变。
+- `1.6.8` 起方法名对照 Hutool `JSONUtil` 改为 `toJsonStr`、`toBean`、`toList`，容器内改用 Spring Boot
+  配好的 `JsonMapper`，不再沿用单引号、浮点默认转 BigDecimal、自定义日期格式等旧规则。
 - Jackson 注解仍使用 `com.fasterxml.jackson.annotation` 包；这里只迁移 databind/core API，
   不要求业务 DTO 改写注解。
 
@@ -70,7 +70,7 @@
 - 静态配置使用官方 `dromara.x-file-storage.default-platform`、`minio[]`、`aliyun-oss[]` 或 `tencent-cos[]`。MinIO/OSS 使用 `end-point`、`access-key/secret-key`，COS 使用 `region`、`secret-id/secret-key`；平台项有稳定 `platform` 和私有 `bucket-name`。Spring 配置另有 `enable-storage`，core Builder 不使用该字段；`base-path` 必须为空，由业务 `baseDir` 形成对象键。凭据仅在服务端注入，不进入源码、日志或管理元数据响应。AI 的 DB 加密配置、权限和动态句柄管理属于 AI 业务控制面，不放进公共包。
 - `createUploadPolicy(...)` 保持 POST 表单上传；`OssUploadPolicy.formFields` 是完整表单字段，新客户端原样提交。原 OSS 字段和十参数构造器保留，MinIO 使用 S3 V4 签名字段，COS 使用官方 `COSSigner.buildPostObjectSignature` 及其专用表单协议。三者均固定精确对象 key、MIME、大小范围和到期时间，不能用普通请求签名冒充 POST 签名。真实云端权限/CORS、私有访问和读写仍需单独验收。
 - `verifyObjectExists(platform, key)`、`signedViewUri(platform, key, expiry)` 支持读取持久化平台；调用方必须先完成所有者和展示 token 校验，不能把此通用门面当成授权服务。历史文件保留原平台，切换默认平台不会迁移已有对象。
-- 未使用 OSS、短信、钉钉、直播的服务不再需要这些可选配置的占位值；调用对应功能时仍须提供真实运行配置。
+- 未使用 OSS 的服务不再需要 OSS 配置的占位值；调用时仍须提供真实运行配置。
 
 ## 远程发布
 
@@ -166,3 +166,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `1.6.6` 是第1阶段底座升级：JDK 21、Gradle 9.9.1、Spring Boot 4.0.9、Spring Cloud 2025.1.4、Nacos 客户端 3.3.0、Dubbo 3.3.7、MyBatis-Plus 3.5.18.1 等依赖顺延，公共 API 不变。配套轻库 `0.1.4` 与 `com:traffic-canary:0.1.1` 只改编译基线与依赖版本；OTel API/BOM 对齐 Java agent 2.33.1 内置的 1.67.0，不让应用侧 API 比 agent 新。消费者须运行在 Java 21。
 
 `1.6.7` 修复 `DubboContextPropagationFilter` 拿不到 Spring 绑定配置的问题。Dubbo 3 创建过滤器后按 setter 名（`trafficGovernanceProperties`、`tenantProperties`）到 Spring 容器取 Bean，不按类型查找；`@EnableConfigurationProperties` 注册的 Bean 名对不上，过滤器一直用默认值，结果是提供方拒绝所有灰度授权、灰度实例不带授权也放行、自定义租户头名不生效。新增 `DubboExtensionPropertiesAliasConfig` 给容器里唯一的同类型 Bean 补别名，不新增 Bean；`DubboContextPropagationFilterInjectionTest` 按 Dubbo 真实注入路径覆盖。公共 API 不变，消费者升级后重启生效。
+
+`1.6.8` 是第2阶段 utils 改造（一次发版）：删除过时、小众、从未生效或无人使用的 51 个类与十余个依赖（钉钉与阿里云短信/直播/工作流、请求日志写 ES、从未生效的防重复提交、PdfUtils、RabbitMQ 配置、Dozer、Orika、Aviator、Guava 显式声明、Jedis 等）；`GeneralConvertor` 改用 Hutool，`OkHttpUtils` 恢复默认证书校验并按官方用法关闭响应；Redis 连接与 `RedissonClient` 交给 Spring Boot 与 Redisson 官方 starter 自动配置，锁工具补回调式加锁与安全解锁；缓存序列化器换成 Jackson 3 实现；数据权限改为直接构造 JSqlParser 表达式、出错不再放行；异步任务带上提交时的租户与用户上下文；`ReturnCode` 常量改英文命名（编码与文案不变）；`ApiResponse` 去掉与 `errorMessage` 重复的 `msg`、新增 `traceId`、时间固定 GMT+8；`ApiExceptionHandler` 继承 `ResponseEntityExceptionHandler`，补齐 Spring MVC 标准异常与兜底；`@Phone`、`IpUtils`、`JsonUtil` 按 Hutool 写法改写；javadoc 报错即失败。消费者升级时需把错误码常量改成新名、删掉子类里与基类重复的异常处理、需要上传的服务自行声明 `spring.servlet.multipart.*`、需要 WebSocket 或 POI 的服务自行声明依赖。
