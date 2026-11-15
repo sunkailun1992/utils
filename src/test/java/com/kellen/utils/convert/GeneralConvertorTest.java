@@ -33,20 +33,20 @@ class GeneralConvertorTest {
     }
 
     @Test
-    void copiesInheritedBaseFieldsIncludingIsDelete() {
+    void copiesInheritedBaseFieldsIncludingDeleted() {
         SourceBo deleted = source("bob");
         SourceBo unknown = source("carol");
-        unknown.setIsDelete(null);
+        unknown.setDeleted(null);
 
         TargetEntity fromDeleted = GeneralConvertor.convertor(deleted, TargetEntity.class);
         TargetEntity fromUnknown = GeneralConvertor.convertor(unknown, TargetEntity.class);
 
         assertThat(fromDeleted.getId()).isEqualTo("id-bob");
-        assertThat(fromDeleted.getCreateDateTime()).isEqualTo(CREATED);
-        assertThat(fromDeleted.getIsDelete()).isTrue();
+        assertThat(fromDeleted.getCreateTime()).isEqualTo(CREATED);
+        assertThat(fromDeleted.getDeleted()).isTrue();
         assertThat(fromDeleted.getVersion()).isEqualTo(3);
         assertThat(fromDeleted.getTenantId()).isEqualTo("tenant-a");
-        assertThat(fromUnknown.getIsDelete()).isNull();
+        assertThat(fromUnknown.getDeleted()).isNull();
     }
 
     @Test
@@ -113,8 +113,8 @@ class GeneralConvertorTest {
     private static SourceBo source(String name) {
         SourceBo source = new SourceBo();
         source.setId("id-" + name);
-        source.setCreateDateTime(CREATED);
-        source.setIsDelete(Boolean.TRUE);
+        source.setCreateTime(CREATED);
+        source.setDeleted(Boolean.TRUE);
         source.setVersion(3);
         source.setTenantId("tenant-a");
         source.setName(name);
@@ -141,8 +141,8 @@ class GeneralConvertorTest {
     @Data
     public static class Base {
         private String id;
-        private LocalDateTime createDateTime;
-        private Boolean isDelete;
+        private LocalDateTime createTime;
+        private Boolean deleted;
         private Integer version;
         private String tenantId;
     }

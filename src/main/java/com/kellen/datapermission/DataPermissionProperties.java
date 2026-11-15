@@ -25,9 +25,9 @@ public class DataPermissionProperties {
     private boolean enabled = false;
 
     /**
-     * 默认本人数据字段。
+     * 默认本人数据字段，即实体基类的创建人列。
      */
-    private String defaultUserColumn = "create_name";
+    private String defaultUserColumn = "creator";
 
     /**
      * 默认部门数据字段。

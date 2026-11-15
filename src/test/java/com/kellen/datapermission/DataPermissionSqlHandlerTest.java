@@ -45,6 +45,21 @@ class DataPermissionSqlHandlerTest {
     }
 
     @Test
+    void selfScopeFallsBackToCreatorColumn() {
+        DataPermissionProperties properties = new DataPermissionProperties();
+        properties.setEnabled(true);
+        DataPermissionProperties.TableRule rule = new DataPermissionProperties.TableRule();
+        rule.setDeptColumn("dept_id");
+        properties.getTableRules().put("auth_user", rule);
+        UserContextHolder.set(user("u1", "d1", "SELF", List.of()));
+
+        Expression expression = new DataPermissionSqlHandler(properties).getSqlSegment(aliasedUserTable(), null, "mapper.select");
+
+        assertThat(expression).isNotNull();
+        assertThat(expression.toString()).isEqualTo("u.creator = 'u1'");
+    }
+
+    @Test
     void deptScopeFiltersByDeptColumn() {
         UserContextHolder.set(user("u1", "d1", "DEPT", List.of()));
 

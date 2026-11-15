@@ -107,7 +107,7 @@ class PostgresqlLiveContractTest {
     @Test void actualPgExecutesTypedTenantPaginationAndBooleanSoftDelete() throws Exception {
         String table = "utils_pg_fixture_" + UUID.randomUUID().toString().replace("-", "");
         try (Connection connection = connection(); Statement statement = connection.createStatement()) {
-            statement.execute("CREATE TABLE public." + table + " (id varchar(64) PRIMARY KEY, tenant_id varchar(64) NOT NULL, is_delete boolean NOT NULL DEFAULT false)");
+            statement.execute("CREATE TABLE public." + table + " (id varchar(64) PRIMARY KEY, tenant_id varchar(64) NOT NULL, is_deleted boolean NOT NULL DEFAULT false)");
             try {
                 try (var insert = connection.prepareStatement("INSERT INTO public." + table + " VALUES (?, ?, ?)")) {
                     for (int index = 0; index < 25; index++) {

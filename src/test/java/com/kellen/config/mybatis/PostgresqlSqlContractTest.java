@@ -78,7 +78,7 @@ class PostgresqlSqlContractTest {
         MybatisConfiguration config = new MybatisConfiguration();
         GlobalConfigUtils.setGlobalConfig(config, new GlobalConfig().setDbConfig(new GlobalConfig.DbConfig()));
         var info = TableInfoHelper.initTableInfo(new MapperBuilderAssistant(config, "fixture"), Fixture.class);
-        assertThat(info.getLogicDeleteSql(false, true).replace(" ", "")).isEqualTo("is_delete=false");
+        assertThat(info.getLogicDeleteSql(false, true).replace(" ", "")).isEqualTo("is_deleted=false");
         assertThat(info.getLogicDeleteFieldInfo().getLogicDeleteValue()).isEqualTo("true");
     }
 

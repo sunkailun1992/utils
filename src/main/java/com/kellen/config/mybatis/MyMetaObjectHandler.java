@@ -1,6 +1,7 @@
 package com.kellen.config.mybatis;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.kellen.security.UserContextHolder;
 import com.kellen.security.config.TenantProperties;
 import com.kellen.utils.context.TenantContextHolder;
 import org.apache.ibatis.reflection.MetaObject;
@@ -32,25 +33,52 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     }
 
     /**
-     * 插入时填充公共字段。
+     * 插入时填充创建时间、更新时间、创建人、更新人与租户ID；实体上已有的值不覆盖。
      *
      * @param metaObject MyBatis 元对象
      */
     @Override
     public void insertFill(MetaObject metaObject) {
-        setFieldValByName("createDateTime", LocalDateTime.now(), metaObject); // 新增时填充创建时间。
-        setFieldValByName("modifyDateTime", LocalDateTime.now(), metaObject); // 新增时同步填充修改时间。
+        LocalDateTime now = LocalDateTime.now(); // 同一次插入的创建时间与更新时间取同一时刻。
+        String userId = currentUserId(); // 没有登录用户（种子、后台任务）时为 null，不填创建人与更新人。
+        fillIfAbsent("createTime", now, metaObject); // 新增时填充创建时间。
+        fillIfAbsent("updateTime", now, metaObject); // 新增时同步填充更新时间。
+        fillIfAbsent("creator", userId, metaObject); // 新增时填充创建人，已有值（如种子指定）不覆盖。
+        fillIfAbsent("updater", userId, metaObject); // 新增时同步填充更新人。
         fillTenantId(metaObject); // 新增时按当前租户上下文填充租户ID。
     }
 
     /**
-     * 更新时填充公共字段。
+     * 更新时刷新更新时间，有登录用户时把更新人改为当前用户。
      *
      * @param metaObject MyBatis 元对象
      */
     @Override
     public void updateFill(MetaObject metaObject) {
-        setFieldValByName("modifyDateTime", LocalDateTime.now(), metaObject); // 更新时刷新修改时间。
+        setFieldValByName("updateTime", LocalDateTime.now(), metaObject); // 更新时刷新更新时间。
+        setFieldValByName("updater", currentUserId(), metaObject); // 值为 null 时框架不写入，没有登录用户就保留原更新人。
+    }
+
+    /**
+     * 读取当前登录用户ID，空白视为没有登录用户。
+     *
+     * @return 用户ID，没有登录用户时为 null
+     */
+    private static String currentUserId() {
+        return StringUtils.trimToNull(UserContextHolder.getUserId()); // 空白用户ID不写入审计字段。
+    }
+
+    /**
+     * 字段为空时填充值。
+     *
+     * @param fieldName 实体属性名
+     * @param value 要填充的值，为 null 时不填
+     * @param metaObject MyBatis 元对象
+     */
+    private void fillIfAbsent(String fieldName, Object value, MetaObject metaObject) {
+        if (getFieldValByName(fieldName, metaObject) == null) {
+            setFieldValByName(fieldName, value, metaObject); // 实体没有该属性或值为 null 时框架自动跳过。
+        }
     }
 
     /**
