@@ -24,9 +24,6 @@ import org.springframework.jdbc.datasource.init.ScriptUtils;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -35,35 +32,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * 数据源改用 dynamic-datasource 原生配置：服务 {@code application.yml} 的统一数据源块建出 master、gray 两个 Druid 池，
- * 并由 dynamic-datasource 按 Seata AT 包装；Seata 自动代理关闭，路由数据源本身不再被包一层。
+ * 数据源改用 dynamic-datasource 原生配置：服务 {@code application.yml} 的统一数据源块建出 master、gray 两个 Druid 池；
+ * 启用 Seata 时由 dynamic-datasource 按 AT 包装，Seata 自动代理关闭，路由数据源本身不再被包一层。
  */
 class NativeDynamicDataSourceTest {
-
-    /** 各服务 application.yml 里与本测试相同的数据源块；地址、账号与口令在 Nacos。 */
-    private static final String[] SERVICE_BLOCK = {
-            "spring.datasource.dynamic.primary=master",
-            "spring.datasource.dynamic.strict=true",
-            "spring.datasource.dynamic.seata=true",
-            "spring.datasource.dynamic.seata-mode=AT",
-            "spring.datasource.dynamic.druid.initial-size=1",
-            "spring.datasource.dynamic.druid.min-idle=1",
-            "spring.datasource.dynamic.druid.max-wait=3000",
-            "spring.datasource.dynamic.druid.connect-timeout=3000",
-            "spring.datasource.dynamic.druid.socket-timeout=30000",
-            "spring.datasource.dynamic.druid.validation-query=SELECT 1",
-            "spring.datasource.dynamic.druid.validation-query-timeout=3",
-            "spring.datasource.dynamic.druid.test-on-borrow=true",
-            "spring.datasource.dynamic.druid.test-while-idle=true",
-            "spring.datasource.dynamic.druid.keep-alive=true",
-            "spring.datasource.dynamic.druid.time-between-eviction-runs-millis=30000",
-            "spring.datasource.dynamic.druid.keep-alive-between-time-millis=60000",
-            "spring.datasource.dynamic.datasource.master.type=com.alibaba.druid.pool.DruidDataSource",
-            "spring.datasource.dynamic.datasource.master.druid.max-active=4",
-            "spring.datasource.dynamic.datasource.gray.type=com.alibaba.druid.pool.DruidDataSource",
-            "spring.datasource.dynamic.datasource.gray.druid.max-active=2",
-            "seata.enable-auto-data-source-proxy=false"
-    };
 
     /** 不可达的合成地址；不带 connectTimeout、socketTimeout，Druid 初始化时才不会拿 URL 里的秒数覆盖毫秒设置。 */
     private static final String UNREACHABLE = "jdbc:postgresql://127.0.0.1:1/fleet_pg_test_none";
@@ -71,17 +43,19 @@ class NativeDynamicDataSourceTest {
     private final ApplicationContextRunner runner = new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(DynamicDataSourceAutoConfiguration.class,
                     DruidDataSourceAutoConfigure.class, SeataDataSourceAutoConfiguration.class))
-            .withPropertyValues(SERVICE_BLOCK);
+            .withPropertyValues(ServiceDataSourceBlock.PROPERTIES);
 
-    /** Seata 代理在构造时就要连库读元数据，不连库的用例只关掉这一项，其余与服务配置相同。 */
+    /** 与 github-dev 一样关闭 Seata：两个池不包 Seata 代理，也就不在建池时连库。 */
     @Test
     void nativePropertiesBuildMasterAndGrayPoolsWithConfiguredBudgets() {
-        runner.withPropertyValues(nacosKeys(UNREACHABLE, "fixture", "synthetic-fixture"))
-                .withPropertyValues("spring.datasource.dynamic.lazy=true", "spring.datasource.dynamic.seata=false")
+        runner.withPropertyValues(ServiceDataSourceBlock.nacosKeys(UNREACHABLE, "fixture", "synthetic-fixture"))
+                .withPropertyValues("spring.datasource.dynamic.lazy=true", "seata.enabled=false")
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     Map<String, DataSource> pools = context.getBean(DynamicRoutingDataSource.class).getDataSources();
                     assertThat(pools).containsOnlyKeys("master", "gray");
+                    assertThat(pools).allSatisfy((name, dataSource) -> assertThat(((ItemDataSource) dataSource).getDataSource())
+                            .as("Seata 关闭时不包代理").isSameAs(((ItemDataSource) dataSource).getRealDataSource()));
                     assertBudget(realPool(pools.get("master")), 4);
                     assertBudget(realPool(pools.get("gray")), 2);
                 });
@@ -91,8 +65,8 @@ class NativeDynamicDataSourceTest {
     void noCustomDataSourceBeanRemains() {
         assertThatThrownBy(() -> Class.forName("com.kellen.config.datasource.DynamicDataSourceConfig"))
                 .isInstanceOf(ClassNotFoundException.class);
-        runner.withPropertyValues(nacosKeys(UNREACHABLE, "fixture", "synthetic-fixture"))
-                .withPropertyValues("spring.datasource.dynamic.lazy=true", "spring.datasource.dynamic.seata=false")
+        runner.withPropertyValues(ServiceDataSourceBlock.nacosKeys(UNREACHABLE, "fixture", "synthetic-fixture"))
+                .withPropertyValues("spring.datasource.dynamic.lazy=true", "seata.enabled=false")
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     assertThat(context.getBeansOfType(DataSource.class)).hasSize(1)
@@ -103,8 +77,8 @@ class NativeDynamicDataSourceTest {
     }
 
     /**
-     * 与服务完全相同的配置（seata: true、AT），并像服务一样经 SpringApplication 启动：Seata 读配置依赖它在启动时注入的环境，
-     * ApplicationContextRunner 不执行这一步。github-dev 关闭了 Seata（seata.enabled=false），这里保持一致。
+     * 启用 Seata 时（seata.enabled=true）由 dynamic-datasource 给两个池包 Seata AT 代理；库里须已有 undo_log。
+     * 像服务一样经 SpringApplication 启动：Seata 读配置依赖它在启动时注入的环境，ApplicationContextRunner 不执行这一步。
      * 连专用测试库的随机独立 schema，结束后删除。
      */
     @Test
@@ -119,14 +93,9 @@ class NativeDynamicDataSourceTest {
         }
         try {
             String url = base + (base.contains("?") ? "&" : "?") + "currentSchema=" + schema;
-            Map<String, Object> properties = new LinkedHashMap<>();
-            for (String entry : SERVICE_BLOCK) {
-                properties.put(entry.substring(0, entry.indexOf('=')), entry.substring(entry.indexOf('=') + 1));
-            }
-            for (String entry : nacosKeys(url, System.getenv("FLEET_PG_TEST_USERNAME"), System.getenv("FLEET_PG_TEST_PASSWORD"))) {
-                properties.put(entry.substring(0, entry.indexOf('=')), entry.substring(entry.indexOf('=') + 1));
-            }
-            properties.put("seata.enabled", "false");
+            Map<String, Object> properties = ServiceDataSourceBlock.asMap(ServiceDataSourceBlock.PROPERTIES,
+                    ServiceDataSourceBlock.nacosKeys(url, System.getenv("FLEET_PG_TEST_USERNAME"), System.getenv("FLEET_PG_TEST_PASSWORD")));
+            properties.put("seata.enabled", "true");
             try (ConfigurableApplicationContext context = new SpringApplicationBuilder(NativeDataSourceApplication.class)
                     .web(WebApplicationType.NONE).bannerMode(Banner.Mode.OFF).logStartupInfo(false)
                     .properties(properties).run()) {
@@ -152,18 +121,6 @@ class NativeDynamicDataSourceTest {
     @ImportAutoConfiguration({DynamicDataSourceAutoConfiguration.class, DruidDataSourceAutoConfigure.class,
             SeataDataSourceAutoConfiguration.class})
     static class NativeDataSourceApplication { }
-
-    private static String[] nacosKeys(String url, String username, String password) {
-        List<String> keys = new ArrayList<>();
-        for (String name : List.of("master", "gray")) {
-            String prefix = "spring.datasource.dynamic.datasource." + name + ".";
-            keys.add(prefix + "url=" + url);
-            keys.add(prefix + "username=" + username);
-            keys.add(prefix + "password=" + password);
-            keys.add(prefix + "driver-class-name=org.postgresql.Driver");
-        }
-        return keys.toArray(String[]::new);
-    }
 
     private static DruidDataSource realPool(DataSource dataSource) {
         assertThat(dataSource).isInstanceOf(ItemDataSource.class);
