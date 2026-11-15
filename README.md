@@ -22,9 +22,9 @@
 - 认证上下文：使用 `SecurityUser` 与 `UserContextHolder`
 - 租户上下文：使用 `TenantContextHolder`
 - 动态数据源：只保留 `master` 与 `gray`
-- 个人业务库迁移目标为 PostgreSQL；`postgresql` / `postgresql-gray` 配置、字符串租户与 Boolean 逻辑删除、独立测试库及切换边界见 [PG 底座说明](docs/postgresql-fleet-foundation.md)。历史 MySQL 仍供其它项目或必要中间件使用，本轮不删除其数据库、账号或容器。
-- 数据源连接健康：默认借出前执行 `SELECT 1` 校验，并启用空闲检测与保活；保活间隔默认 60 秒且会自动归一化为严格大于空闲检测间隔，避免数据库空闲超时后的首次请求命中失效连接或 Druid 因非法时间组合启动失败
-- 乐观锁：`EntityBase.version` 只表示 MyBatis-Plus `@Version` 数据库版本号
+- 个人业务库为 PostgreSQL；数据源用 dynamic-datasource 原生配置（各服务 `application.yml` 的 `spring.datasource.dynamic` 块，地址与账号在 Nacos 的 `spring.datasource.dynamic.datasource.master/gray`），字符串租户与 Boolean 逻辑删除、独立测试库及切换边界见 [PG 底座说明](docs/postgresql-fleet-foundation.md)。历史 MySQL 仍供其它项目或必要中间件使用，本轮不删除其数据库、账号或容器。
+- 数据源连接健康：各服务 `application.yml` 的 `spring.datasource.dynamic.druid` 统一设借出前 `SELECT 1` 校验、空闲检测与保活（检测 30 秒、保活 60 秒，保活间隔须大于检测间隔，否则 Druid 启动失败）及连接 3000 毫秒、读取 30000 毫秒超时；JDBC URL 不带 `connectTimeout`、`socketTimeout`，见[超时单位说明](docs/postgresql-druid-timeouts.md)
+- 实体基类：`EntityBase` 只有 `createTime`、`updateTime`、`creator`、`updater`、`deleted`，`TenantEntityBase` 只多 `tenantId`，由 `MyMetaObjectHandler` 自动填充；乐观锁 `version` 由实体自己声明，只表示 MyBatis-Plus `@Version` 数据库版本号
 - JSON：`JsonUtil` 使用 Spring Boot 4 默认 Jackson 3 databind API；`json/bean/list` 方法签名保持兼容
 
 ### Jackson 3 迁移说明
@@ -127,7 +127,7 @@ cd ../gateway
 - 不再把 HTTP 请求头里的 `version` 当作业务版本校验。
 - 不再新增 `bank`、`hz`、`hx`、`jghx` 等动态数据源常量或配置。
 - 不在 `gateway`、`user` 等消费者项目内复制 `utils` 工具类源码。
-- 业务库公共基础脚本源头为 `src/main/resources/db/postgresql/common-infra-schema.sql`；接入 MyBatis-Plus DDL 与 Seata AT 的消费者服务首次启动空库前，必须在目标业务库手动执行该脚本，先建 `ddl_history` 和 `undo_log`。
+- utils 不放迁移；各业务服务的表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。
 - 不把网关路由、Nacos 配置、SLS/Logback 本地配置放进本仓库。
 - AI 新增或修改 Java 代码时，必须补充说明公共职责、消费者影响和安全边界的有效注释，禁止机械逐行或行尾堆叠注释。
 - 新增 Java 类必须补齐类注释、字段注释、方法 JavaDoc，并在关键逻辑块前说明为什么这样实现。

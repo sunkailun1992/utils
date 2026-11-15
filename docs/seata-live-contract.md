@@ -2,7 +2,7 @@
 
 ## 目标与边界
 
-`SeataDubboPostgresqlLiveContractTest` 验证公共基础设施链：已有 TC、两个独立 Java JVM、真实 Dubbo Triple、现有 `DubboContextPropagationFilter`、公共 `DynamicDataSourceConfig` 的 AT 代理，以及两个专用 PostgreSQL 库。
+`SeataDubboPostgresqlLiveContractTest` 验证公共基础设施链：已有 TC、两个独立 Java JVM、真实 Dubbo Triple、现有 `DubboContextPropagationFilter`、dynamic-datasource 原生配置（`seata: true`、`seata-mode: AT`）给两个池包的 AT 代理，以及两个专用 PostgreSQL 库。
 
 普通 `./gradlew test` 不运行该联调。所有探针类都在 `src/test/java`，不进入 Maven 主制品；不新增业务 RPC、HTTP 写接口或业务全局事务，不改 Nacos、TC 配置或业务库。它使用程序化 Seata TM 开始/提交/回滚全局事务，分支由 Spring `TransactionTemplate` 通过实际 `DataSourceProxy` 提交并注册到 TC；并非用普通 SQL 本地事务代替 Seata。
 
@@ -12,7 +12,7 @@
 
 - 已有 TC 可达，实际服务端版本独立核实。测试不会安装、启动、重启或修改 TC。
 - 两个不同的专用 PostgreSQL 数据库，实际库名均以 `fleet_pg_test_` 开头；拒绝所有 `github_dev_*` 业务库。两库各自的账号只须测试库连接、schema 建删表及合成记录读写权限。
-- 在两专用库首次启动 RM 前执行权威 `src/main/resources/db/postgresql/common-infra-schema.sql`，准备 `public.undo_log`；测试不会创建、删除或清空该表。
+- 在两专用库首次启动 RM 前准备 `public.undo_log`（结构同 `src/test/resources/db/test/undo_log.sql`，与各服务 `V1__baseline.sql` 一致）：Seata 开启时代理在建池阶段就检查该表；测试不会创建、删除或清空该表。两库 JDBC URL 不带 `connectTimeout`、`socketTimeout`。
 - 只通过环境变量注入以下值，勿写入 Git、命令行参数或日志：
 
 | 变量 | 用途 |

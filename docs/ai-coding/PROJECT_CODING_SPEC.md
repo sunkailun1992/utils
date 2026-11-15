@@ -14,7 +14,7 @@
 
 - public 类型使用 PascalCase，文件名必须与 public 类型名完全一致。
 - 工具类使用 `XxxUtils`，例如 `JwtUtils`、`OkHttpUtils`。
-- 配置类使用 `XxxConfig`，例如 `DynamicDataSourceConfig`、`MyBatisPlusConfig`。
+- 配置类使用 `XxxConfig`，例如 `MyBatisPlusConfig`、`RedisCacheConfig`。
 - AOP 切面使用业务语义命名，例如 `IdempotentAspect`。
 - 缩写保持项目当前写法：`JwtUtils`、`OkHttpUtils`、`MyBatisPlusConfig`、`ApiResponse`。
 - 不新增含糊类名，例如 `TestUtil`、`CommonUtil`、`BaseUtil2`。
@@ -62,12 +62,12 @@
 
 ## MyBatis-Plus
 
-- 实体基础字段统一继承 `EntityBase`。
-- `EntityBase.version` 只表示 MyBatis-Plus 乐观锁字段。
-- 业务微服务新增业务表时，DDL 默认包含 `code`、`description`、`create_date_time`、`create_name`、`modify_date_time`、`modify_name`、`is_delete`、`type`、`state`、`label`、`sorting`、`version`、`tenant_id` 等公共治理字段，不得只写业务字段。
-- `type/state` 是 DDL 默认治理/状态字段，但不放入 `EntityBase`。业务代码需要读写时由当前实体自行声明并配套 `IEnum` 或受控枚举；不需要读写时依赖数据库默认值。
+- 实体基础字段统一继承 `TenantEntityBase`（无租户的表继承 `EntityBase`）。
+- 实体基类对照芋道 `BaseDO`：`EntityBase` 只有 `createTime`、`updateTime`、`creator`、`updater`、`deleted`（列 `is_deleted`），由 `MyMetaObjectHandler` 自动填充，创建人、修改人取当前登录用户ID，没有登录用户（种子、后台任务）时不填，实体上已有的值不覆盖；`TenantEntityBase` 只多 `tenantId`。`id`（字符串雪花ID）、`version`（乐观锁）及 `code`、`description`、`sorting` 等由用到的实体自己声明。
+- 业务微服务新增业务表时，DDL 必须包含 `id`、`create_time`、`update_time`、`creator`、`updater`、`is_deleted`，有租户的表加 `tenant_id`，用乐观锁的表加 `version`；`code`、`description`、`type`、`state`、`sorting` 按业务需要添加，不再使用 `label`。不得只写业务字段。
+- `type/state` 不放入实体基类。业务代码需要读写时由当前实体自行声明并配套 `IEnum` 或受控枚举；不需要读写时依赖数据库默认值。
 - 数据库列 `version` 只表示 MyBatis-Plus 乐观锁。业务版本、模板版本、协议版本、Prompt 版本必须使用明确列名，例如 `template_version`、`prompt_version`、`protocol_version`，不得复用 `version`。
-- `src/main/resources/db/postgresql/common-infra-schema.sql` 是业务库公共基础脚本源头，维护 `ddl_history` 与 Seata AT `undo_log`。消费者服务全新或空业务库首次启动前，必须在目标业务库手动执行该脚本；Seata AT 会在 `DataSource` 初始化时先检查 `undo_log`，不能依赖 MyBatis-Plus DDL 首次启动自动创建。
+- 表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。Seata AT 的 `undo_log` 写在各服务 `V1__baseline.sql`；数据源块的 `spring.datasource.dynamic.seata` 跟随 `seata.enabled`，Seata 开启时数据源创建阶段（早于 Flyway）就会检查该表，所以启用 Seata 前库里须已完成迁移。
 - 乐观锁由 `MyBatisPlusConfig` 注册 `OptimisticLockerInnerInterceptor`。
 - 更新接口需要提交查询时拿到的当前 `version`。
 - 更新建议使用 `updateById(entity)`，避免只按 id 的 `UpdateWrapper` 绕过乐观锁。

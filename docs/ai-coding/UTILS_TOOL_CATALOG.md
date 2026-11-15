@@ -51,17 +51,18 @@
 - `com.kellen.config.dubbo.DubboContextPropagationFilter`：Dubbo RPC 上下文透传。
 - `com.kellen.config.web.ReqInterceptor`：HTTP 请求租户上下文初始化。
 - `com.kellen.utils.context.DynamicSourceTtl`：动态数据源上下文，`peek()` 只读不补位。
-- `com.kellen.config.datasource.DynamicDataSourceConfig`：Druid 动态数据源配置，主库与灰度库接入 Seata（`org.apache.seata.*`）。
+- 数据源不再由 utils 自写配置：各服务用 dynamic-datasource 原生 `spring.datasource.dynamic.*`，`application.yml` 放连接池与 Seata 参数，Nacos 放 master、gray 地址与账号；`seata` 跟随 `seata.enabled`，开启时由 dynamic-datasource 按 AT 包装 Seata 代理。
+- Flyway：utils 以 `api` 带上 `spring-boot-starter-flyway` 与 `flyway-database-postgresql`，不放迁移；MyBatis-Plus 的顺序探测器让 `SqlSessionTemplate` 等 Flyway 迁移完成。
 - `com.kellen.config.mybatis.MyBatisPlusConfig`：MyBatis-Plus 插件配置。
 - `com.kellen.config.mybatis.MybatisPlusSecurityProperties`：MyBatis-Plus SQL 安全插件开关配置。
-- `com.kellen.config.mybatis.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器。
+- `com.kellen.config.mybatis.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器；插入填创建时间、更新时间、创建人、更新人与租户，更新刷新更新时间与更新人；没有登录用户时不填人，已有值不覆盖。
 - `com.kellen.datapermission.DataPermissionSqlHandler`：数据权限条件，直接构造 JSqlParser 表达式（本人与部门为等值条件，部门树与自定义为 `IN`），内部异常不吞掉。
-- `com.kellen.entity.EntityBase`：通用实体基类。
+- `com.kellen.entity.EntityBase`、`com.kellen.entity.TenantEntityBase`：实体基类两层，前者只有审计与逻辑删除字段，后者只多租户ID。
 
 当前边界：
 
 - 只保留 `master` 与 `gray` 两个数据源。
-- Druid 数据源默认启用借出前有效性校验、空闲检测和最小连接保活；消费者可通过 `utils.datasource.health.*` 覆盖校验语句、超时、检测间隔和最小空闲连接数。
+- Druid 连接池的借出前校验、空闲检测、保活与连接、读取超时（毫秒）写在各服务 `application.yml` 的 `spring.datasource.dynamic.druid`；JDBC URL 不带 `connectTimeout`、`socketTimeout`，见[超时单位说明](../postgresql-druid-timeouts.md)。
 - `version` 只作为 MyBatis-Plus 乐观锁字段。
 - `MyBatisPlusConfig` 按 MyBatis-Plus 官方顺序注册插件：多租户、数据权限 → 分页、乐观锁 → 非法 SQL 检查、防全表更新删除。
 - `IllegalSQLInnerInterceptor` 与 `BlockAttackInnerInterceptor` 属于默认安全边界，关闭前必须补充原因、替代防护和测试。
