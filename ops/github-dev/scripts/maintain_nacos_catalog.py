@@ -219,7 +219,6 @@ def maintain(client, descriptions, replacements, directory, backup_directory,
     previous_content = {}
     if retire:
         previous = private_directory(previous)
-        previous_content = {name: private_text(previous / name) for name in replacements}
     backup_directory = outside_git(backup_directory)
     require(not backup_directory.is_symlink(), "备份目录不能是符号链接")
     backup_directory.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -238,6 +237,10 @@ def maintain(client, descriptions, replacements, directory, backup_directory,
             value = client.get(name)
             save_snapshot(backup, name, value)
             if value is not None:
+                # 只有仍在远端的旧项需要已复核快照；早已删除的旧项没有原文可比对。
+                require((previous / name).is_file() and not (previous / name).is_symlink(),
+                        name + ": 仍在远端但缺少 --previous 旧内容快照，停止")
+                previous_content[name] = private_text(previous / name)
                 require(value["content"] == previous_content[name], name + ": 旧配置已漂移，停止")
                 if replacement:
                     require(originals[replacement]["content"] == candidate[replacement], name + ": 替代配置未就绪")
@@ -291,7 +294,7 @@ def maintain(client, descriptions, replacements, directory, backup_directory,
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, epilog="删除不是回收站操作；恢复旧配置需要使用 Git 外快照重新发布。接口不提供原子 CAS，维护期间避免其他写入。")
     parser.add_argument("--env-file", type=Path, default=Path.home() / ".config/kellen-github/dev.env")
-    parser.add_argument("--directory", type=Path, required=True, help="已发布并读回的 27 项私有候选目录")
+    parser.add_argument("--directory", type=Path, required=True, help="已发布并读回、恰好包含 catalog 全部当前项的私有候选目录")
     parser.add_argument("--backup-directory", type=Path, required=True, help="Git 外 0700 备份根目录，每次新建独立快照子目录")
     parser.add_argument("--previous", type=Path, help="旧 dataId 原始内容快照目录，文件名与 dataId 相同")
     parser.add_argument("--apply", action="store_true", help="实际更新描述；未指定时只预演并备份")

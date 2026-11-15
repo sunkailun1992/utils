@@ -3,18 +3,6 @@
   "group": "DEFAULT_GROUP",
   "entries": [
     {
-      "dataId": "a2a.yaml",
-      "description": "A2A 租户、提供方及协议入口约定；个人 github-dev 配置，凭据由私有环境注入。",
-      "category": "共享 AI 协议",
-      "consumers": [
-        "ai",
-        "ai-agent",
-        "ai-memory",
-        "mcp",
-        "rag"
-      ]
-    },
-    {
       "dataId": "actuator.yaml",
       "description": "管理端点访问令牌、暴露范围与健康详情策略；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "安全与可观测性",
@@ -70,20 +58,6 @@
       ]
     },
     {
-      "dataId": "elasticsearch.yaml",
-      "description": "Elasticsearch 连接及个人请求日志索引；个人 github-dev 配置，凭据由私有环境注入。",
-      "category": "共享基础设施",
-      "consumers": [
-        "ai",
-        "ai-memory",
-        "mcp",
-        "message",
-        "rag",
-        "report",
-        "user"
-      ]
-    },
-    {
       "dataId": "gateway-spring.yaml",
       "description": "网关路由、Redis 限流和浏览器 CORS 白名单；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
@@ -126,30 +100,6 @@
     {
       "dataId": "mybatis-plus.yaml",
       "description": "MyBatis-Plus 映射、逻辑删除和 MyBatis-Mate 授权；个人 github-dev 配置，凭据由私有环境注入。",
-      "category": "共享基础设施",
-      "consumers": [
-        "ai",
-        "ai-memory",
-        "mcp",
-        "message",
-        "rag",
-        "report",
-        "user"
-      ]
-    },
-    {
-      "dataId": "qdrant.yaml",
-      "description": "Qdrant gRPC 连接；RAG HTTP 客户端另见 rag-spring.yaml；个人 github-dev 配置，凭据由私有环境注入。",
-      "category": "共享基础设施",
-      "consumers": [
-        "ai",
-        "ai-memory",
-        "rag"
-      ]
-    },
-    {
-      "dataId": "rabbitmq.yaml",
-      "description": "RabbitMQ 连接、独立 vhost 与消费监听器开关；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "共享基础设施",
       "consumers": [
         "ai",

@@ -12,7 +12,7 @@
 | 数据源、注册发现、消息队列、环境、治理参数 | Nacos 的对应基础设施/服务 dataId | 不为每个基础设施复制管理 UI |
 | 存储加密根密钥、允许连接的私有存储 origin | 仅 AI 服务 OS 环境/私有部署输入 | 不可在业务页面或 Nacos 修改 |
 
-模型部署与上游凭据以 LiteLLM 为管理源，业务应用使用各自最小权限 virtual key。DeepSeek/Qwen/RAG 已按各自连接接入；Google 因 NAS native 请求仍为 UNKNOWN，当前保留 Agent 原 direct 路径及其专属 Google 凭据，不能宣称所有应用已只持 virtual key。AI/Agent/RAG 的九份源码 profile 均不再直接导入 `ai-model-secrets.yaml`；旧远端 dataId 仅保留为显式回滚来源，Google 必需字段由 Agent 服务配置显式提供。存储凭据由 AI 服务使用独立 AES-GCM 根密钥加密保存，不复用 JWT、数据库密码或模型主密钥；Nacos 保留基础设施连接，迁移后的业务存储连接不再由共享 Nacos 配置管理。
+模型部署与上游凭据以 LiteLLM 为管理源，业务应用使用各自最小权限 virtual key。DeepSeek/Qwen/RAG 已按各自连接接入；Google 因 NAS native 请求仍为 UNKNOWN，当前保留 Agent 原 direct 路径及其专属 Google 凭据，不能宣称所有应用已只持 virtual key。AI/Agent/RAG 的九份源码 profile 均不再直接导入 `ai-model-secrets.yaml`，该 dataId 已从远端退役删除（Git 外私有快照保留），Google 必需字段由 Agent 服务配置显式提供。存储凭据由 AI 服务使用独立 AES-GCM 根密钥加密保存，不复用 JWT、数据库密码或模型主密钥；Nacos 保留基础设施连接，迁移后的业务存储连接不再由共享 Nacos 配置管理。
 
 业务生成参数还要按执行层的显式来源核对：DeepSeek/Qwen 的 `SERVICE` 保留服务参数，`DEPLOYMENT` 才省略服务覆盖并继承原生 deployment 默认；Google direct 选项保持原合同。源码支持该选择不等于所有在运行实例已完成参数迁移，也不能声称已有完整生成策略或 Prompt 管理页面。
 
@@ -99,4 +99,4 @@ M2 后完整 metrics 的已知值检查为 0 命中，metrics key/user scope 未
 
 AI 1.6.7 与 admin-web 1.1.0 已交付 main/CI。现有 MinIO 连接经管理 API 一次导入，平台与原 300 秒上传/300 秒查看/20 MiB 策略保值；真实 WRITE/EXISTS/READ/VERIFY_PRIVATE/CLEANUP 五步通过且 owned 对象已清理。匿名 401、租户管理员 403、平台管理员 200 已取证；同 key 原操作数据查回一致、换内容重用 key 返回 409，拒绝及重放后三张控制表和时间戳不变。密钥、明文凭据及密文均不进入管理 API 结果。
 
-当前文件表基线为 0，历史平台/null 读取只由针对性 fixture 证明；OSS、COS、S3 为官方 SDK/XFS 回环验证，不冒充真实云凭据已配置。Nacos 的旧 storage.yaml 保留私有回滚来源，新 AI 三 profile 不再导入；已在实际 DB 迁移/新版本与读写验收后，仅 CAS 移除 ai-spring.yaml 的旧 ai.oss，其他 typed 值与 metadata 保持。浏览器已验证真实连接、生效/探针版本、KEEP 不回显旧密钥、无改动禁保存、还原后禁保存、本地时区和 MiB 展示。
+当前文件表基线为 0，历史平台/null 读取只由针对性 fixture 证明；OSS、COS、S3 为官方 SDK/XFS 回环验证，不冒充真实云凭据已配置。Nacos 的旧 storage.yaml 已退役删除（Git 外私有快照保留），新 AI 三 profile 不再导入；已在实际 DB 迁移/新版本与读写验收后，仅 CAS 移除 ai-spring.yaml 的旧 ai.oss，其他 typed 值与 metadata 保持。浏览器已验证真实连接、生效/探针版本、KEEP 不回显旧密钥、无改动禁保存、还原后禁保存、本地时区和 MiB 展示。

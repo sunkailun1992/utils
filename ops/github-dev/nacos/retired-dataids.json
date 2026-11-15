@@ -59,6 +59,42 @@
       "replacement": null,
       "reason": "个人 XXL-JOB 依赖、示例处理器和全部 profile 导入退役；采用独立 Conductor OSS，消费者重启验证后按 CAS 清理个人远端配置，不处理美联 namespace。",
       "kind": "scheduler-retirement"
+    },
+    {
+      "dataId": "elasticsearch.yaml",
+      "replacement": null,
+      "reason": "utils 1.6.8 已移除请求日志写入 Elasticsearch，各服务升级时去掉导入；无服务导入、无代码读取；按「没用的全部删除」退役，Git 外私有快照保留，恢复须重新发布并恢复导入。",
+      "kind": "unused-retirement"
+    },
+    {
+      "dataId": "rabbitmq.yaml",
+      "replacement": null,
+      "reason": "个人服务不再依赖 RabbitMQ，各服务升级时去掉导入；无服务导入、无代码读取；按「没用的全部删除」退役，Git 外私有快照保留，恢复须重新发布并恢复导入。",
+      "kind": "unused-retirement"
+    },
+    {
+      "dataId": "a2a.yaml",
+      "replacement": null,
+      "reason": "custom.a2a-* 没有任何代码或 ${} 引用，ai、ai-agent、ai-memory、mcp、rag 同步去掉导入；无服务导入、无代码读取；按「没用的全部删除」退役，Git 外私有快照保留，恢复须重新发布并恢复导入。",
+      "kind": "unused-retirement"
+    },
+    {
+      "dataId": "qdrant.yaml",
+      "replacement": null,
+      "reason": "qdrant.host/port/api-key 没有读取方，RAG 只用 rag-spring.yaml 的 rag.vector.qdrant-url；ai、ai-memory、rag 同步去掉导入；无服务导入、无代码读取；按「没用的全部删除」退役，Git 外私有快照保留，恢复须重新发布并恢复导入。",
+      "kind": "unused-retirement"
+    },
+    {
+      "dataId": "ai-model-secrets.yaml",
+      "replacement": null,
+      "reason": "源码自 ai-agent 0.3.0、RAG 1.2.6、ai-memory 1.1.3 起不再导入，原先仅留作旧制品回滚；无服务导入、无代码读取；按「没用的全部删除」退役，Git 外私有快照保留，恢复须重新发布并恢复导入。",
+      "kind": "unused-retirement"
+    },
+    {
+      "dataId": "storage.yaml",
+      "replacement": null,
+      "reason": "AI 1.6.7 起存储连接与策略归 AI 控制台数据库，原先仅留作旧制品回滚；无服务导入、无代码读取；按「没用的全部删除」退役，Git 外私有快照保留，恢复须重新发布并恢复导入。",
+      "kind": "unused-retirement"
     }
   ]
 }

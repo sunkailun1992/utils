@@ -99,20 +99,155 @@ def render_document(source, environment):
     return result
 
 
+def dotted(path):
+    """键路径的报错写法，只含键名与列表下标，不含值。"""
+    text = ""
+    for part in path:
+        text += f"[{part}]" if isinstance(part, int) else (f".{part}" if text else str(part))
+    return text
+
+
+def _same(left, right):
+    return json.dumps(left, sort_keys=True, ensure_ascii=False) == json.dumps(right, sort_keys=True, ensure_ascii=False)
+
+
+def _expected(template, remote, path, drops, problems):
+    """模板每个标量取远端同路径的值；远端多出的键只能是已声明的删除项。"""
+    if isinstance(template, dict) and isinstance(remote, dict):
+        for key in remote:
+            if key not in template and dotted(path + [key]) not in drops:
+                problems.append("远端有模板没有的键：" + dotted(path + [key]))
+        return {key: _expected(value, remote[key], path + [key], drops, problems) if key in remote else value
+                for key, value in template.items()}
+    if isinstance(template, list) and isinstance(remote, list):
+        if len(template) != len(remote):
+            problems.append("列表长度不同：" + dotted(path))
+            return template
+        return [_expected(item, other, path + [index], drops, problems)
+                for index, (item, other) in enumerate(zip(template, remote))]
+    if isinstance(template, (dict, list)) or isinstance(remote, (dict, list)):
+        problems.append("结构不同：" + dotted(path))
+        return template
+    return remote
+
+
+def overlay_document(rendered, remote_text, drops=()):
+    """保值渲染：保留已渲染模板的注释、键序与结构，同路径的值换成远端当前值。
+
+    远端多出的键必须在 drops（点分键路径）中声明才会被删除；报错只给键路径，不输出值。"""
+    template, remote = yaml_json(rendered), yaml_json(remote_text)
+    problems = []
+    expected = _expected(template, remote, [], set(drops), problems)
+    if problems:
+        raise ValueError("；".join(problems))
+    positions = subprocess.run(["ruby", "-ryaml", "-rjson", "-e", """
+      nodes = []
+      visit = lambda do |node, path|
+        case node
+        when Psych::Nodes::Mapping
+          node.children.each_slice(2) { |key, value| visit.call(value, path + [key.value]) }
+        when Psych::Nodes::Sequence
+          node.children.each_with_index { |child, index| visit.call(child, path + [index]) }
+        when Psych::Nodes::Scalar
+          nodes << [path, node.start_line, node.start_column, node.end_line, node.end_column]
+        when Psych::Nodes::Alias
+          raise 'alias unsupported'
+        else
+          (node.children || []).each { |child| visit.call(child, path) }
+        end
+      end
+      visit.call(Psych.parse_stream(STDIN.read), [])
+      puts JSON.generate(nodes)
+    """], input=rendered, capture_output=True, text=True)
+    if positions.returncode:
+        raise ValueError("YAML 模板格式错误；原文不输出")
+    offsets = [0]
+    for line in rendered.splitlines(keepends=True):
+        offsets.append(offsets[-1] + len(line))
+    result = rendered
+    for path, start_line, start_column, end_line, end_column in reversed(json.loads(positions.stdout)):
+        value, current = expected, template
+        for part in path:
+            value, current = value[part], current[part]
+        if _same(value, current):
+            continue
+        start, end = offsets[start_line] + start_column, offsets[end_line] + end_column
+        replacement = json.dumps(value, ensure_ascii=False)
+        if rendered[start:end].endswith("\n"):
+            replacement += "\n"
+        if start == end and not rendered[start - 1:start].isspace():
+            replacement = " " + replacement
+        result = result[:start] + replacement + result[end:]
+    if not _same(yaml_json(result), expected):
+        raise ValueError("保值渲染后与远端语义不一致；未输出配置")
+    return result
+
+
+def render_directory(source, output, environment, remote=None, keep_remote=(), drops=()):
+    """渲染全部模板；keep_remote 中的 dataId 按 remote 目录的远端原文保值渲染。
+
+    全部算完才写文件；输出目录只能含当前模板同名文件，避免已退役的 dataId 随发布被重新写回。"""
+    names = sorted(file.name for file in source.iterdir())
+    keep = set(keep_remote)
+    unknown = keep - set(names)
+    if unknown:
+        raise ValueError("--keep-remote 不是当前模板：" + "、".join(sorted(unknown)))
+    if keep and remote is None:
+        raise ValueError("--keep-remote 需要 --remote 远端原文目录")
+    grouped = {}
+    for item in drops:
+        name, separator, path = item.partition(":")
+        if not separator or not path or name not in keep:
+            raise ValueError("--drop 须写成 <保值 dataId>:<键路径>：" + item)
+        grouped.setdefault(name, set()).add(path)
+    if output.exists():
+        stale = sorted(file.name for file in output.iterdir() if file.name not in names)
+        if stale:
+            raise ValueError("输出目录含非当前模板的文件，发布时会被一并写入：" + "、".join(stale))
+    results = {}
+    for name in names:
+        result = render_document((source / name).read_text(), environment)
+        if name in keep:
+            current = remote / name
+            if not current.is_file():
+                raise ValueError("远端原文目录缺少：" + name)
+            try:
+                result = overlay_document(result, current.read_text(), grouped.get(name, ()))
+            except ValueError as error:
+                raise ValueError(f"{name}：{error}") from None
+        results[name] = result
+    output.mkdir(parents=True, exist_ok=True, mode=0o700)
+    output.chmod(0o700)
+    for name, result in results.items():
+        destination = output / name
+        destination.write_text(result)
+        destination.chmod(0o600)
+    return names
+
+
+def outside_git(path):
+    resolved = path.resolve()
+    if any((parent / ".git").exists() for parent in [resolved, *resolved.parents]):
+        raise ValueError("含凭据的渲染结果和远端原文必须放在 Git 仓库外")
+    return path
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--env-file", type=Path, default=Path.home() / ".config/kellen-github/dev.env")
     parser.add_argument("--output", type=Path, default=Path.home() / ".config/kellen-github/nacos-rendered/DEFAULT_GROUP")
+    parser.add_argument("--remote", type=Path, help="Git 外的远端原文目录，文件名即 dataId；可与 sync_nacos.py 的 --previous 共用")
+    parser.add_argument("--keep-remote", action="append", default=[], metavar="DATAID",
+                        help="该 dataId 的值以远端为准，模板只提供注释、键序与结构；可重复")
+    parser.add_argument("--drop", action="append", default=[], metavar="DATAID:键路径",
+                        help="保值渲染时允许删除的远端键，例如 rag-spring.yaml:rag.engine.graph-enabled；可重复")
     args = parser.parse_args()
-    if any((parent / ".git").exists() for parent in [args.output.resolve(), *args.output.resolve().parents]):
-        raise ValueError("含凭据的渲染结果必须放在 Git 仓库外")
-    environment = private_environment(args.env_file)
+    outside_git(args.output)
+    if args.remote:
+        outside_git(args.remote)
     source = Path(__file__).resolve().parents[1] / "nacos/DEFAULT_GROUP"
-    args.output.mkdir(parents=True, exist_ok=True, mode=0o700)
-    args.output.chmod(0o700)
-    for file in sorted(source.iterdir()):
-        result = render_document(file.read_text(), environment)
-        destination = args.output / file.name
-        destination.write_text(result)
-        destination.chmod(0o600)
-    print(f"已渲染 {len(list(source.iterdir()))} 个 dataId 到私有目录；配置值不输出")
+    names = render_directory(source, args.output, private_environment(args.env_file), args.remote,
+                             args.keep_remote, args.drop)
+    print(f"已渲染 {len(names)} 个 dataId 到私有目录，其中 {len(set(args.keep_remote))} 个按远端值保值渲染；配置值不输出")
+    for item in sorted(args.drop):
+        print("已删除远端键 " + item)

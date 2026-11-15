@@ -207,36 +207,33 @@ class NacosOrganizationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "mutate records"):
                 configuration.prepare(root)
 
-    def test_current_catalog_keeps_shared_model_configuration_for_explicit_rollback_only(self):
+    def test_shared_model_configuration_is_retired_and_cannot_return(self):
         directory = Path(__file__).resolve().parents[1] / "nacos"
         active = {file.name: file.read_text() for file in (directory / "DEFAULT_GROUP").iterdir()}
         catalog = json.loads((directory / "catalog.json").read_text())
         retired = json.loads((directory / "retired-dataids.json").read_text())
         self.assertNotIn("ai-model-secrets.yaml", set(active))
         self.assertNotIn("ai-model-secrets.yaml", {entry["dataId"] for entry in catalog["entries"]})
-        self.assertNotIn("ai-model-secrets.yaml", {entry["dataId"] for entry in retired["retired"]})
-        historical = yaml_json((directory / "rollback-examples/ai-model-secrets.yaml").read_text())
-        self.assertEqual(historical, {"spring": {"ai": {"google": {"genai": {
-            "api-key": "${GITHUB_GOOGLE_API_KEY}",
-            "chat": {"options": {"model": "${GITHUB_GOOGLE_CHAT_MODEL:gemini-3.1-flash-lite}"}}
-        }}}}})
+        self.assertIn({"dataId": "ai-model-secrets.yaml", "replacement": None},
+                      [{"dataId": entry["dataId"], "replacement": entry["replacement"]} for entry in retired["retired"]])
+        self.assertFalse((directory / "rollback-examples").exists())
         configuration.check_model_credential_scope(active, catalog, retired)
 
-    def test_storage_connections_are_console_owned_and_rollback_is_not_automatically_retired(self):
+    def test_storage_connections_are_console_owned_and_old_storage_is_retired(self):
         directory = configuration.CONFIG.parent
         active = {file.name: file.read_text() for file in configuration.CONFIG.iterdir()}
         catalog = json.loads((directory / "catalog.json").read_text())
         retired = json.loads((directory / "retired-dataids.json").read_text())
         self.assertNotIn("storage.yaml", set(active))
         self.assertNotIn("storage.yaml", {entry["dataId"] for entry in catalog["entries"]})
-        self.assertNotIn("storage.yaml", {entry["dataId"] for entry in retired["retired"]})
+        self.assertIn("storage.yaml", {entry["dataId"] for entry in retired["retired"]})
         self.assertNotIn("oss", yaml_json(active["ai-spring.yaml"])["ai"])
-        self.assertEqual(yaml_json((directory / "rollback-examples/storage.yaml").read_text())["dromara"]["x-file-storage"]["default-platform"], "minio-private")
         configuration.check_storage_credential_scope(active, catalog, retired)
+        without_storage = {"retired": [entry for entry in retired["retired"] if entry["dataId"] != "storage.yaml"]}
         for changed, changed_catalog, changed_retired in (
             ({**active, "storage.yaml": "{}"}, catalog, retired),
             (active, {"entries": [*catalog["entries"], {"dataId": "storage.yaml"}]}, retired),
-            (active, catalog, {"retired": [*retired["retired"], {"dataId": "storage.yaml"}]}),
+            (active, catalog, without_storage),
             ({**active, "ai-spring.yaml": "ai:\n  oss:\n    base-dir: old\n"}, catalog, retired),
         ):
             with self.assertRaises(AssertionError):
@@ -258,10 +255,10 @@ class NacosOrganizationTests(unittest.TestCase):
         proxied = yaml_json(render_document(source, {**environment, "GITHUB_GOOGLE_BASE_URL": "http://127.0.0.1:4567/gemini"}))
         self.assertEqual(proxied["ai"]["agent"]["google"]["base-url"], "http://127.0.0.1:4567/gemini")
 
-    def test_shared_model_scope_guard_rejects_reactivation_and_automatic_retirement(self):
+    def test_shared_model_scope_guard_rejects_reactivation_and_missing_retirement(self):
         active = {"ai-agent-spring.yaml": (configuration.CONFIG / "ai-agent-spring.yaml").read_text()}
         catalog = {"entries": [{"dataId": "ai-agent-spring.yaml"}]}
-        retired = {"retired": []}
+        retired = {"retired": [{"dataId": "ai-model-secrets.yaml", "replacement": None}]}
         configuration.check_model_credential_scope(active, catalog, retired)
         with self.assertRaisesRegex(AssertionError, "历史共享模型"):
             configuration.check_model_credential_scope({**active, "ai-model-secrets.yaml": "{}"}, catalog, retired)
@@ -269,8 +266,11 @@ class NacosOrganizationTests(unittest.TestCase):
         altered["entries"].append({"dataId": "ai-model-secrets.yaml"})
         with self.assertRaisesRegex(AssertionError, "历史共享模型"):
             configuration.check_model_credential_scope(active, altered, retired)
-        with self.assertRaisesRegex(AssertionError, "不得自动删除"):
-            configuration.check_model_credential_scope(active, catalog, {"retired": [{"dataId": "ai-model-secrets.yaml"}]})
+        with self.assertRaisesRegex(AssertionError, "退役项"):
+            configuration.check_model_credential_scope(active, catalog, {"retired": []})
+        with self.assertRaisesRegex(AssertionError, "退役项"):
+            configuration.check_model_credential_scope(active, catalog, {"retired": [
+                {"dataId": "ai-model-secrets.yaml", "replacement": "ai-agent-spring.yaml"}]})
 
     def test_mapping_merge_preserves_later_override_and_ordered_lists(self):
         templates = {"shared.yaml": "spring:\n  enabled: true\n  ports: [1, 2]\n",

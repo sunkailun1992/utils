@@ -4,7 +4,9 @@
 # 导入服务：ai-memory、mcp、message、rag、report、user。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
+# utils 安全组件参数。
 security:
+  # 身份来源：请求头直传与 JWT 二选一或并用。
   auth:
     # 启用公共认证上下文处理；不替代各接口的权限判断。
     enabled: true
@@ -12,6 +14,7 @@ security:
     header-enabled: false
     # 启用 JWT 身份解析，密钥和 issuer 见 security-jwt.yaml。
     jwt-enabled: true
+  # 数据权限：按用户、部门归属列追加查询条件。
   data-permission:
     # 启用数据权限拦截；具体用户、部门列需与各实体表一致。
     enabled: true
@@ -19,22 +22,27 @@ security:
     default-user-column: owner_user_id
     # 未单独声明表规则时使用的部门归属列。
     default-dept-column: dept_id
+    # 按表覆盖默认归属列，键为表名。
     table-rules:
+      # 用户表：本人按主键 id 判定，部门按 dept_id。
       auth_user:
         # 该表数据权限使用的用户归属列；必须与实际表结构一致。
         user-column: id
         # 该表数据权限使用的部门归属列；必须与实际表结构一致。
         dept-column: dept_id
+      # 部门表：部门按主键 id 判定，负责人按 owner_user_id。
       auth_dept:
         # 该表数据权限使用的用户归属列；必须与实际表结构一致。
         user-column: owner_user_id
         # 该表数据权限使用的部门归属列；必须与实际表结构一致。
         dept-column: id
+      # 角色表：负责人按 owner_user_id，部门按 dept_id。
       auth_role:
         # 该表数据权限使用的用户归属列；必须与实际表结构一致。
         user-column: owner_user_id
         # 该表数据权限使用的部门归属列；必须与实际表结构一致。
         dept-column: dept_id
+# utils 多租户隔离参数。
 tenant:
   # 启用租户隔离，租户上下文由可信认证链提供。
   enabled: true

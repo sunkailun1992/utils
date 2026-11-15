@@ -1,10 +1,11 @@
 """注释随 Nacos 模板一起渲染；私有值必须保持为完整的 YAML 字符串。"""
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from render_nacos import render, render_document, yaml_json
+from render_nacos import overlay_document, render, render_directory, render_document, yaml_json
 
 
 class NacosRenderTests(unittest.TestCase):
@@ -43,6 +44,103 @@ class NacosRenderTests(unittest.TestCase):
         actual = render_document(source, {'GITHUB_NAME': '测试'})
         self.assertIn('# 下一组\nnext: true', actual)
         self.assertEqual(yaml_json(actual), render(yaml_json(source), {'GITHUB_NAME': '测试'}))
+
+
+class NacosOverlayTests(unittest.TestCase):
+    """保值渲染：模板只提供注释、键序与结构，同路径的值取远端。"""
+
+    TEMPLATE = ('# 文件说明\n'
+                'agent:\n'
+                '  # 生成参数来源\n'
+                '  source: SERVICE\n'
+                '  # 上游地址\n'
+                '  base-url: https://api.example.invalid\n'
+                '  # 运行期密钥占位符\n'
+                '  api-key: rendered-secret\n'
+                '  # 超时（毫秒）\n'
+                '  timeout: 1000\n'
+                '  # 列表\n'
+                '  hosts: [a, b]\n')
+
+    def test_remote_values_win_and_template_comments_survive(self):
+        remote = ('agent:\n  source: DEPLOYMENT\n  base-url: http://gateway.invalid:14000/v1\n'
+                  '  api-key: ${GITHUB_AGENT_KEY}\n  timeout: 2500\n  hosts: [c, d]\n')
+        actual = overlay_document(self.TEMPLATE, remote)
+        self.assertEqual(yaml_json(actual), yaml_json(remote))
+        for comment in ('# 文件说明', '# 生成参数来源', '# 运行期密钥占位符', '# 列表'):
+            self.assertIn(comment, actual)
+        self.assertIn('  timeout: 2500\n', actual)
+
+    def test_unchanged_values_keep_template_text(self):
+        self.assertEqual(overlay_document(self.TEMPLATE, self.TEMPLATE), self.TEMPLATE)
+
+    def test_remote_only_keys_fail_unless_declared_as_drops(self):
+        remote = self.TEMPLATE.replace('  timeout: 1000\n', '  timeout: 1000\n  retired-flag: true\n')
+        with self.assertRaisesRegex(ValueError, r'^远端有模板没有的键：agent\.retired-flag'):
+            overlay_document(self.TEMPLATE, remote)
+        dropped = overlay_document(self.TEMPLATE, remote, drops={'agent.retired-flag'})
+        self.assertNotIn('retired-flag', yaml_json(dropped)['agent'])
+
+    def test_template_only_keys_keep_their_rendered_value(self):
+        remote = self.TEMPLATE.replace('  timeout: 1000\n', '')
+        self.assertEqual(yaml_json(overlay_document(self.TEMPLATE, remote))['agent']['timeout'], 1000)
+
+    def test_structure_mismatch_fails_without_echoing_values(self):
+        for remote in ('agent:\n  source: SERVICE\n  base-url: x\n  api-key: remote-secret\n  timeout: 1000\n  hosts: [a]\n',
+                       'agent:\n  source: {nested: remote-secret}\n  base-url: x\n  api-key: y\n  timeout: 1\n  hosts: [a, b]\n'):
+            with self.assertRaises(ValueError) as caught:
+                overlay_document(self.TEMPLATE, remote)
+            self.assertNotIn('remote-secret', str(caught.exception))
+            self.assertRegex(str(caught.exception), r'agent\.(hosts|source)')
+
+    def test_block_scalar_and_empty_value_positions(self):
+        template = '# 说明\ntext: |\n  old line\n# 空值\nempty:\n# 下一组\nnext: true\n'
+        remote = 'text: "新\\n两行"\nempty: "值: #不是注释"\nnext: false\n'
+        actual = overlay_document(template, remote)
+        self.assertEqual(yaml_json(actual), yaml_json(remote))
+        self.assertIn('# 下一组\nnext: false', actual)
+
+
+class NacosRenderDirectoryTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix='nacos-render-')
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name)
+        self.source, self.output, self.remote = root / 'templates', root / 'out', root / 'remote'
+        for directory in (self.source, self.remote):
+            directory.mkdir()
+        (self.source / 'a.yaml').write_text('# 说明\nkey: ${GITHUB_A}\n')
+        (self.source / 'b.yaml').write_text('# 说明\nflag: false\n# 旧开关\nold: 1\n')
+        (self.remote / 'b.yaml').write_text('flag: true\nold: 1\nretired: true\n')
+
+    def test_only_selected_dataids_keep_remote_values(self):
+        names = render_directory(self.source, self.output, {'GITHUB_A': 'x'}, remote=self.remote,
+                                 keep_remote=['b.yaml'], drops=['b.yaml:retired'])
+        self.assertEqual(names, ['a.yaml', 'b.yaml'])
+        self.assertEqual(yaml_json((self.output / 'a.yaml').read_text()), {'key': 'x'})
+        self.assertEqual(yaml_json((self.output / 'b.yaml').read_text()), {'flag': True, 'old': 1})
+        self.assertIn('# 旧开关', (self.output / 'b.yaml').read_text())
+
+    def test_stale_output_files_are_rejected_before_any_write(self):
+        self.output.mkdir()
+        (self.output / 'retired.yaml').write_text('old: true\n')
+        with self.assertRaisesRegex(ValueError, 'retired.yaml'):
+            render_directory(self.source, self.output, {'GITHUB_A': 'x'})
+        self.assertEqual(sorted(file.name for file in self.output.iterdir()), ['retired.yaml'])
+
+    def test_failed_overlay_writes_nothing(self):
+        with self.assertRaisesRegex(ValueError, 'b.yaml.*retired'):
+            render_directory(self.source, self.output, {'GITHUB_A': 'x'}, remote=self.remote, keep_remote=['b.yaml'])
+        self.assertFalse(self.output.exists() and any(self.output.iterdir()))
+
+    def test_keep_remote_and_drop_arguments_are_validated(self):
+        for keep, drops, message in ((['c.yaml'], [], '不是当前模板'), (['a.yaml'], [], '缺少'),
+                                     (['b.yaml'], ['a.yaml:key'], '--drop')):
+            with self.assertRaisesRegex(ValueError, message):
+                render_directory(self.source, self.output, {'GITHUB_A': 'x'}, remote=self.remote,
+                                 keep_remote=keep, drops=drops)
+        with self.assertRaisesRegex(ValueError, '--remote'):
+            render_directory(self.source, self.output, {'GITHUB_A': 'x'}, keep_remote=['b.yaml'])
 
 
 if __name__ == '__main__':

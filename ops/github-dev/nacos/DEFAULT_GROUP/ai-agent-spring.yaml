@@ -2,28 +2,38 @@
 # dataId：ai-agent-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：Agent 模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择。
 # 导入服务：ai-agent。
-# 维护：生成参数按来源选择由原生 deployment 或本服务持有；真实凭据只由私有环境注入，Git 发布不表示配置已发布。
+# 维护：DeepSeek/Qwen 走 LiteLLM 网关，网关地址与 ${GITHUB_*_API_KEY} 运行期占位符以远端为准，发布须用 render_nacos.py --remote/--keep-remote 保值渲染；真实凭据不进 Git。
 
+# Spring AI 框架参数。
 spring:
+  # Spring AI 自动配置。
   ai:
+    # 按能力选择模型实现。
     model:
       # Spring AI 聊天模型实现；具体 Google 模型与凭据由下方本服务参数提供。
       chat: google-genai
+    # Spring AI Google GenAI 模型。
     google:
+      # Gemini Developer API 客户端。
       genai:
         # Google 原生接口密钥；直连时为提供方密钥，代理时为本服务 scoped vkey，必须与 base-url 配套，真实值不进 Git。
         api-key: ${GITHUB_GOOGLE_API_KEY}
+        # 聊天模型参数。
         chat:
+          # 默认请求选项。
           options:
             # Google 原生模型 ID；沿用旧共享模板占位符和默认值，代理接入须验证原生路由可识别。
             model: ${GITHUB_GOOGLE_CHAT_MODEL:gemini-3.1-flash-lite}
 
 # 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
 ai:
+  # Prompt 管理：启动同步与 Nacos Prompt 源。
   prompts:
+    # 启动时把 classpath 下的 Prompt 发布到 Nacos。
     sync:
       # 关闭启动时的 Prompt 同步，避免导入既有演示或业务 Prompt。
       enabled: false
+    # 运行期从 Nacos AI Prompt Registry 读取 Prompt。
     nacos:
       # 关闭 Prompt 的 Nacos 配置源；连接值保留供显式启用时使用。
       enabled: false
@@ -35,33 +45,33 @@ ai:
       username: ${custom.nacos-username:}
       # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
       password: ${custom.nacos-password:}
+  # Agent 执行参数：模型提供方、各模型连接、注册与调用方校验。
   agent:
     # Agent 执行模型提供方；应与所选模型及其凭据配套。
     provider: google
-    google:
-      # 可选 Google Developer 原生 HTTP(S) 基址，无单位；代理路径止于 /gemini、不带 /v1beta，空值保持 SDK 官方入口。
-      # 仅供 ai-agent；非空时须配套本服务 scoped vkey，恢复直连必须同时恢复对应密钥，不支持 Vertex 代理。
-      base-url: ${GITHUB_GOOGLE_BASE_URL:}
+    # DeepSeek 兼容接口；github-dev 经 LiteLLM 网关调用。
     deepseek:
       # 生成参数来源，无单位；SERVICE 保留服务参数，DEPLOYMENT 省略服务覆盖并继承网关原生默认值。
       # 切换前先在对应 deployment 保值配置并读回输出上限/思考参数；ai-agent >= 0.3.1 受控重启后生效，不支持热切换。
-      generation-defaults-source: SERVICE
-      # 模型或服务访问密钥；仅由私有环境注入，空占位不表示已完成接入。
+      generation-defaults-source: DEPLOYMENT
+      # 访问密钥；github-dev 远端保留 ${GITHUB_DEEPSEEK_API_KEY} 原样，由 ai-agent 进程 OS 环境在运行期解析为本服务 LiteLLM virtual key。
       api-key: ${GITHUB_DEEPSEEK_API_KEY}
-      # 模型服务 API 基址；使用提供方兼容接口，保留所需版本路径。
+      # 模型服务 API 基址，保留版本路径；github-dev 远端指向 LiteLLM 网关，模板默认值为提供方官方入口。
       base-url: ${GITHUB_DEEPSEEK_BASE_URL:https://api.deepseek.com}
       # 实际调用的模型 ID，需在所选提供方和账号中可用。
       model: ${GITHUB_DEEPSEEK_MODEL:deepseek-chat}
+    # 通义千问兼容接口；github-dev 经 LiteLLM 网关调用。
     qwen:
       # 生成参数来源，无单位；SERVICE 保留服务参数，DEPLOYMENT 省略服务覆盖并继承网关原生默认值。
       # 切换前先在对应 deployment 保值配置并读回采样/输出上限；ai-agent >= 0.3.1 受控重启后生效，不支持热切换。
-      generation-defaults-source: SERVICE
-      # 模型或服务访问密钥；仅由私有环境注入，空占位不表示已完成接入。
+      generation-defaults-source: DEPLOYMENT
+      # 访问密钥；github-dev 远端保留 ${GITHUB_QWEN_API_KEY} 原样，由 ai-agent 进程 OS 环境在运行期解析为本服务 LiteLLM virtual key。
       api-key: ${GITHUB_QWEN_API_KEY}
-      # 模型服务 API 基址；使用提供方兼容接口，保留所需版本路径。
+      # 模型服务 API 基址，保留版本路径；github-dev 远端指向 LiteLLM 网关，模板默认值为提供方官方入口。
       base-url: ${GITHUB_QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
       # 实际调用的模型 ID，需在所选提供方和账号中可用。
       model: ${GITHUB_QWEN_CHAT_MODEL:qwen-plus}
+    # 向 Nacos AI Registry 发布本服务的 AgentCard。
     registry:
       # 启用当前个人空间内的AgentCard发布；公开地址必须指向本环境网关。
       enabled: true
@@ -75,6 +85,7 @@ ai:
       password: ${custom.nacos-password:}
       # 注册信息对调用方暴露的基址；必须是调用方可达的网关入口。
       public-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
+    # 调用方服务身份校验。
     security:
       # 当前 Agent 服务提供方编码，参与服务身份验证。
       provider-code: github-agent
@@ -82,3 +93,8 @@ ai:
       allowed-client-ids: ${GITHUB_AGENT_CLIENT_ID:github-ai}
       # 签名请求体的最大字节数；33554432 字节为 32 MiB。
       max-body-bytes: 33554432
+    # Google 原生接口的 Agent 专属参数，由 ai-agent 的 Google 流式传输配置读取。
+    google:
+      # 可选 Google Developer 原生 HTTP(S) 基址，无单位；代理路径止于 /gemini、不带 /v1beta，空值保持 SDK 官方入口。
+      # 仅供 ai-agent；非空时须配套本服务 scoped vkey，恢复直连必须同时恢复对应密钥，不支持 Vertex 代理。
+      base-url: ${GITHUB_GOOGLE_BASE_URL:}

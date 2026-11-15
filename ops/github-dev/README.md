@@ -64,9 +64,9 @@ python3 ops/github-dev/scripts/sync_nacos.py
 
 配置检查需要同级 Java 服务与 `admin-web`，会检查 27 个 profile、dataId 覆盖、实体表清单，以及前端 service 前缀、网关路由优先级、StripPrefix 与后端 Controller 根路径。它不是完整 API 方法/参数校验，也不能替代在线验证。路由反例测试不需要同级仓库，已接入 CI。
 
-`render_nacos.py` 只替换 YAML 标量中的 `GITHUB_*` 占位符，保留注释、分组与 Spring `${custom.*}` 引用，并与原语义渲染结果比较；凭据通过字符串序列化转义，不能拼成额外字段。渲染成功只证明本地产物已生成，发布前仍需读回当前 Nacos 配置。
+`render_nacos.py` 只替换 YAML 标量中的 `GITHUB_*` 占位符，保留注释、分组与 Spring `${custom.*}` 引用，并与原语义渲染结果比较；凭据通过字符串序列化转义，不能拼成额外字段。渲染成功只证明本地产物已生成，发布前仍需读回当前 Nacos 配置。加 `--remote <远端原文目录> --keep-remote <dataId>` 时，该 dataId 只取模板的注释、键序与结构，值取远端（`ai-agent-spring.yaml`、`rag-spring.yaml` 必须这样发布，见 [Nacos 配置目录](nacos/README.md)）；远端多出的键须用 `--drop <dataId>:<键路径>` 声明才会删除。输出目录含非当前模板的文件时直接报错。
 
-`sync_nacos.py` 默认只读，使用仓库现有 Gradle 依赖中的官方 Nacos SDK，逐 dataId 读回核对，日志只在私有目录。目录结构和说明使用 `nacos/catalog.json`，合并/删除清单见 `nacos/retired-dataids.json`。渲染时使用新的空私有输出目录，避免以前的 8 个旧文件残留被当作候选重复发布；发布前比对输出文件集合与 catalog。新建配置需显式 `--publish`；更新已有配置还需 `--previous <已复核的旧配置目录>`，程序比对旧内容并通过 CAS 发布，遇到漂移拒绝覆盖。真实配置只发到固定的 `github-dev/DEFAULT_GROUP`，不写 Nacos 数据库。
+`sync_nacos.py` 默认只读，使用仓库现有 Gradle 依赖中的官方 Nacos SDK，逐 dataId 读回核对，日志只在私有目录。目录结构和说明使用 `nacos/catalog.json`，合并/删除清单见 `nacos/retired-dataids.json`。渲染时使用新的空私有输出目录，避免已退役的旧文件残留被当作候选重复发布；发布前比对输出文件集合与 catalog。新建配置需显式 `--publish`；更新已有配置还需 `--previous <已复核的旧配置目录>`，程序比对旧内容并通过 CAS 发布，遇到漂移拒绝覆盖。真实配置只发到固定的 `github-dev/DEFAULT_GROUP`，不写 Nacos 数据库。
 
 ## 本地启动
 

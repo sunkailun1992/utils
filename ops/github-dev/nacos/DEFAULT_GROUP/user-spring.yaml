@@ -4,6 +4,7 @@
 # 导入服务：user。
 # 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
+# user 主数据源，由 utils 的动态数据源配置读取。
 postgresql:
   # 个人 PostgreSQL JDBC URL；连接超时3秒、socket超时30秒，库名与服务匹配。
   url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_user?connectTimeout=3&socketTimeout=30&tcpKeepAlive=true
@@ -13,6 +14,7 @@ postgresql:
   password: ${GITHUB_POSTGRESQL_USER_PASSWORD}
   # 个人主数据源的PostgreSQL JDBC 驱动类。
   driverClassName: org.postgresql.Driver
+# 灰度数据源；当前与主数据源同库，按灰度标签切换时使用。
 postgresql-gray:
   # 灰度数据源复用主数据源的JDBC URL，库名与服务匹配。
   url: ${postgresql.url}
@@ -25,6 +27,7 @@ postgresql-gray:
 
 # 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
 oauth:
+  # 用户服务内置的 OAuth 授权服务器。
   authorization-server:
     # OAuth 对外公开入口，用于授权服务器元数据；通过网关访问时保持一致。
     external-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}

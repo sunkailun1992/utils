@@ -4,6 +4,7 @@
 # 导入服务：ai-memory。
 # 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
+# ai-memory 主数据源，由 utils 的动态数据源配置读取。
 postgresql:
   # 个人 PostgreSQL JDBC URL；连接超时3秒、socket超时30秒，库名与服务匹配。
   url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_ai_memory?connectTimeout=3&socketTimeout=30&tcpKeepAlive=true
@@ -13,6 +14,7 @@ postgresql:
   password: ${GITHUB_POSTGRESQL_AI_MEMORY_PASSWORD}
   # 个人主数据源的PostgreSQL JDBC 驱动类。
   driverClassName: org.postgresql.Driver
+# 灰度数据源；当前与主数据源同库，按灰度标签切换时使用。
 postgresql-gray:
   # 灰度数据源复用主数据源的JDBC URL，库名与服务匹配。
   url: ${postgresql.url}

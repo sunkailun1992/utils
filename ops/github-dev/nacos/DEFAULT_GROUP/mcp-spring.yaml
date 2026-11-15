@@ -4,6 +4,7 @@
 # 导入服务：mcp。
 # 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
+# mcp 主数据源，由 utils 的动态数据源配置读取。
 postgresql:
   # 个人 PostgreSQL JDBC URL；连接超时3秒、socket超时30秒，库名与服务匹配。
   url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_mcp?connectTimeout=3&socketTimeout=30&tcpKeepAlive=true
@@ -13,6 +14,7 @@ postgresql:
   password: ${GITHUB_POSTGRESQL_MCP_PASSWORD}
   # 个人主数据源的PostgreSQL JDBC 驱动类。
   driverClassName: org.postgresql.Driver
+# 灰度数据源；当前与主数据源同库，按灰度标签切换时使用。
 postgresql-gray:
   # 灰度数据源复用主数据源的JDBC URL，库名与服务匹配。
   url: ${postgresql.url}
@@ -25,7 +27,9 @@ postgresql-gray:
 
 # 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
 mcp:
+  # MCP Server 自身的注册。
   server:
+    # 向 Nacos AI Registry 注册 MCP Server。
     registry:
       # 关闭 MCP 服务自动注册；启用前核对个人 Nacos 空间。
       enabled: false
@@ -39,7 +43,9 @@ mcp:
       password: ${custom.nacos-password:}
       # 注册信息对调用方暴露的基址；必须是调用方可达的网关入口。
       public-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
+  # MCP 作为 A2A Agent 的注册。
   agent:
+    # 向 Nacos AI Registry 发布 AgentCard。
     registry:
       # 关闭 MCP 的 Agent 注册能力，避免发布未验收的 AgentCard。
       enabled: false
@@ -51,7 +57,9 @@ mcp:
       username: ${custom.nacos-username:}
       # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
       password: ${custom.nacos-password:}
+  # MCP 的 OAuth 保护。
   oauth:
+    # 资源服务器：校验访问令牌并发布受保护资源元数据。
     resource-server:
       # 启用 OAuth 资源服务器校验，受保护接口必须验证访问令牌。
       enabled: true

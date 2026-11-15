@@ -2,28 +2,25 @@
 # dataId：redis.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：公共 Redis 缓存和 Spring Data Redis 共用连接。
 # 导入服务：ai、ai-memory、gateway、mcp、message、rag、report、user。
-# 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
+# 维护：连接只在 spring.data.redis 声明一次；Redisson、Spring Cache 与网关限流都读这一组，真实凭据不进 Git。
 
+# utils 公共缓存参数，由 utils 的 Redis 缓存配置读取。
 redis:
-  # 公共 Redis 连接主机，复用共享变量。
-  hostName: ${custom.infra-redis-host}
-  # Redis TCP 端口，复用共享变量。
-  port: ${custom.infra-redis-port}
-  # 个人 Redis 逻辑库编号；12 为当前约定，需在服务端支持的范围内。
-  database: ${GITHUB_REDIS_DATABASE:12}
-  # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
-  password: ${GITHUB_REDIS_PASSWORD:}
+  # Spring Cache 缓存定义。
   cache:
     # 缓存名-过期分钟数，逗号分隔；githubCache-30 为 30 分钟，0 表示不过期。
     cache-names: githubCache-30
+# Spring Boot 标准连接参数；Redisson starter 与 Spring Data Redis 共用。
 spring:
+  # Spring Data 各存储的连接设置。
   data:
+    # 单机 Redis 连接。
     redis:
-      # Spring Data Redis 与公共缓存共用同一主机。
-      host: ${redis.hostName}
-      # Spring Data Redis 与公共缓存共用同一 TCP 端口。
-      port: ${redis.port}
-      # Spring Data Redis 与公共缓存使用同一个人逻辑库。
-      database: ${redis.database}
-      # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
-      password: ${redis.password}
+      # Redis 主机，引用共享变量 custom.infra-redis-host（见 reuse-configuration.yaml）。
+      host: ${custom.infra-redis-host}
+      # Redis TCP 端口，引用共享变量 custom.infra-redis-port。
+      port: ${custom.infra-redis-port}
+      # 个人 Redis 逻辑库编号；12 为当前约定，需在服务端支持的范围内。
+      database: ${GITHUB_REDIS_DATABASE:12}
+      # 连接认证密码；真实值由私有环境注入，禁止写入 Git 和日志。
+      password: ${GITHUB_REDIS_PASSWORD:}

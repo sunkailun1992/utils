@@ -4,6 +4,7 @@
 # 导入服务：ai、ai-memory、mcp、message、rag、report、user。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
+# Seata 客户端（seata-spring-boot-starter）设置；服务端与事务分组见各服务 profile。
 seata:
   # 关闭 Seata；启用前需准备对应事务分组、服务端和 undo_log。
   enabled: false

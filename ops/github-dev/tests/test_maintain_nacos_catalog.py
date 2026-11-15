@@ -303,6 +303,21 @@ class CatalogMaintenanceTests(unittest.TestCase):
             self.run_maintenance(apply=True)
         self.assertEqual(self.writes(), [])
 
+    def test_absent_retired_dataid_needs_no_previous_snapshot(self):
+        # 早已删除的旧项在远端没有原文，无从备份，不应阻止其它退役项。
+        self.configs.pop("empty.yaml")
+        (self.previous / "empty.yaml").unlink()
+        summary = self.run_maintenance(apply=True, retire=True)
+        self.assertEqual((summary["deleted"], summary["alreadyAbsent"]), (1, 1))
+        self.assertNotIn("old.yaml", self.configs)
+
+    def test_present_retired_dataid_without_snapshot_stops_before_writes(self):
+        (self.previous / "old.yaml").unlink()
+        with self.assertRaisesRegex(maintenance.MaintenanceError, "old.yaml.*快照"):
+            self.run_maintenance(apply=True, retire=True)
+        self.assertEqual(self.writes(), [])
+        self.assertIn("old.yaml", self.configs)
+
     def test_extra_files_and_missing_previous_are_rejected(self):
         private_file(self.candidate / "old.yaml", "unexpected")
         with self.assertRaisesRegex(maintenance.MaintenanceError, "额外文件"):

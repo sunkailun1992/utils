@@ -4,6 +4,7 @@
 # 导入服务：ai。
 # 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
+# ai 主数据源，由 utils 的动态数据源配置读取。
 postgresql:
   # 个人 PostgreSQL JDBC URL；连接超时3秒、socket超时30秒，库名与服务匹配。
   url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_ai?connectTimeout=3&socketTimeout=30&tcpKeepAlive=true
@@ -13,6 +14,7 @@ postgresql:
   password: ${GITHUB_POSTGRESQL_AI_PASSWORD}
   # 个人主数据源的PostgreSQL JDBC 驱动类。
   driverClassName: org.postgresql.Driver
+# 灰度数据源；当前与主数据源同库，按灰度标签切换时使用。
 postgresql-gray:
   # 灰度数据源复用主数据源的JDBC URL，库名与服务匹配。
   url: ${postgresql.url}
@@ -25,9 +27,11 @@ postgresql-gray:
 
 # 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
 ai:
+  # 启动初始化。
   bootstrap:
     # 关闭启动演示种子，避免自动创建历史业务数据。
     seed-demo-content: false
+  # 从 Nacos AI Registry 读取 AgentCard 以发现 Agent。
   agent-registry:
     # 启用当前个人空间内的Agent发现；找不到Agent时业务保持既有失败/回退策略。
     enabled: true
@@ -39,7 +43,9 @@ ai:
     username: ${custom.nacos-username:}
     # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
     password: ${custom.nacos-password:}
+  # 调用 Agent 的客户端设置。
   agent-client:
+    # 服务身份签名。
     auth:
       # 启用 AI 调用 Agent 的服务身份签名；缺凭据时应拒绝调用。
       enabled: true

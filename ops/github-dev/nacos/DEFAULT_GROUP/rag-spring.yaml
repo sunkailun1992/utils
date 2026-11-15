@@ -2,8 +2,9 @@
 # dataId：rag-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：RAG 主/灰度数据源、独立向量集合、嵌入模型和解析/检索引擎。
 # 导入服务：rag。
-# 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
+# 维护：引擎地址与密钥、混合写入、默认知识库、嵌入网关地址以远端为准，发布须用 render_nacos.py --remote/--keep-remote 保值渲染；凭据只在私有配置。
 
+# rag 主数据源，由 utils 的动态数据源配置读取。
 postgresql:
   # 个人 PostgreSQL JDBC URL；连接超时3秒、socket超时30秒，库名与服务匹配。
   url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_rag?connectTimeout=3&socketTimeout=30&tcpKeepAlive=true
@@ -13,6 +14,7 @@ postgresql:
   password: ${GITHUB_POSTGRESQL_RAG_PASSWORD}
   # 个人主数据源的PostgreSQL JDBC 驱动类。
   driverClassName: org.postgresql.Driver
+# 灰度数据源；当前与主数据源同库，按灰度标签切换时使用。
 postgresql-gray:
   # 灰度数据源复用主数据源的JDBC URL，库名与服务匹配。
   url: ${postgresql.url}
@@ -25,16 +27,17 @@ postgresql-gray:
 
 # 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
 rag:
+  # Python RAG 引擎（解析、检索、图谱）的调用参数，由 RagEngineProperties 绑定。
   engine:
-    # PDF/PNG/JPEG 解析开关；false 保留 Office 上传，扫描件另需配置 OCR 服务。
-    parse-enabled: false
+    # PDF/PNG/JPEG 解析开关；false 只保留 Office 上传，扫描件另需引擎侧 OCR。
+    parse-enabled: true
     # 图构建提交、图查询及删除屏障的 HTTP 总超时，毫秒；独立于异步构建总预算和检索预算。
     graph-timeout-millis: 10000
     # 异步图构建状态查询 HTTP 总超时，毫秒；失败由前端明确显示，不解释为构建完成。
     graph-status-timeout-millis: 3500
-    # Python 引擎根地址，格式 http(s)://host:port，不含路径；检索与图谱必须配置此地址，空值将明确降级/报错，不转回旧实现。
+    # Python 引擎根地址，格式 http(s)://host:port，不含路径；github-dev 远端为 NAS 上的引擎，空值将明确降级/报错，不转回旧实现。
     base-url: ${GITHUB_RAG_ENGINE_URL:}
-    # Java 与 Python 一致的内部服务密钥，至少 32 字符；不使用浏览器 JWT，禁止提交真实值。
+    # Java 与 Python 一致的内部服务密钥，至少 32 字符；不使用浏览器 JWT，真实值只在远端与引擎侧，禁止提交。
     api-key: ${GITHUB_RAG_ENGINE_API_KEY:}
     # 解析总超时，毫秒，1000–120000；应略大于引擎的解析总预算。
     parse-timeout-millis: 65000
@@ -44,16 +47,19 @@ rag:
     max-response-bytes: 16777216
     # 单文档最大返回切片数，超过则拒绝；应与 Python 引擎上限保持一致。
     max-chunks: 1000
+  # 向量入库与检索参数，由 RagVectorProperties 绑定。
   vector:
-    # 双写 dense/sparse 向量；默认 false。开启前完成集合 schema、历史回填和 Python hybrid 参数对齐。
+    # 未指定知识库时使用的知识库编码；代码默认 general-knowledge，github-dev 远端另有取值。
+    default-knowledge-base: ${GITHUB_RAG_DEFAULT_KNOWLEDGE_BASE:general-knowledge}
+    # 双写 dense/sparse 向量；模板默认 false，github-dev 远端已开启。开启前完成集合 schema、历史回填和 Python hybrid 参数对齐。
     hybrid-write-enabled: ${GITHUB_RAG_HYBRID_WRITE_ENABLED:false}
     # 启用 RAG 向量能力；实际检索和嵌入仍需 Qdrant 与模型服务可用。
     enabled: true
-    # RAG 使用 Qdrant HTTP REST 入口 6333，与共享 gRPC 6334 区分。
+    # RAG 直连 Qdrant 的 HTTP REST 入口，端口 6333；其它服务不直接访问 Qdrant。
     qdrant-url: http://${GITHUB_QDRANT_HOST}:6333
     # 个人文档向量集合名，避免读取或覆盖公司集合。
     collection-name: github_dev_rag
-    # 嵌入模型的 OpenAI 兼容 API 基址；保留 /v1 路径契约。
+    # 嵌入模型的 OpenAI 兼容 API 基址，保留 /v1 路径；github-dev 远端指向 LiteLLM 网关。
     qwen-base-url: ${GITHUB_RAG_QWEN_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
-    # RAG 嵌入模型密钥；真实值由私有环境注入，不写入 Git。
+    # 嵌入模型密钥；github-dev 远端保留 ${GITHUB_RAG_QWEN_API_KEY} 原样，由 rag 进程 OS 环境在运行期解析。
     qwen-api-key: ${GITHUB_RAG_QWEN_API_KEY}

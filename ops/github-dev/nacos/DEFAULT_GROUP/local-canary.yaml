@@ -8,16 +8,18 @@
 local-canary:
   # 服务以此确认公共文件已加载，缺省时不注册灰度实例。
   ready: true
-  # 实例标签须与网关映射和对应 Dubbo provider 一致，默认 kellen-local。
+  # 实例标签须与网关映射和对应 Dubbo provider 一致，默认 kellen-local；各服务 dev profile 直接引用它。
   tag: ${APP_CANARY_TAG:kellen-local}
 
+# utils、网关与各服务的流量治理参数在本机灰度实例上的覆盖值。
 traffic:
+  # 灰度与泳道治理；稳定实例的默认值见 traffic-governance.yaml。
   governance:
+    # 当前实例自身的泳道信息。
     instance:
-      # 写入服务实例元数据，便于核对当前通道。
+      # 写入服务实例元数据，便于核对当前通道；各服务 dev profile 以 ${traffic.governance.instance.lane:canary} 引用。
       lane: canary
-      # 同一通道的实例和调用使用同一个标签。
-      tag: ${local-canary.tag}
+    # 短时灰度授权的校验与传播。
     canary:
       # 启用短时灰度授权的验证和已接入调用的传播。
       enabled: true

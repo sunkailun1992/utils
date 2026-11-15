@@ -4,25 +4,37 @@
 # 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
+# utils 自定义安全参数，由 utils 的 Actuator 访问保护读取。
 security:
+  # 管理端点访问保护；只管 /actuator/**，业务接口鉴权不受影响。
   actuator:
     # 管理端点的受控访问令牌；空值不是放行授权，真实值由私有环境注入。
     token: ${GITHUB_ACTUATOR_TOKEN:}
+# Spring Boot Actuator 端点、健康详情与 Micrometer 指标设置。
 management:
+  # 端点暴露范围；未列出的端点即使存在也不对外提供。
   endpoints:
+    # 只约束 HTTP 暴露，不影响 JMX。
     web:
+      # HTTP 暴露白名单。
       exposure:
         # 允许通过 HTTP 暴露的 Actuator 端点列表；不开放 env/configprops 等敏感端点。
         include: health,info,prometheus
+  # 单个端点的行为设置。
   endpoint:
+    # /actuator/health 的返回内容。
     health:
       # 健康检查详情展示策略；never 不向请求方返回组件连接细节。
       show-details: never
+  # Micrometer 指标导出设置，供 Prometheus 抓取。
   metrics:
+    # 指标分布统计；只对列出的计时器生效。
     distribution:
+      # 按指标名开启 histogram 分桶，键为指标名。
       percentiles-histogram:
         # 仅为 HTTP 请求耗时输出固定 histogram buckets，供 P95 看板聚合；false 会使面板无分桶数据。
         http.server.requests: true
+    # 附加到每个指标的公共标签；只放低基数的固定值。
     tags:
       # 固定应用标识，禁止使用用户、租户或业务 ID。
       application: ${spring.application.name}

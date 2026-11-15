@@ -90,7 +90,7 @@ def check_local_canary_template(source):
     assert value == {
         "local-canary": {"tag": "${APP_CANARY_TAG:kellen-local}", "ready": True},
         "traffic": {"governance": {
-            "instance": {"lane": "canary", "tag": "${local-canary.tag}"},
+            "instance": {"lane": "canary"},
             "canary": {"enabled": True, "service": "${spring.application.name}",
                        "http-tag": "${local-canary.tag}",
                        "signing-key": "${GITHUB_PERSONAL_CANARY_SIGNING_KEY}"},
@@ -123,10 +123,10 @@ def check_catalog(config, catalog, retired, consumers):
 
 
 def check_model_credential_scope(config, catalog, retired):
-    """历史共享模型项不再发布或自动删除；Google 参数由 Agent 显式持有。"""
+    """历史共享模型项已退役，不得重新发布；Google 参数由 Agent 显式持有。"""
     legacy = "ai-model-secrets.yaml"
     assert legacy not in config and legacy not in {item["dataId"] for item in catalog["entries"]}, "历史共享模型不得重新进入活跃模板或 catalog"
-    assert legacy not in {item["dataId"] for item in retired["retired"]}, "历史共享模型远端保留，不得自动删除"
+    assert legacy in {item["dataId"] for item in retired["retired"] if item["replacement"] is None}, "历史共享模型须登记为无替代的退役项"
     agent = yaml_json(config["ai-agent-spring.yaml"])
     google = agent["spring"]["ai"]["google"]["genai"]
     assert google["api-key"] == "${GITHUB_GOOGLE_API_KEY}", "Agent Google 凭据须由本服务私有占位符提供"
@@ -138,7 +138,7 @@ def check_storage_credential_scope(config, catalog, retired):
     active = {entry["dataId"] for entry in catalog["entries"]}
     removed = {entry["dataId"] for entry in retired["retired"]}
     assert "storage.yaml" not in config and "storage.yaml" not in active, "历史存储连接不得重新进入活动 Nacos"
-    assert "storage.yaml" not in removed, "历史存储回滚配置不得自动删除"
+    assert "storage.yaml" in removed, "历史存储配置须登记为退役项"
     assert "oss" not in yaml_json(config["ai-spring.yaml"]).get("ai", {}), "AI 存储策略由控制台数据库维护"
 
 
@@ -489,8 +489,6 @@ def check():
     auth = yaml_json((CONFIG / "security-auth.yaml").read_text())
     assert auth["security"]["auth"]["header-enabled"] is False
     assert auth["tenant"]["ignore-without-tenant"] is False
-    elasticsearch = yaml_json((CONFIG / "elasticsearch.yaml").read_text())
-    assert elasticsearch["elasticsearch"]["request-log-index"] == "github_dev_request_log"
     documents, manifest = prepare(ROOT)
     sql = "\n".join(documents.values())
     assert not re.search(r"INSERT(?: IGNORE)? INTO auth_user\b", sql, re.I)
