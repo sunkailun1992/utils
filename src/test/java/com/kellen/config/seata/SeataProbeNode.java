@@ -1,6 +1,7 @@
 package com.kellen.config.seata;
 
-import com.kellen.config.datasource.DynamicDataSourceConfig;
+import com.alibaba.druid.spring.boot4.autoconfigure.DruidDataSourceAutoConfigure;
+import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration;
 import com.kellen.utils.context.TenantContextHolder;
 import org.apache.dubbo.config.ApplicationConfig;
 import org.apache.dubbo.config.ProtocolConfig;
@@ -12,7 +13,9 @@ import org.apache.seata.rm.RMClient;
 import org.apache.seata.tm.TMClient;
 import org.apache.seata.tm.api.GlobalTransaction;
 import org.apache.seata.tm.api.GlobalTransactionContext;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -92,20 +95,36 @@ public final class SeataProbeNode {
 
     private AnnotationConfigApplicationContext dataSourceContext() {
         Map<String, Object> settings = new LinkedHashMap<>();
-        for (String prefix : new String[] {"postgresql", "postgresql-gray"}) {
-            settings.put(prefix + ".url", url);
-            settings.put(prefix + ".username", username);
-            settings.put(prefix + ".password", password);
-            settings.put(prefix + ".driverClassName", "org.postgresql.Driver");
+        settings.put("spring.datasource.dynamic.primary", "master");
+        settings.put("spring.datasource.dynamic.strict", "true");
+        settings.put("spring.datasource.dynamic.seata", "true");
+        settings.put("spring.datasource.dynamic.seata-mode", "AT");
+        settings.put("spring.datasource.dynamic.druid.initial-size", "1");
+        settings.put("spring.datasource.dynamic.druid.min-idle", "1");
+        settings.put("spring.datasource.dynamic.druid.max-wait", "3000");
+        settings.put("spring.datasource.dynamic.druid.connect-timeout", "3000");
+        settings.put("spring.datasource.dynamic.druid.socket-timeout", "30000");
+        for (String name : new String[] {"master", "gray"}) {
+            String prefix = "spring.datasource.dynamic.datasource." + name + ".";
+            settings.put(prefix + "type", "com.alibaba.druid.pool.DruidDataSource");
+            settings.put(prefix + "url", url);
+            settings.put(prefix + "username", username);
+            settings.put(prefix + "password", password);
+            settings.put(prefix + "driver-class-name", "org.postgresql.Driver");
         }
-        settings.put("utils.datasource.pool.master.max-active", "2");
-        settings.put("utils.datasource.pool.gray.max-active", "1");
+        settings.put("spring.datasource.dynamic.datasource.master.druid.max-active", "2");
+        settings.put("spring.datasource.dynamic.datasource.gray.druid.max-active", "1");
         var context = new AnnotationConfigApplicationContext();
         context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("isolated-seata-probe", settings));
-        context.register(DynamicDataSourceConfig.class);
+        context.register(NativeDataSource.class);
         context.refresh();
         return context;
     }
+
+    /** 与服务相同：只由 dynamic-datasource 原生配置建 master、gray 两个 Druid 池并按 Seata AT 包装。 */
+    @Configuration(proxyBeanMethods = false)
+    @ImportAutoConfiguration({DynamicDataSourceAutoConfiguration.class, DruidDataSourceAutoConfigure.class})
+    static class NativeDataSource { }
 
     private void runProvider(ApplicationConfig application) throws Exception {
         ServiceConfig<SeataProbeRpcService> service = new ServiceConfig<>();
