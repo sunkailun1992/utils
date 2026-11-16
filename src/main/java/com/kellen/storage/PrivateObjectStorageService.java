@@ -3,8 +3,6 @@ package com.kellen.storage;
 import com.aliyun.oss.common.utils.BinaryUtil;
 import com.aliyun.oss.model.MatchMode;
 import com.aliyun.oss.model.PolicyConditions;
-import com.kellen.aliyun.oss.token.OssTokenUtils;
-import com.kellen.aliyun.oss.token.OssUploadPolicy;
 import com.qcloud.cos.auth.COSSigner;
 import cn.hutool.json.JSONUtil;
 import io.minio.PostPolicy;
@@ -60,16 +58,16 @@ public class PrivateObjectStorageService {
         return platform() != null && !platform().isBlank() && !"local".equals(platform());
     }
 
-    public OssUploadPolicy createUploadPolicy(String ownerScope, String fileType, String mimeType, String fileName,
+    public UploadPolicy createUploadPolicy(String ownerScope, String fileType, String mimeType, String fileName,
                                                String baseDir, long uploadExpireSeconds, long viewExpireSeconds,
                                                long maxUploadBytes) {
-        String mime = OssTokenUtils.normalizeMimeType(mimeType, fileName);
-        String type = OssTokenUtils.normalizeFileType(fileType, mime);
-        OssTokenUtils.validateFileTypeMatchesMime(type, mime);
+        String mime = UploadFiles.mimeType(mimeType, fileName);
+        String type = UploadFiles.fileType(fileType, mime);
+        UploadFiles.requireTypeMatchesMime(type, mime);
         if (maxUploadBytes < 1) {
             throw new IllegalArgumentException("maxUploadBytes 必须大于零");
         }
-        String key = OssTokenUtils.createObjectKey(baseDir, ownerScope, type, fileName, mime);
+        String key = UploadFiles.objectKey(baseDir, ownerScope, type, fileName, mime);
         Date expiration = expiration(uploadExpireSeconds);
         FileStorage storage = requiredStorage(platform());
         try {
@@ -130,7 +128,7 @@ public class PrivateObjectStorageService {
 
     public void validateObjectOwner(String baseDir, String ownerScope, String objectKey) {
         String key = requiredKey(objectKey);
-        if (!key.startsWith(OssTokenUtils.ownerBasePrefix(baseDir, ownerScope))) {
+        if (!key.startsWith(UploadFiles.ownerPrefix(baseDir, ownerScope))) {
             throw new IllegalArgumentException("objectKey 不属于当前用户");
         }
     }
@@ -225,9 +223,9 @@ public class PrivateObjectStorageService {
         return Date.from(Instant.now().plusSeconds(seconds));
     }
 
-    private static OssUploadPolicy result(String accessId, String policy, String signature, String host, Date expiration,
-                                           String key, String type, String mime, long maxBytes, Map<String, String> fields) {
-        return new OssUploadPolicy(accessId, policy, signature, host, Long.toString(expiration.getTime() / 1000),
-                key, type, mime, maxBytes, null, fields);
+    private static UploadPolicy result(String accessId, String policy, String signature, String host, Date expiration,
+                                        String key, String type, String mime, long maxBytes, Map<String, String> fields) {
+        return new UploadPolicy(accessId, policy, signature, host, Long.toString(expiration.getTime() / 1000),
+                key, type, mime, maxBytes, fields);
     }
 }

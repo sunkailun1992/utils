@@ -129,10 +129,8 @@ utils 当前没有切面。原有的请求日志切面与防重复提交从未�
 
 对象存储：
 
-- `com.kellen.aliyun.AliyunKey`：阿里云密钥配置。
-- `com.kellen.aliyun.Oss`：OSS 配置。
-- `com.kellen.aliyun.oss.token.*`：OSS 直传策略与签名访问地址（官方 SDK 写法）。
-- `com.kellen.storage.PrivateObjectStorageService`：X File Storage 私有存储门面，统一 OSS / MinIO 的 POST 策略、对象存在性、短时 GET 签名与服务端上传；所有者与 token 授权由业务服务维护。
+- `com.kellen.storage.PrivateObjectStorageService`：X File Storage 私有存储门面，统一 OSS / MinIO / COS 的 POST 策略（返回 `UploadPolicy`）、对象存在性、短时 GET 签名与服务端上传；所有者与 token 授权由业务服务维护。
+- `com.kellen.storage.DisplayTokenUtils`：私有文件展示 token 的哈希与常量时间比对，业务表只存哈希。
 - `com.kellen.storage.ObjectStorageConfig`：加载官方 `dromara.x-file-storage` 平台配置，不复制业务文件服务或保存另一套存储凭据。
 
 使用原则：

@@ -68,9 +68,9 @@
 - MVC 租户上下文优先采用已认证 JWT/OAuth 的 `SecurityUser`，不能被 `tenantId`、`tenant-id` 或 `X-Tenant-Id` HTTP 头覆盖。已认证但无租户的请求返回 403；公开登录入口不从匿名头建立租户，由业务验证登录参数。`tenant.ignore-without-tenant=false` 防止 SQL 层缺上下文时跳过租户条件；Dubbo/MQ 的既有租户头契约保留。
 - 文件存储统一入口是 `com.kellen.storage.PrivateObjectStorageService`，使用 X File Storage `2.3.0` 管理 OSS / MinIO / 腾讯 COS 平台与客户端。`1.6.3` 补充 COS 原生 POST 表单签名，固定官方 SDK `com.qcloud:cos_api:5.6.283`，保留原方法与构造器。MinIO SDK 固定 `8.6.0`，也用于兼容 S3 的平台。
 - 静态配置使用官方 `dromara.x-file-storage.default-platform`、`minio[]`、`aliyun-oss[]` 或 `tencent-cos[]`。MinIO/OSS 使用 `end-point`、`access-key/secret-key`，COS 使用 `region`、`secret-id/secret-key`；平台项有稳定 `platform` 和私有 `bucket-name`。Spring 配置另有 `enable-storage`，core Builder 不使用该字段；`base-path` 必须为空，由业务 `baseDir` 形成对象键。凭据仅在服务端注入，不进入源码、日志或管理元数据响应。AI 的 DB 加密配置、权限和动态句柄管理属于 AI 业务控制面，不放进公共包。
-- `createUploadPolicy(...)` 保持 POST 表单上传；`OssUploadPolicy.formFields` 是完整表单字段，新客户端原样提交。原 OSS 字段和十参数构造器保留，MinIO 使用 S3 V4 签名字段，COS 使用官方 `COSSigner.buildPostObjectSignature` 及其专用表单协议。三者均固定精确对象 key、MIME、大小范围和到期时间，不能用普通请求签名冒充 POST 签名。真实云端权限/CORS、私有访问和读写仍需单独验收。
-- `verifyObjectExists(platform, key)`、`signedViewUri(platform, key, expiry)` 支持读取持久化平台；调用方必须先完成所有者和展示 token 校验，不能把此通用门面当成授权服务。历史文件保留原平台，切换默认平台不会迁移已有对象。
-- 未使用 OSS 的服务不再需要 OSS 配置的占位值；调用时仍须提供真实运行配置。
+- `createUploadPolicy(...)` 返回 `UploadPolicy`，保持 POST 表单上传；`formFields` 是完整表单字段，客户端原样提交。MinIO 使用 S3 V4 签名字段，COS 使用官方 `COSSigner.buildPostObjectSignature` 及其专用表单协议。三者均固定精确对象 key、MIME、大小范围和到期时间，不能用普通请求签名冒充 POST 签名。真实云端权限/CORS、私有访问和读写仍需单独验收。
+- `verifyObjectExists(platform, key)`、`signedViewUri(platform, key, expiry)` 支持读取持久化平台；调用方必须先完成所有者和展示 token 校验（`DisplayTokenUtils.matches`，库里只存哈希），不能把此通用门面当成授权服务。历史文件保留原平台，切换默认平台不会迁移已有对象。
+- 上传下载统一走 X File Storage，OSS 只是其中一个平台；阿里云 OSS 专用的静态配置（`aliyun.oss.*`、`AliyunKey`）与直传工具已删除。
 
 ## 远程发布
 

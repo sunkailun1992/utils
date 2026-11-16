@@ -47,7 +47,7 @@ com.kellen.security            安全过滤器、认证用户与用户上下文
 com.kellen.security.config     安全认证与租户配置属性
 com.kellen.aop                 通用请求切面
 com.kellen.log                 请求日志、RPC 日志、ES 日志采集存储
-com.kellen.aliyun              阿里云、钉钉、短信、OSS、直播、工作流封装
+com.kellen.storage             对象存储统一入口（X File Storage 平台：OSS / MinIO / COS）
 ```
 
 ## 新增类放置规则
@@ -72,7 +72,7 @@ com.kellen.aliyun              阿里云、钉钉、短信、OSS、直播、工�
 - 通用实体基类放到 `com.kellen.entity`。
 - 防重复提交运行组件放到 `com.kellen.idempotent`。
 - 认证过滤器和用户上下文放到 `com.kellen.security`，安全配置属性放到 `com.kellen.security.config`。
-- 第三方平台封装放到平台命名空间，例如 `com.kellen.aliyun.*`。
+- 对象存储放到 `com.kellen.storage`，各厂商只作 X File Storage 的平台，不再单独封装厂商 SDK。
 
 ## 禁止事项
 
