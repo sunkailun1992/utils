@@ -17,7 +17,7 @@
 | [dubbo.yaml](DEFAULT_GROUP/dubbo.yaml) | Dubbo Triple 协议和个人 namespace/group 隔离 | ai、ai-agent、ai-memory、mcp、message、rag、report、user |
 | [mybatis-plus.yaml](DEFAULT_GROUP/mybatis-plus.yaml) | MyBatis-Plus 映射、逻辑删除和 MyBatis-Mate 授权 | ai、ai-memory、mcp、message、rag、report、user |
 | [redis.yaml](DEFAULT_GROUP/redis.yaml) | 公共 Redis 缓存和 Spring Data Redis 共用连接 | ai、ai-memory、gateway、mcp、message、rag、report、user |
-| [seata.yaml](DEFAULT_GROUP/seata.yaml) | Seata 分布式事务启用状态 | ai、ai-memory、mcp、message、rag、report、user |
+| [seata.yaml](DEFAULT_GROUP/seata.yaml) | Seata 客户端：事务分组、TC 地址与数据源代理方式 | ai、ai-memory、mcp、message、rag、report、user |
 
 ## 安全与可观测性
 

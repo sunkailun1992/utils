@@ -1,12 +1,30 @@
 # 配置分类：共享基础设施
 # dataId：seata.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：Seata 分布式事务启用状态。
+# 用途：Seata 分布式事务客户端：事务分组、TC 地址与数据源代理方式。
 # 导入服务：ai、ai-memory、mcp、message、rag、report、user。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
-# Seata 客户端（seata-spring-boot-starter）设置；服务端与事务分组见各服务 profile。
+# Seata 客户端（seata-spring-boot-starter）设置；始终开启，不设总开关，未写的键用客户端默认值。
 seata:
-  # 关闭 Seata；启用前需准备对应事务分组、服务端和 undo_log。
-  enabled: false
-  # 不让 Seata 自动给 DataSource Bean 包代理：AT 代理由 dynamic-datasource 按 seata 开关给各池包，再包一层会重复代理路由数据源。
+  # 事务分组，七个服务共用；必须与下面 vgroup-mapping 的键一致。
+  tx-service-group: github_dev_tx_group
+  # 不让 Seata 自动给 DataSource Bean 包代理：AT 代理由 dynamic-datasource 给各池包（数据源块固定 seata: true），再包一层会重复代理路由数据源。
   enable-auto-data-source-proxy: false
+  # TC 寻址：事务分组先映射到集群名，再按集群名取地址。
+  service:
+    # 事务分组到 TC 集群名的映射。
+    vgroup-mapping:
+      # github_dev_tx_group 使用名为 default 的 TC 集群。
+      github_dev_tx_group: default
+    # 各 TC 集群的地址，格式 主机:端口，多个地址用英文逗号分隔；registry.type 为 file 时生效。
+    grouplist:
+      # default 集群：NAS 上的 Seata Server 2.7.0，主机与端口见 reuse-configuration.yaml。
+      default: ${custom.infra-seata-host}:${custom.infra-seata-port}
+  # 注册中心：不经服务发现，直接用上面的 grouplist。
+  registry:
+    # file 表示按 service.grouplist 的固定地址连接 TC。
+    type: file
+  # Seata 配置中心：客户端参数都在本文件，不再另读。
+  config:
+    # file 表示只用当前 Spring 环境里的 seata.* 参数。
+    type: file

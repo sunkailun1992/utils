@@ -16,12 +16,8 @@ security:
     jwt-enabled: true
   # 数据权限：按用户、部门归属列追加查询条件。
   data-permission:
-    # 启用数据权限拦截；具体用户、部门列需与各实体表一致。
+    # 启用数据权限拦截；只过滤下面列出的表，未写列名时用 utils 默认的本人列 creator、部门列 create_dept。
     enabled: true
-    # 未单独声明表规则时使用的用户归属列。
-    default-user-column: owner_user_id
-    # 未单独声明表规则时使用的部门归属列。
-    default-dept-column: dept_id
     # 按表覆盖默认归属列，键为表名。
     table-rules:
       # 用户表：本人按主键 id 判定，部门按 dept_id。

@@ -72,6 +72,32 @@ class PostgresqlConfigurationTests(unittest.TestCase):
         seata = yaml_json((CONFIG / "seata.yaml").read_text())["seata"]
         self.assertIs(seata["enable-auto-data-source-proxy"], False)
 
+    def test_seata_is_always_on_and_points_every_service_at_the_shared_tc(self):
+        """Seata 不设总开关：数据源块固定 seata: true，客户端按 file 注册直连 NAS 上的 TC（原生协议 7091）。"""
+        source = (CONFIG / "seata.yaml").read_text()
+        seata = yaml_json(source)["seata"]
+        self.assertNotIn("enabled", seata)
+        self.assertIs(seata["enable-auto-data-source-proxy"], False)
+        group = seata["tx-service-group"]
+        self.assertEqual(seata["service"]["vgroup-mapping"], {group: "default"})
+        self.assertEqual(seata["service"]["grouplist"],
+                         {"default": "${custom.infra-seata-host}:${custom.infra-seata-port}"})
+        self.assertEqual(seata["registry"], {"type": "file"})
+        self.assertEqual(seata["config"], {"type": "file"})
+        shared = yaml_json((CONFIG / "reuse-configuration.yaml").read_text())["custom"]
+        self.assertEqual(shared["infra-seata-host"], "${GITHUB_SEATA_HOST}")
+        self.assertEqual(shared["infra-seata-port"], "${GITHUB_SEATA_PORT:7091}")
+        check_parameter_comments(source)
+
+    def test_data_permission_uses_utils_default_columns(self):
+        """每行记创建部门：没写表规则列时用 utils 默认的 creator、create_dept，Nacos 不再覆盖成旧列名。"""
+        source = (CONFIG / "security-auth.yaml").read_text()
+        permission = yaml_json(source)["security"]["data-permission"]
+        self.assertNotIn("default-user-column", permission)
+        self.assertNotIn("default-dept-column", permission)
+        self.assertEqual(set(permission["table-rules"]), {"auth_user", "auth_dept", "auth_role"})
+        check_parameter_comments(source)
+
     def test_shared_connection_and_boolean_sql_contract_are_postgresql(self):
         shared = yaml_json((CONFIG / "reuse-configuration.yaml").read_text())["custom"]
         self.assertEqual(shared["infra-postgresql-host"], "${GITHUB_POSTGRESQL_HOST}")

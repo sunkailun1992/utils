@@ -14,5 +14,9 @@ custom:
   infra-redis-host: ${GITHUB_REDIS_HOST}
   # Redis TCP 端口，默认 6379。
   infra-redis-port: ${GITHUB_REDIS_PORT:6379}
+  # 开发 Seata Server（TC）主机，与其它共享中间件同在 NAS。
+  infra-seata-host: ${GITHUB_SEATA_HOST}
+  # Seata 客户端协议端口，默认 7091；NAS 上的 2.7.0 在 7091 同时提供健康检查与客户端协议，8091 不可连。
+  infra-seata-port: ${GITHUB_SEATA_PORT:7091}
   # 个人 RPC 分组，所有 provider/consumer 必须使用同一值。
   dubbo-group: GITHUB_DEV_DUBBO

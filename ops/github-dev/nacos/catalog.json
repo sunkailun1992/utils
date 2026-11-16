@@ -160,7 +160,7 @@
     },
     {
       "dataId": "seata.yaml",
-      "description": "Seata 分布式事务启用状态；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "Seata 分布式事务客户端：事务分组、TC 地址与数据源代理方式；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "共享基础设施",
       "consumers": [
         "ai",
