@@ -24,7 +24,7 @@
 - 动态数据源：只保留 `master` 与 `gray`
 - 个人业务库为 PostgreSQL；数据源用 dynamic-datasource 原生配置（各服务 `application.yml` 的 `spring.datasource.dynamic` 块，地址与账号在 Nacos 的 `spring.datasource.dynamic.datasource.master/gray`），字符串租户与 Boolean 逻辑删除、独立测试库及切换边界见 [PG 底座说明](docs/postgresql-fleet-foundation.md)。历史 MySQL 仍供其它项目或必要中间件使用，本轮不删除其数据库、账号或容器。
 - 数据源连接健康：各服务 `application.yml` 的 `spring.datasource.dynamic.druid` 统一设借出前 `SELECT 1` 校验、空闲检测与保活（检测 30 秒、保活 60 秒，保活间隔须大于检测间隔，否则 Druid 启动失败）及连接 3000 毫秒、读取 30000 毫秒超时；JDBC URL 不带 `connectTimeout`、`socketTimeout`，见[超时单位说明](docs/postgresql-druid-timeouts.md)
-- 实体基类：`EntityBase` 只有 `createTime`、`updateTime`、`creator`、`updater`、`deleted`，`TenantEntityBase` 只多 `tenantId`，由 `MyMetaObjectHandler` 自动填充；乐观锁 `version` 由实体自己声明，只表示 MyBatis-Plus `@Version` 数据库版本号
+- 实体基类：`EntityBase` 保留全部公共字段 `id`、`code`、`description`、`createTime`、`creator`、`updateTime`、`updater`、`deleted`、`label`、`sorting`、`version`，`TenantEntityBase` 再加 `tenantId`、`createDept`；时间、创建人、修改人、租户与创建部门由 `MyMetaObjectHandler` 自动填充；乐观锁 `version` 只表示 MyBatis-Plus `@Version` 数据库版本号
 - JSON：`JsonUtil` 使用 Spring Boot 4 默认 Jackson 3 databind API；`json/bean/list` 方法签名保持兼容
 
 ### Jackson 3 迁移说明

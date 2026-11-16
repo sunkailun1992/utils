@@ -55,9 +55,9 @@
 - Flyway：utils 以 `api` 带上 `spring-boot-starter-flyway` 与 `flyway-database-postgresql`，不放迁移；MyBatis-Plus 的顺序探测器让 `SqlSessionTemplate` 等 Flyway 迁移完成。`config.flyway.EarlyFlywayMigration` 在创建任何 Bean 之前先按 `spring.flyway.*` 迁移，数据源包 Seata 代理时库里已有 `undo_log`。
 - `com.kellen.config.mybatis.MyBatisPlusConfig`：MyBatis-Plus 插件配置。
 - `com.kellen.config.mybatis.MybatisPlusSecurityProperties`：MyBatis-Plus SQL 安全插件开关配置。
-- `com.kellen.config.mybatis.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器；插入填创建时间、更新时间、创建人、更新人与租户，更新刷新更新时间与更新人；没有登录用户时不填人，已有值不覆盖。
-- `com.kellen.datapermission.DataPermissionSqlHandler`：数据权限条件，直接构造 JSqlParser 表达式（本人与部门为等值条件，部门树与自定义为 `IN`），内部异常不吞掉。
-- `com.kellen.entity.EntityBase`、`com.kellen.entity.TenantEntityBase`：实体基类两层，前者只有审计与逻辑删除字段，后者只多租户ID。
+- `com.kellen.config.mybatis.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器；插入填创建时间、更新时间、创建人、更新人、租户与创建部门，更新刷新更新时间与更新人；没有登录用户时不填人和部门，已有值不覆盖。
+- `com.kellen.datapermission.DataPermissionSqlHandler`：数据权限条件，直接构造 JSqlParser 表达式（本人与部门为等值条件，部门树与自定义为 `IN`），只对配了规则的表生效，默认本人列 `creator`、部门列 `create_dept`；内部异常不吞掉。
+- `com.kellen.entity.EntityBase`、`com.kellen.entity.TenantEntityBase`：实体基类两层，前者保留全部公共字段（审计字段按芋道命名），后者再加租户ID与创建部门。
 
 当前边界：
 

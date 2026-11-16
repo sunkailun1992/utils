@@ -60,7 +60,7 @@
 - 不在 `user`、`message`、`gateway` 等消费者项目复制 `utils` 源码。
 - 修改公共 API、注解、AOP、认证、租户、异常、返回值或 MyBatis-Plus 配置时，必须评估消费者项目编译影响。
 - `utils` 不放建表脚本或迁移，只以 `api` 带上 Flyway 与其 PostgreSQL 模块。业务服务的表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。Seata AT 的 `undo_log` 写在各服务 `V1__baseline.sql`；数据源块固定 `spring.datasource.dynamic.seata: true`，不设总开关；建池时 Seata AT 代理就检查该表，所以 utils 的 `EarlyFlywayMigration` 在创建任何 Bean 之前先按 `spring.flyway.*` 迁移，新空库首次启动即建出该表。不删除其它项目或必要中间件仍使用的 MySQL 数据。
-- 业务微服务表设计规范由 `docs/ai-coding/PROJECT_CODING_SPEC.md` 和 `docs/ai-coding/examples` 提供模板；实体继承 `TenantEntityBase`（无租户的表继承 `EntityBase`），新增表必须包含 `id` 与基类对应的 `create_time`、`update_time`、`creator`、`updater`、`is_deleted`、`tenant_id`；`version` 只做乐观锁，业务版本使用 `*_version` 命名。
+- 业务微服务表设计规范由 `docs/ai-coding/PROJECT_CODING_SPEC.md` 和 `docs/ai-coding/examples` 提供模板；实体继承 `TenantEntityBase`（无租户的表继承 `EntityBase`），新增表必须包含基类对应的列 `id`、`code`、`description`、`create_time`、`creator`、`update_time`、`updater`、`is_deleted`、`label`、`sorting`、`version`，租户表再加 `tenant_id`、`create_dept`，迁移不删除这些列；`version` 只做乐观锁，业务版本使用 `*_version` 命名。
 - `utils` 不维护业务路由或 Swagger UI 聚合列表；新增公共 OpenAPI/Springdoc 能力或新 Java 服务消费者时，必须提醒消费者在 `../gateway` 的 Nacos `gateway-spring.yaml` 按需补业务路由和 `springdoc.swagger-ui.urls`，并先验证对应网关文档路径。
 
 ## AI 工程门禁
