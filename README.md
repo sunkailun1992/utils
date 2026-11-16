@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.6.9`
+- 发布坐标：`com:utils:1.7.0`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -170,3 +170,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `1.6.8` 是第2阶段 utils 改造（一次发版）：删除过时、小众、从未生效或无人使用的 51 个类与十余个依赖（钉钉与阿里云短信/直播/工作流、请求日志写 ES、从未生效的防重复提交、PdfUtils、RabbitMQ 配置、Dozer、Orika、Aviator、Guava 显式声明、Jedis 等）；`GeneralConvertor` 改用 Hutool，`OkHttpUtils` 恢复默认证书校验并按官方用法关闭响应；Redis 连接与 `RedissonClient` 交给 Spring Boot 与 Redisson 官方 starter 自动配置，锁工具补回调式加锁与安全解锁；缓存序列化器换成 Jackson 3 实现；数据权限改为直接构造 JSqlParser 表达式、出错不再放行；异步任务带上提交时的租户与用户上下文；`ReturnCode` 常量改英文命名（编码与文案不变）；`ApiResponse` 去掉与 `errorMessage` 重复的 `msg`、新增 `traceId`、时间固定 GMT+8；`ApiExceptionHandler` 继承 `ResponseEntityExceptionHandler`，补齐 Spring MVC 标准异常与兜底；`@Phone`、`IpUtils`、`JsonUtil` 按 Hutool 写法改写；javadoc 报错即失败。消费者升级时需把错误码常量改成新名、删掉子类里与基类重复的异常处理、需要上传的服务自行声明 `spring.servlet.multipart.*`、需要 WebSocket 或 POI 的服务自行声明依赖。
 
 `1.6.9` 是第3阶段 utils 改造（一次发版）：删除 MyBatis-Plus DDL 建表方式（`PostgresqlDdl*` 与公共建表脚本），`api` 带上 Flyway 11.14.1 与其 PostgreSQL 模块，各服务表结构改由自己的 `db/migration` 迁移管理；实体基类按芋道两层，`EntityBase` 只留 `createTime`、`updateTime`、`creator`、`updater`、`deleted`（列 `is_deleted`），`TenantEntityBase` 只多 `tenantId`，`MyMetaObjectHandler` 插入时填创建人、更新人（取当前登录用户，没有就不填），数据权限默认本人字段改为 `creator`；删除自写的 `DynamicDataSourceConfig`，数据源改用 dynamic-datasource 原生配置，`seata` 跟随 `seata.enabled`。消费者升级时需新增 `V1__baseline.sql` 等迁移并删掉 `IDdl` 实现与旧脚本，实体改继承 `TenantEntityBase` 并自行声明 `id`、`version` 等字段，`application.yml` 加数据源与 Flyway 块，Nacos 换成 `spring.datasource.dynamic.datasource.master/gray` 键（URL 不带 `connectTimeout`、`socketTimeout`）。
+
+`1.7.0` 是第3阶段返工（一次发版）：实体基类恢复全部公共字段，`EntityBase` 有 `id`、`code`、`description`、`createTime`、`creator`、`updateTime`、`updater`、`deleted`、`label`、`sorting`、`version`，`TenantEntityBase` 再加 `tenantId`、`createDept`（插入时取当前登录用户的部门），数据权限默认部门列改为 `create_dept`；Seata 固定开启（数据源块 `seata: true`，不再跟随 `seata.enabled`），新增 `EarlyFlywayMigration` 在建数据源之前先按 `spring.flyway.*` 迁移，新空库开着 Seata 也能首次启动；删除阿里云 OSS 专用代码（`com.kellen.aliyun`），上传策略改为 `com.kellen.storage.UploadPolicy`（去掉恒为空的 `securityToken`），展示 token 改为 `DisplayTokenUtils.hash/matches`。消费者升级时删掉实体里基类已有的 `id`、`code`、`description`、`label`、`sorting`、`version` 声明，租户表用新迁移加 `create_dept` 列，`application.yml` 数据源块改为 `seata: true`，并把 `OssTokenUtils`、`OssUploadPolicy` 换成新类。
