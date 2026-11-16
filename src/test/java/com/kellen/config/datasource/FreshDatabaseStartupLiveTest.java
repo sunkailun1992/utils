@@ -1,10 +1,14 @@
 package com.kellen.config.datasource;
 
 import com.alibaba.druid.spring.boot4.autoconfigure.DruidDataSourceAutoConfigure;
+import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
+import com.baomidou.dynamic.datasource.ds.ItemDataSource;
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceAutoConfiguration;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
+import com.kellen.config.flyway.EarlyFlywayMigrationAutoConfiguration;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.seata.rm.datasource.SeataDataSourceProxy;
 import org.apache.seata.spring.boot.autoconfigure.SeataDataSourceAutoConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -20,20 +24,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.sql.Connection;
+import javax.sql.DataSource;
 import java.sql.DriverManager;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * 新空库首次启动：表与 Seata 的 {@code undo_log} 只由服务自己的 Flyway 迁移创建。
+ * 新空库首次启动：表与 Seata 的 {@code undo_log} 只由服务自己的 Flyway 迁移创建，Seata 保持开启。
  *
- * <p>Spring Boot 建 Flyway 时会先取主数据源；dynamic-datasource 包 Seata AT 代理时会连库检查 {@code undo_log}，
- * 表不存在就启动失败。所以数据源块的 {@code seata} 跟随 {@code seata.enabled}：Seata 关闭时（github-dev 现状）
- * 不包代理，空库可以由 Flyway 建表；启用 Seata 前库里必须已有 {@code undo_log}。</p>
+ * <p>Spring Boot 建 Flyway 时会先取主数据源；dynamic-datasource 给池包 Seata AT 代理时会连库检查 {@code undo_log}，
+ * 表不存在就启动失败。utils 在创建任何 Bean 之前先按 {@code spring.flyway.*} 执行一次迁移，Spring Boot 自己的迁移随后
+ * 无事可做。</p>
  *
  * <p>只连 {@code fleet_pg_test_} 开头的专用库，在随机独立 schema 里执行，结束后删除该 schema。</p>
  */
@@ -41,11 +45,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FreshDatabaseStartupLiveTest {
 
     @Test
-    void emptyDatabaseStartsAndFlywayCreatesTablesWhileSeataIsOff() throws Exception {
+    void emptyDatabaseStartsWithSeataOnAndFlywayCreatesTables() throws Exception {
         String base = System.getenv("FLEET_PG_TEST_URL");
         String schema = createSchema(base);
-        try (ConfigurableApplicationContext context = start(base, schema, false)) {
+        try (ConfigurableApplicationContext context = start(base, schema)) {
             assertThat(context.getBean(FreshProbe.class).rowsAtStartup).isZero();
+            Map<String, DataSource> pools = context.getBean(DynamicRoutingDataSource.class).getDataSources();
+            assertThat(pools).allSatisfy((name, dataSource) ->
+                    assertThat(((ItemDataSource) dataSource).getDataSource()).isInstanceOf(SeataDataSourceProxy.class));
             try (Connection connection = connection(base);
                  var rows = connection.createStatement().executeQuery(
                          "SELECT version FROM " + schema + ".flyway_schema_history WHERE success ORDER BY installed_rank")) {
@@ -57,26 +64,12 @@ class FreshDatabaseStartupLiveTest {
         }
     }
 
-    /** 说明为什么要跟随 Seata 开关：Seata 开启时代理先于 Flyway 检查 undo_log，空库无法启动。 */
-    @Test
-    void emptyDatabaseCannotStartWhileSeataProxiesBeforeFlyway() throws Exception {
-        String base = System.getenv("FLEET_PG_TEST_URL");
-        String schema = createSchema(base);
-        try {
-            assertThatThrownBy(() -> start(base, schema, true).close())
-                    .rootCause().hasMessageContaining("undo_log table not exist");
-        } finally {
-            dropSchema(base, schema);
-        }
-    }
-
-    private static ConfigurableApplicationContext start(String base, String schema, boolean seataEnabled) {
+    private static ConfigurableApplicationContext start(String base, String schema) {
         String url = base + (base.contains("?") ? "&" : "?") + "currentSchema=" + schema;
         Map<String, Object> properties = ServiceDataSourceBlock.asMap(ServiceDataSourceBlock.PROPERTIES,
                 ServiceDataSourceBlock.FLYWAY, ServiceDataSourceBlock.nacosKeys(url,
                         System.getenv("FLEET_PG_TEST_USERNAME"), System.getenv("FLEET_PG_TEST_PASSWORD")));
         properties.put("spring.flyway.locations", "classpath:db/test/fresh");
-        properties.put("seata.enabled", String.valueOf(seataEnabled));
         return new SpringApplicationBuilder(FreshApplication.class)
                 .web(WebApplicationType.NONE).bannerMode(Banner.Mode.OFF).logStartupInfo(false)
                 .properties(properties).run();
@@ -131,10 +124,11 @@ class FreshDatabaseStartupLiveTest {
         }
     }
 
-    /** 按服务启动流程，只导入数据源、Flyway、MyBatis-Plus 与 Seata 数据源的自动配置。 */
+    /** 按服务启动流程，只导入数据源、Flyway（含 utils 的提前迁移）、MyBatis-Plus 与 Seata 数据源的自动配置。 */
     @Configuration(proxyBeanMethods = false)
     @ImportAutoConfiguration({DynamicDataSourceAutoConfiguration.class, DruidDataSourceAutoConfigure.class,
-            FlywayAutoConfiguration.class, MybatisPlusAutoConfiguration.class, SeataDataSourceAutoConfiguration.class})
+            FlywayAutoConfiguration.class, EarlyFlywayMigrationAutoConfiguration.class, MybatisPlusAutoConfiguration.class,
+            SeataDataSourceAutoConfiguration.class})
     @MapperScan(basePackageClasses = FreshDatabaseStartupLiveTest.class, annotationClass = Mapper.class)
     static class FreshApplication {
         @Bean

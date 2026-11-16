@@ -51,8 +51,8 @@
 - `com.kellen.config.dubbo.DubboContextPropagationFilter`：Dubbo RPC 上下文透传。
 - `com.kellen.config.web.ReqInterceptor`：HTTP 请求租户上下文初始化。
 - `com.kellen.utils.context.DynamicSourceTtl`：动态数据源上下文，`peek()` 只读不补位。
-- 数据源不再由 utils 自写配置：各服务用 dynamic-datasource 原生 `spring.datasource.dynamic.*`，`application.yml` 放连接池与 Seata 参数，Nacos 放 master、gray 地址与账号；`seata` 跟随 `seata.enabled`，开启时由 dynamic-datasource 按 AT 包装 Seata 代理。
-- Flyway：utils 以 `api` 带上 `spring-boot-starter-flyway` 与 `flyway-database-postgresql`，不放迁移；MyBatis-Plus 的顺序探测器让 `SqlSessionTemplate` 等 Flyway 迁移完成。
+- 数据源不再由 utils 自写配置：各服务用 dynamic-datasource 原生 `spring.datasource.dynamic.*`，`application.yml` 放连接池与 Seata 参数，Nacos 放 master、gray 地址与账号；`seata` 固定 `true`，由 dynamic-datasource 按 AT 包装 Seata 代理。
+- Flyway：utils 以 `api` 带上 `spring-boot-starter-flyway` 与 `flyway-database-postgresql`，不放迁移；MyBatis-Plus 的顺序探测器让 `SqlSessionTemplate` 等 Flyway 迁移完成。`config.flyway.EarlyFlywayMigration` 在创建任何 Bean 之前先按 `spring.flyway.*` 迁移，数据源包 Seata 代理时库里已有 `undo_log`。
 - `com.kellen.config.mybatis.MyBatisPlusConfig`：MyBatis-Plus 插件配置。
 - `com.kellen.config.mybatis.MybatisPlusSecurityProperties`：MyBatis-Plus SQL 安全插件开关配置。
 - `com.kellen.config.mybatis.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器；插入填创建时间、更新时间、创建人、更新人与租户，更新刷新更新时间与更新人；没有登录用户时不填人，已有值不覆盖。

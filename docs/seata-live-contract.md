@@ -6,13 +6,13 @@
 
 普通 `./gradlew test` 不运行该联调。所有探针类都在 `src/test/java`，不进入 Maven 主制品；不新增业务 RPC、HTTP 写接口或业务全局事务，不改 Nacos、TC 配置或业务库。它使用程序化 Seata TM 开始/提交/回滚全局事务，分支由 Spring `TransactionTemplate` 通过实际 `DataSourceProxy` 提交并注册到 TC；并非用普通 SQL 本地事务代替 Seata。
 
-本合同成功只证明上述基础设施链可执行。实际 fleet 是否启用 `seata.enabled`、是否已配置正确事务分组/注册中心、业务边界是否使用全局事务，需要分别验收。没有跨库业务需求时，不把所有 `@Transactional` 改为 `@GlobalTransactional`。
+本合同成功只证明上述基础设施链可执行。实际 fleet 是否已配置正确事务分组/注册中心、业务边界是否使用全局事务，需要分别验收。没有跨库业务需求时，不把所有 `@Transactional` 改为 `@GlobalTransactional`。
 
 ## 前提与私有环境变量
 
 - 已有 TC 可达，实际服务端版本独立核实。测试不会安装、启动、重启或修改 TC。
 - 两个不同的专用 PostgreSQL 数据库，实际库名均以 `fleet_pg_test_` 开头；拒绝所有 `github_dev_*` 业务库。两库各自的账号只须测试库连接、schema 建删表及合成记录读写权限。
-- 在两专用库首次启动 RM 前准备 `public.undo_log`（结构同 `src/test/resources/db/test/undo_log.sql`，与各服务 `V1__baseline.sql` 一致）：Seata 开启时代理在建池阶段就检查该表；测试不会创建、删除或清空该表。两库 JDBC URL 不带 `connectTimeout`、`socketTimeout`。
+- 在两专用库首次启动 RM 前准备 `public.undo_log`（结构同 `src/test/resources/db/test/undo_log.sql`，与各服务 `V1__baseline.sql` 一致）：代理在建池阶段就检查该表；本测试不经 Flyway，不会创建、删除或清空该表。两库 JDBC URL 不带 `connectTimeout`、`socketTimeout`。
 - 只通过环境变量注入以下值，勿写入 Git、命令行参数或日志：
 
 | 变量 | 用途 |

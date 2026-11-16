@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * 数据源改用 dynamic-datasource 原生配置：服务 {@code application.yml} 的统一数据源块建出 master、gray 两个 Druid 池；
- * 启用 Seata 时由 dynamic-datasource 按 AT 包装，Seata 自动代理关闭，路由数据源本身不再被包一层。
+ * 并由 dynamic-datasource 按 Seata AT 包装；Seata 自动代理关闭，路由数据源本身不再被包一层。
  */
 class NativeDynamicDataSourceTest {
 
@@ -45,17 +45,17 @@ class NativeDynamicDataSourceTest {
                     DruidDataSourceAutoConfigure.class, SeataDataSourceAutoConfiguration.class))
             .withPropertyValues(ServiceDataSourceBlock.PROPERTIES);
 
-    /** 与 github-dev 一样关闭 Seata：两个池不包 Seata 代理，也就不在建池时连库。 */
+    /** 不连库的用例只关掉 Seata 代理（代理构造时就要连库读元数据），其余与服务配置相同。 */
     @Test
     void nativePropertiesBuildMasterAndGrayPoolsWithConfiguredBudgets() {
         runner.withPropertyValues(ServiceDataSourceBlock.nacosKeys(UNREACHABLE, "fixture", "synthetic-fixture"))
-                .withPropertyValues("spring.datasource.dynamic.lazy=true", "seata.enabled=false")
+                .withPropertyValues("spring.datasource.dynamic.lazy=true", "spring.datasource.dynamic.seata=false")
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     Map<String, DataSource> pools = context.getBean(DynamicRoutingDataSource.class).getDataSources();
                     assertThat(pools).containsOnlyKeys("master", "gray");
                     assertThat(pools).allSatisfy((name, dataSource) -> assertThat(((ItemDataSource) dataSource).getDataSource())
-                            .as("Seata 关闭时不包代理").isSameAs(((ItemDataSource) dataSource).getRealDataSource()));
+                            .as("关掉代理时池不被包装").isSameAs(((ItemDataSource) dataSource).getRealDataSource()));
                     assertBudget(realPool(pools.get("master")), 4);
                     assertBudget(realPool(pools.get("gray")), 2);
                 });
@@ -66,7 +66,7 @@ class NativeDynamicDataSourceTest {
         assertThatThrownBy(() -> Class.forName("com.kellen.config.datasource.DynamicDataSourceConfig"))
                 .isInstanceOf(ClassNotFoundException.class);
         runner.withPropertyValues(ServiceDataSourceBlock.nacosKeys(UNREACHABLE, "fixture", "synthetic-fixture"))
-                .withPropertyValues("spring.datasource.dynamic.lazy=true", "seata.enabled=false")
+                .withPropertyValues("spring.datasource.dynamic.lazy=true", "spring.datasource.dynamic.seata=false")
                 .run(context -> {
                     assertThat(context).hasNotFailed();
                     assertThat(context.getBeansOfType(DataSource.class)).hasSize(1)
@@ -77,7 +77,7 @@ class NativeDynamicDataSourceTest {
     }
 
     /**
-     * 启用 Seata 时（seata.enabled=true）由 dynamic-datasource 给两个池包 Seata AT 代理；库里须已有 undo_log。
+     * 与服务相同的配置（seata: true、AT）由 dynamic-datasource 给两个池包 Seata AT 代理。
      * 像服务一样经 SpringApplication 启动：Seata 读配置依赖它在启动时注入的环境，ApplicationContextRunner 不执行这一步。
      * 连专用测试库的随机独立 schema，结束后删除。
      */
@@ -95,7 +95,6 @@ class NativeDynamicDataSourceTest {
             String url = base + (base.contains("?") ? "&" : "?") + "currentSchema=" + schema;
             Map<String, Object> properties = ServiceDataSourceBlock.asMap(ServiceDataSourceBlock.PROPERTIES,
                     ServiceDataSourceBlock.nacosKeys(url, System.getenv("FLEET_PG_TEST_USERNAME"), System.getenv("FLEET_PG_TEST_PASSWORD")));
-            properties.put("seata.enabled", "true");
             try (ConfigurableApplicationContext context = new SpringApplicationBuilder(NativeDataSourceApplication.class)
                     .web(WebApplicationType.NONE).bannerMode(Banner.Mode.OFF).logStartupInfo(false)
                     .properties(properties).run()) {

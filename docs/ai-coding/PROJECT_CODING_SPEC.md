@@ -67,7 +67,7 @@
 - 业务微服务新增业务表时，DDL 必须包含 `id`、`create_time`、`update_time`、`creator`、`updater`、`is_deleted`，有租户的表加 `tenant_id`，用乐观锁的表加 `version`；`code`、`description`、`type`、`state`、`sorting` 按业务需要添加，不再使用 `label`。不得只写业务字段。
 - `type/state` 不放入实体基类。业务代码需要读写时由当前实体自行声明并配套 `IEnum` 或受控枚举；不需要读写时依赖数据库默认值。
 - 数据库列 `version` 只表示 MyBatis-Plus 乐观锁。业务版本、模板版本、协议版本、Prompt 版本必须使用明确列名，例如 `template_version`、`prompt_version`、`protocol_version`，不得复用 `version`。
-- 表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。Seata AT 的 `undo_log` 写在各服务 `V1__baseline.sql`；数据源块的 `spring.datasource.dynamic.seata` 跟随 `seata.enabled`，Seata 开启时数据源创建阶段（早于 Flyway）就会检查该表，所以启用 Seata 前库里须已完成迁移。
+- 表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。Seata AT 的 `undo_log` 写在各服务 `V1__baseline.sql`；数据源块固定 `spring.datasource.dynamic.seata: true`，不设总开关；建池时 Seata AT 代理就检查该表，所以 utils 的 `EarlyFlywayMigration` 在创建任何 Bean 之前先按 `spring.flyway.*` 迁移，新空库首次启动即建出该表。
 - 乐观锁由 `MyBatisPlusConfig` 注册 `OptimisticLockerInnerInterceptor`。
 - 更新接口需要提交查询时拿到的当前 `version`。
 - 更新建议使用 `updateById(entity)`，避免只按 id 的 `UpdateWrapper` 绕过乐观锁。

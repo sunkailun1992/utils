@@ -12,7 +12,7 @@ final class ServiceDataSourceBlock {
     static final String[] PROPERTIES = {
             "spring.datasource.dynamic.primary=master",
             "spring.datasource.dynamic.strict=true",
-            "spring.datasource.dynamic.seata=${seata.enabled:true}",
+            "spring.datasource.dynamic.seata=true",
             "spring.datasource.dynamic.seata-mode=AT",
             "spring.datasource.dynamic.druid.initial-size=1",
             "spring.datasource.dynamic.druid.min-idle=1",
