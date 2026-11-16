@@ -1,6 +1,7 @@
 package com.kellen.config.mybatis;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
+import com.kellen.security.SecurityUser;
 import com.kellen.security.UserContextHolder;
 import com.kellen.security.config.TenantProperties;
 import com.kellen.utils.context.TenantContextHolder;
@@ -33,7 +34,7 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     }
 
     /**
-     * 插入时填充创建时间、更新时间、创建人、更新人与租户ID；实体上已有的值不覆盖。
+     * 插入时填充创建时间、更新时间、创建人、更新人、租户ID与创建部门；实体上已有的值不覆盖。
      *
      * @param metaObject MyBatis 元对象
      */
@@ -46,6 +47,7 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
         fillIfAbsent("creator", userId, metaObject); // 新增时填充创建人，已有值（如种子指定）不覆盖。
         fillIfAbsent("updater", userId, metaObject); // 新增时同步填充更新人。
         fillTenantId(metaObject); // 新增时按当前租户上下文填充租户ID。
+        fillIfAbsent("createDept", currentDeptId(), metaObject); // 新增时记录创建部门，供按部门的数据权限过滤。
     }
 
     /**
@@ -66,6 +68,16 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
      */
     private static String currentUserId() {
         return StringUtils.trimToNull(UserContextHolder.getUserId()); // 空白用户ID不写入审计字段。
+    }
+
+    /**
+     * 读取当前登录用户的部门ID，没有登录用户或没有部门时为空。
+     *
+     * @return 部门ID，没有时为 null
+     */
+    private static String currentDeptId() {
+        SecurityUser user = UserContextHolder.get(); // 读取认证过滤器写入的当前用户快照。
+        return user == null ? null : StringUtils.trimToNull(user.getDeptId()); // 空白部门ID不写入。
     }
 
     /**

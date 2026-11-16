@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-/** 自动填充：插入填时间、创建人、修改人与租户，更新刷新修改时间与修改人；没有登录用户时不填人，已有创建人不覆盖。 */
+/** 自动填充：插入填时间、创建人、修改人、租户与创建部门，更新刷新修改时间与修改人；没有登录用户时不填人和部门，已有值不覆盖。 */
 class MyMetaObjectHandlerTest {
 
     private static final LocalDateTime EARLIER = LocalDateTime.of(2026, 1, 1, 8, 0);
@@ -40,6 +40,7 @@ class MyMetaObjectHandlerTest {
         assertThat(entity.getCreator()).isEqualTo("u-1");
         assertThat(entity.getUpdater()).isEqualTo("u-1");
         assertThat(entity.getTenantId()).isEqualTo("t-1");
+        assertThat(entity.getCreateDept()).isEqualTo("d-1");
     }
 
     @Test
@@ -50,6 +51,7 @@ class MyMetaObjectHandlerTest {
 
         assertThat(entity.getCreator()).isNull();
         assertThat(entity.getUpdater()).isNull();
+        assertThat(entity.getCreateDept()).isNull();
         assertThat(entity.getCreateTime()).isNotNull();
         assertThat(entity.getUpdateTime()).isNotNull();
     }
@@ -59,10 +61,12 @@ class MyMetaObjectHandlerTest {
         login("u-1");
         Fixture entity = new Fixture();
         entity.setCreator("seed");
+        entity.setCreateDept("seed-dept");
 
         handler.insertFill(SystemMetaObject.forObject(entity));
 
         assertThat(entity.getCreator()).isEqualTo("seed");
+        assertThat(entity.getCreateDept()).isEqualTo("seed-dept");
     }
 
     @Test
@@ -73,6 +77,7 @@ class MyMetaObjectHandlerTest {
         entity.setUpdateTime(EARLIER);
         entity.setCreator("u-0");
         entity.setUpdater("u-0");
+        entity.setCreateDept("d-0");
 
         handler.updateFill(SystemMetaObject.forObject(entity));
 
@@ -80,10 +85,11 @@ class MyMetaObjectHandlerTest {
         assertThat(entity.getUpdater()).isEqualTo("u-2");
         assertThat(entity.getCreateTime()).isEqualTo(EARLIER);
         assertThat(entity.getCreator()).isEqualTo("u-0");
+        assertThat(entity.getCreateDept()).isEqualTo("d-0");
     }
 
     private static void login(String userId) {
-        UserContextHolder.set(new SecurityUser(userId, "name", "t-1", List.of()));
+        UserContextHolder.set(new SecurityUser(userId, "name", "t-1", "d-1", "ALL", List.of(), List.of()));
     }
 
     private static TenantProperties enabledTenants() {

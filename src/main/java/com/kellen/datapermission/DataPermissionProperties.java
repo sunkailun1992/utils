@@ -30,9 +30,9 @@ public class DataPermissionProperties {
     private String defaultUserColumn = "creator";
 
     /**
-     * 默认部门数据字段。
+     * 默认部门数据字段，即带租户实体基类的创建部门列。
      */
-    private String defaultDeptColumn = "dept_id";
+    private String defaultDeptColumn = "create_dept";
 
     /**
      * 忽略数据权限的 Mapper 方法ID。
