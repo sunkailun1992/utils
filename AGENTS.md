@@ -52,7 +52,7 @@
 
 - 多项目通用能力才放入 `utils`；单个业务服务专用逻辑必须留在业务项目。
 - 工具只留在用的：过时、小众、从未生效或已被替代且无人使用的工具与依赖直接删除，不为「以后可能用」保留；判断在用要看服务实际引用，以及 Spring 组件是否真正生效（注解要有切面驱动）。有新需求再按主流程度与 GitHub 关注度选库。
-- 保留的工具，写法与命名对照同类里 GitHub 关注度最高的项目（如 Hutool、OkHttp、Redisson、MyBatis-Plus、Spring Boot、芋道 ruoyi-vue-pro）；能直接用这些库现成能力的不自己实现。只有个别服务用到的依赖或配置，由该服务自己声明。
+- 保留的工具，写法与命名对照同类的多个主流项目，以多数做法为准，不以单个项目为准（如 Hutool、OkHttp、Redisson、MyBatis-Plus、Spring Boot；后台框架对照 RuoYi-Vue、RuoYi-Vue-Plus、JeecgBoot、芋道 ruoyi-vue-pro 等）；能直接用这些库现成能力的不自己实现。只有个别服务用到的依赖或配置，由该服务自己声明。
 - 公共工具、公共配置、公共注解、公共异常、公共上下文和第三方通用封装在本仓库维护。
 - 业务 RPC 接口、DTO、枚举和值对象不放在 `utils`，统一维护在同级 `../rpc-api`。
 - 个人公共包统一使用 `com:utils` / `com:rpc-api`，美联对应包使用 `com.kellen:utils` / `com.kellen:rpc-api`；共用远程 Maven 地址时按 group 隔离并独立发布版本。同步公司代码时不得同步覆盖个人构建坐标或消费者依赖坐标。
@@ -60,7 +60,7 @@
 - 不在 `user`、`message`、`gateway` 等消费者项目复制 `utils` 源码。
 - 修改公共 API、注解、AOP、认证、租户、异常、返回值或 MyBatis-Plus 配置时，必须评估消费者项目编译影响。
 - `utils` 不放建表脚本或迁移，只以 `api` 带上 Flyway 与其 PostgreSQL 模块。业务服务的表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。Seata AT 的 `undo_log` 写在各服务 `V1__baseline.sql`；数据源块固定 `spring.datasource.dynamic.seata: true`，不设总开关；建池时 Seata AT 代理就检查该表，所以 utils 的 `EarlyFlywayMigration` 在创建任何 Bean 之前先按 `spring.flyway.*` 迁移，新空库首次启动即建出该表。不删除其它项目或必要中间件仍使用的 MySQL 数据。
-- 业务微服务表设计规范由 `docs/ai-coding/PROJECT_CODING_SPEC.md` 和 `docs/ai-coding/examples` 提供模板；实体继承 `TenantEntityBase`（无租户的表继承 `EntityBase`），新增表必须包含基类对应的列 `id`、`code`、`description`、`create_time`、`creator`、`update_time`、`updater`、`is_deleted`、`label`、`sorting`、`version`，租户表再加 `tenant_id`、`create_dept`，迁移不删除这些列；`version` 只做乐观锁，业务版本使用 `*_version` 命名。
+- 业务微服务表设计规范由 `docs/ai-coding/PROJECT_CODING_SPEC.md` 和 `docs/ai-coding/examples` 提供模板；实体继承 `TenantEntityBase`；每张新建表都必须包含全部基础字段 `id`、`code`、`description`、`create_time`、`create_by`、`update_time`、`update_by`、`is_deleted`、`label`、`sorting`、`version`、`tenant_id`、`create_dept`，不得省略（平台级配置表的 `tenant_id` 用固定值，如 `PLATFORM`），迁移不删除这些列；`version` 只做乐观锁，业务版本使用 `*_version` 命名。
 - `utils` 不维护业务路由或 Swagger UI 聚合列表；新增公共 OpenAPI/Springdoc 能力或新 Java 服务消费者时，必须提醒消费者在 `../gateway` 的 Nacos `gateway-spring.yaml` 按需补业务路由和 `springdoc.swagger-ui.urls`，并先验证对应网关文档路径。
 
 ## AI 工程门禁

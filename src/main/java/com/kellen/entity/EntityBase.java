@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
 /**
  * MyBatis-Plus 实体基类：主键、编码、说明、审计、逻辑删除、标签、排序与乐观锁版本号。
  *
- * <p>审计字段命名对照芋道 {@code BaseDO}，由 {@code MyMetaObjectHandler} 自动填充；有租户的实体继承
- * {@link TenantEntityBase}。</p>
+ * <p>审计字段按主流项目的多数命名（RuoYi-Vue、RuoYi-Vue-Plus、JeecgBoot 的 createBy、createTime、updateBy、updateTime），
+ * 由 {@code MyMetaObjectHandler} 自动填充；实体继承 {@link TenantEntityBase}。</p>
  *
  * @author 孙凯伦
  */
@@ -60,7 +60,7 @@ public abstract class EntityBase implements Serializable {
      */
     @Schema(description = "创建人")
     @TableField(fill = FieldFill.INSERT)
-    private String creator;
+    private String createBy;
 
     /**
      * 最后更新时间，插入和更新时自动填充。
@@ -76,7 +76,7 @@ public abstract class EntityBase implements Serializable {
      */
     @Schema(description = "更新人")
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private String updater;
+    private String updateBy;
 
     /**
      * 逻辑删除标记，对应 {@code is_deleted} 列。

@@ -9,7 +9,7 @@ import org.springframework.core.task.TaskDecorator;
  * TransmittableThreadLocal 的上下文；任务结束后恢复工作线程原有的值，不复制 MDC。
  *
  * <p>只靠 TransmittableThreadLocal 本身，线程池复用线程时会沿用创建该线程那次请求的值，
- * 所以必须在提交时用 {@link TtlRunnable} 捕获、在执行时回放（与芋道 ruoyi-vue-pro 的做法一致）。</p>
+ * 所以必须在提交时用 {@link TtlRunnable} 捕获、在执行时回放（TransmittableThreadLocal 官方推荐的线程池用法）。</p>
  */
 public final class TraceContextTaskDecorator implements TaskDecorator {
     /**

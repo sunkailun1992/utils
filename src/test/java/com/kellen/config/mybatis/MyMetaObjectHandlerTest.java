@@ -37,8 +37,8 @@ class MyMetaObjectHandlerTest {
         handler.insertFill(SystemMetaObject.forObject(entity));
 
         assertThat(entity.getCreateTime()).isNotNull().isEqualTo(entity.getUpdateTime());
-        assertThat(entity.getCreator()).isEqualTo("u-1");
-        assertThat(entity.getUpdater()).isEqualTo("u-1");
+        assertThat(entity.getCreateBy()).isEqualTo("u-1");
+        assertThat(entity.getUpdateBy()).isEqualTo("u-1");
         assertThat(entity.getTenantId()).isEqualTo("t-1");
         assertThat(entity.getCreateDept()).isEqualTo("d-1");
     }
@@ -49,8 +49,8 @@ class MyMetaObjectHandlerTest {
 
         assertThatCode(() -> handler.insertFill(SystemMetaObject.forObject(entity))).doesNotThrowAnyException();
 
-        assertThat(entity.getCreator()).isNull();
-        assertThat(entity.getUpdater()).isNull();
+        assertThat(entity.getCreateBy()).isNull();
+        assertThat(entity.getUpdateBy()).isNull();
         assertThat(entity.getCreateDept()).isNull();
         assertThat(entity.getCreateTime()).isNotNull();
         assertThat(entity.getUpdateTime()).isNotNull();
@@ -60,12 +60,12 @@ class MyMetaObjectHandlerTest {
     void insertKeepsExplicitCreator() {
         login("u-1");
         Fixture entity = new Fixture();
-        entity.setCreator("seed");
+        entity.setCreateBy("seed");
         entity.setCreateDept("seed-dept");
 
         handler.insertFill(SystemMetaObject.forObject(entity));
 
-        assertThat(entity.getCreator()).isEqualTo("seed");
+        assertThat(entity.getCreateBy()).isEqualTo("seed");
         assertThat(entity.getCreateDept()).isEqualTo("seed-dept");
     }
 
@@ -75,16 +75,16 @@ class MyMetaObjectHandlerTest {
         Fixture entity = new Fixture();
         entity.setCreateTime(EARLIER);
         entity.setUpdateTime(EARLIER);
-        entity.setCreator("u-0");
-        entity.setUpdater("u-0");
+        entity.setCreateBy("u-0");
+        entity.setUpdateBy("u-0");
         entity.setCreateDept("d-0");
 
         handler.updateFill(SystemMetaObject.forObject(entity));
 
         assertThat(entity.getUpdateTime()).isAfter(EARLIER);
-        assertThat(entity.getUpdater()).isEqualTo("u-2");
+        assertThat(entity.getUpdateBy()).isEqualTo("u-2");
         assertThat(entity.getCreateTime()).isEqualTo(EARLIER);
-        assertThat(entity.getCreator()).isEqualTo("u-0");
+        assertThat(entity.getCreateBy()).isEqualTo("u-0");
         assertThat(entity.getCreateDept()).isEqualTo("d-0");
     }
 

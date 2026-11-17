@@ -62,9 +62,9 @@
 
 ## MyBatis-Plus
 
-- 实体基础字段统一继承 `TenantEntityBase`（无租户的表继承 `EntityBase`）。
-- `EntityBase` 保留全部公共字段：`id`（字符串雪花ID）、`code`、`description`、`createTime`、`creator`、`updateTime`、`updater`、`deleted`（列 `is_deleted`）、`label`、`sorting`、`version`（乐观锁）。审计字段按芋道 `BaseDO` 命名，由 `MyMetaObjectHandler` 自动填充：创建人、修改人取当前登录用户ID，没有登录用户（种子、后台任务）时不填，实体上已有的值不覆盖。`TenantEntityBase` 再加 `tenantId` 与 `createDept`（列 `create_dept`，插入时取当前登录用户的部门，对照 RuoYi-Vue-Plus 的 `createDept`）；每行都记部门，数据权限过滤按表在 `security.data-permission.table-rules` 开启，默认部门列为 `create_dept`、本人列为 `creator`。
-- 业务微服务新增业务表时，DDL 必须包含基类对应的列 `id`、`code`、`description`、`create_time`、`creator`、`update_time`、`updater`、`is_deleted`、`label`、`sorting`、`version`，有租户的表再加 `tenant_id`、`create_dept`；`type`、`state` 按业务需要添加。不得只写业务字段。迁移不删除基类对应的列，旧列只改名。
+- 实体基础字段统一继承 `TenantEntityBase`。
+- `EntityBase` 保留全部公共字段：`id`（字符串雪花ID）、`code`、`description`、`createTime`、`createBy`、`updateTime`、`updateBy`、`deleted`（列 `is_deleted`）、`label`、`sorting`、`version`（乐观锁）。审计字段按主流项目的多数命名（RuoYi-Vue、RuoYi-Vue-Plus、JeecgBoot 都用 `createBy`、`createTime`、`updateBy`、`updateTime`），由 `MyMetaObjectHandler` 自动填充：创建人、修改人取当前登录用户ID，没有登录用户（种子、后台任务）时不填，实体上已有的值不覆盖。`TenantEntityBase` 再加 `tenantId` 与 `createDept`（列 `create_dept`，插入时取当前登录用户的部门，对照 RuoYi-Vue-Plus 的 `createDept`）；每行都记部门，数据权限过滤按表在 `security.data-permission.table-rules` 开启，默认部门列为 `create_dept`、本人列为 `create_by`。
+- 每张新建表的 DDL 都必须包含全部基础字段 `id`、`code`、`description`、`create_time`、`create_by`、`update_time`、`update_by`、`is_deleted`、`label`、`sorting`、`version`、`tenant_id`、`create_dept`，不得省略，平台级配置表的 `tenant_id` 用固定值（如 `PLATFORM`）；`type`、`state` 按业务需要添加。不得只写业务字段。迁移不删除基类对应的列，旧列只改名。
 - `type/state` 不放入实体基类。业务代码需要读写时由当前实体自行声明并配套 `IEnum` 或受控枚举；不需要读写时依赖数据库默认值。
 - 数据库列 `version` 只表示 MyBatis-Plus 乐观锁。业务版本、模板版本、协议版本、Prompt 版本必须使用明确列名，例如 `template_version`、`prompt_version`、`protocol_version`，不得复用 `version`。
 - 表结构只由本服务 `src/main/resources/db/migration` 的 Flyway 迁移管理；已提交的迁移文件不修改，改结构只新增 `V<下一个>__<说明>.sql`；新库保持空库，由服务首次启动时的 Flyway 建表，不手工执行任何公共脚本。Seata AT 的 `undo_log` 写在各服务 `V1__baseline.sql`；数据源块固定 `spring.datasource.dynamic.seata: true`，不设总开关；建池时 Seata AT 代理就检查该表，所以 utils 的 `EarlyFlywayMigration` 在创建任何 Bean 之前先按 `spring.flyway.*` 迁移，新空库首次启动即建出该表。
@@ -84,7 +84,7 @@
 ## AOP 与幂等
 
 - 切面当前负责 SQL 参数校验、动态数据源上下文、请求日志、幂等锁生命周期。
-- utils 当前没有切面与防重复提交；需要时按芋道 `@Idempotent` 的切面写法新增，并在异常时释放。
+- utils 当前没有切面与防重复提交；需要时对照主流项目（RuoYi-Vue-Plus `@RepeatSubmit`、芋道 `@Idempotent` 等）的切面写法新增，并在异常时释放。
 - 幂等 key 应包含租户、用户、类名、方法名，避免跨租户或跨用户互相影响。
 - 异常路径必须释放幂等锁并清理线程上下文。
 

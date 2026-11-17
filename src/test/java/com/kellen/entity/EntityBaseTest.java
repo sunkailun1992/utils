@@ -16,15 +16,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** 实体基类两层：EntityBase 保留全部公共字段（审计字段按芋道命名），TenantEntityBase 加租户与创建部门。 */
+/** 实体基类两层：EntityBase 保留全部公共字段（审计字段按主流项目多数命名：createBy/createTime/updateBy/updateTime），TenantEntityBase 加租户与创建部门。 */
 class EntityBaseTest {
 
     @Test
-    void entityBaseKeepsTheCommonFieldsWithAuditNamesAlignedToYudao() throws Exception {
+    void entityBaseKeepsTheCommonFieldsWithMainstreamAuditNames() throws Exception {
         assertThat(Modifier.isAbstract(EntityBase.class.getModifiers())).isTrue();
         List<Field> fields = instanceFields(EntityBase.class);
-        assertThat(fields).extracting(Field::getName).containsExactly("id", "code", "description", "createTime", "creator",
-                "updateTime", "updater", "deleted", "label", "sorting", "version");
+        assertThat(fields).extracting(Field::getName).containsExactly("id", "code", "description", "createTime", "createBy",
+                "updateTime", "updateBy", "deleted", "label", "sorting", "version");
         List<Class<?>> types = fields.stream().<Class<?>>map(Field::getType).toList();
         assertThat(types).containsExactly(String.class, String.class, String.class, LocalDateTime.class, String.class,
                 LocalDateTime.class, String.class, Boolean.class, String.class, Integer.class, Integer.class);

@@ -56,7 +56,7 @@ class DataPermissionSqlHandlerTest {
         Expression expression = new DataPermissionSqlHandler(properties).getSqlSegment(aliasedUserTable(), null, "mapper.select");
 
         assertThat(expression).isNotNull();
-        assertThat(expression.toString()).isEqualTo("u.creator = 'u1'");
+        assertThat(expression.toString()).isEqualTo("u.create_by = 'u1'");
     }
 
     @Test

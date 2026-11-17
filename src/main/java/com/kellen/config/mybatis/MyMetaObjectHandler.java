@@ -44,8 +44,8 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
         String userId = currentUserId(); // 没有登录用户（种子、后台任务）时为 null，不填创建人与更新人。
         fillIfAbsent("createTime", now, metaObject); // 新增时填充创建时间。
         fillIfAbsent("updateTime", now, metaObject); // 新增时同步填充更新时间。
-        fillIfAbsent("creator", userId, metaObject); // 新增时填充创建人，已有值（如种子指定）不覆盖。
-        fillIfAbsent("updater", userId, metaObject); // 新增时同步填充更新人。
+        fillIfAbsent("createBy", userId, metaObject); // 新增时填充创建人，已有值（如种子指定）不覆盖。
+        fillIfAbsent("updateBy", userId, metaObject); // 新增时同步填充更新人。
         fillTenantId(metaObject); // 新增时按当前租户上下文填充租户ID。
         fillIfAbsent("createDept", currentDeptId(), metaObject); // 新增时记录创建部门，供按部门的数据权限过滤。
     }
@@ -58,7 +58,7 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void updateFill(MetaObject metaObject) {
         setFieldValByName("updateTime", LocalDateTime.now(), metaObject); // 更新时刷新更新时间。
-        setFieldValByName("updater", currentUserId(), metaObject); // 值为 null 时框架不写入，没有登录用户就保留原更新人。
+        setFieldValByName("updateBy", currentUserId(), metaObject); // 值为 null 时框架不写入，没有登录用户就保留原更新人。
     }
 
     /**

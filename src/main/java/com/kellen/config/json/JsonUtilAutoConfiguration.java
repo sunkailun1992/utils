@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * 让 {@link JsonUtil} 改用 Spring Boot 配好的 {@link JsonMapper}（芋道 JsonUtils 的做法）；
+ * 让 {@link JsonUtil} 改用 Spring Boot 配好的 {@link JsonMapper}（RuoYi-Vue-Plus、芋道等项目的 JSON 工具都这样取容器里的映射器）；
  * 容器里没有唯一的 {@link JsonMapper} 时保持默认配置。
  *
  * @author 孙凯伦

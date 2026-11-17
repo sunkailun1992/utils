@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:1.7.0`
+- 发布坐标：`com:utils:1.7.1`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -24,7 +24,7 @@
 - 动态数据源：只保留 `master` 与 `gray`
 - 个人业务库为 PostgreSQL；数据源用 dynamic-datasource 原生配置（各服务 `application.yml` 的 `spring.datasource.dynamic` 块，地址与账号在 Nacos 的 `spring.datasource.dynamic.datasource.master/gray`），字符串租户与 Boolean 逻辑删除、独立测试库及切换边界见 [PG 底座说明](docs/postgresql-fleet-foundation.md)。历史 MySQL 仍供其它项目或必要中间件使用，本轮不删除其数据库、账号或容器。
 - 数据源连接健康：各服务 `application.yml` 的 `spring.datasource.dynamic.druid` 统一设借出前 `SELECT 1` 校验、空闲检测与保活（检测 30 秒、保活 60 秒，保活间隔须大于检测间隔，否则 Druid 启动失败）及连接 3000 毫秒、读取 30000 毫秒超时；JDBC URL 不带 `connectTimeout`、`socketTimeout`，见[超时单位说明](docs/postgresql-druid-timeouts.md)
-- 实体基类：`EntityBase` 保留全部公共字段 `id`、`code`、`description`、`createTime`、`creator`、`updateTime`、`updater`、`deleted`、`label`、`sorting`、`version`，`TenantEntityBase` 再加 `tenantId`、`createDept`；时间、创建人、修改人、租户与创建部门由 `MyMetaObjectHandler` 自动填充；乐观锁 `version` 只表示 MyBatis-Plus `@Version` 数据库版本号
+- 实体基类：`EntityBase` 保留全部公共字段 `id`、`code`、`description`、`createTime`、`createBy`、`updateTime`、`updateBy`、`deleted`、`label`、`sorting`、`version`（审计字段按 RuoYi-Vue、RuoYi-Vue-Plus、JeecgBoot 等主流项目的多数命名），`TenantEntityBase` 再加 `tenantId`、`createDept`；时间、创建人、修改人、租户与创建部门由 `MyMetaObjectHandler` 自动填充；乐观锁 `version` 只表示 MyBatis-Plus `@Version` 数据库版本号
 - JSON：`JsonUtil` 使用 Spring Boot 4 默认 Jackson 3 databind API；`json/bean/list` 方法签名保持兼容
 
 ### Jackson 3 迁移说明
@@ -172,3 +172,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `1.6.9` 是第3阶段 utils 改造（一次发版）：删除 MyBatis-Plus DDL 建表方式（`PostgresqlDdl*` 与公共建表脚本），`api` 带上 Flyway 11.14.1 与其 PostgreSQL 模块，各服务表结构改由自己的 `db/migration` 迁移管理；实体基类按芋道两层，`EntityBase` 只留 `createTime`、`updateTime`、`creator`、`updater`、`deleted`（列 `is_deleted`），`TenantEntityBase` 只多 `tenantId`，`MyMetaObjectHandler` 插入时填创建人、更新人（取当前登录用户，没有就不填），数据权限默认本人字段改为 `creator`；删除自写的 `DynamicDataSourceConfig`，数据源改用 dynamic-datasource 原生配置，`seata` 跟随 `seata.enabled`。消费者升级时需新增 `V1__baseline.sql` 等迁移并删掉 `IDdl` 实现与旧脚本，实体改继承 `TenantEntityBase` 并自行声明 `id`、`version` 等字段，`application.yml` 加数据源与 Flyway 块，Nacos 换成 `spring.datasource.dynamic.datasource.master/gray` 键（URL 不带 `connectTimeout`、`socketTimeout`）。
 
 `1.7.0` 是第3阶段返工（一次发版）：实体基类恢复全部公共字段，`EntityBase` 有 `id`、`code`、`description`、`createTime`、`creator`、`updateTime`、`updater`、`deleted`、`label`、`sorting`、`version`，`TenantEntityBase` 再加 `tenantId`、`createDept`（插入时取当前登录用户的部门），数据权限默认部门列改为 `create_dept`；Seata 固定开启（数据源块 `seata: true`，不再跟随 `seata.enabled`），新增 `EarlyFlywayMigration` 在建数据源之前先按 `spring.flyway.*` 迁移，新空库开着 Seata 也能首次启动；删除阿里云 OSS 专用代码（`com.kellen.aliyun`），上传策略改为 `com.kellen.storage.UploadPolicy`（去掉恒为空的 `securityToken`），展示 token 改为 `DisplayTokenUtils.hash/matches`。消费者升级时删掉实体里基类已有的 `id`、`code`、`description`、`label`、`sorting`、`version` 声明，租户表用新迁移加 `create_dept` 列，`application.yml` 数据源块改为 `seata: true`，并把 `OssTokenUtils`、`OssUploadPolicy` 换成新类。
+
+`1.7.1` 把审计字段改为主流项目的多数命名：`EntityBase` 的 `creator`、`updater` 改为 `createBy`、`updateBy`（列 `create_by`、`update_by`，与 RuoYi-Vue、RuoYi-Vue-Plus、JeecgBoot 一致），数据权限默认本人列改为 `create_by`；规范改为每张新建表都必须包含全部基础字段。消费者升级时用新迁移把 `creator`、`updater` 列改名为 `create_by`、`update_by`，代码里的 `getCreator`、`getUpdater` 改为 `getCreateBy`、`getUpdateBy`。

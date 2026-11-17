@@ -56,8 +56,8 @@
 - `com.kellen.config.mybatis.MyBatisPlusConfig`：MyBatis-Plus 插件配置。
 - `com.kellen.config.mybatis.MybatisPlusSecurityProperties`：MyBatis-Plus SQL 安全插件开关配置。
 - `com.kellen.config.mybatis.MyMetaObjectHandler`：MyBatis-Plus 自动填充处理器；插入填创建时间、更新时间、创建人、更新人、租户与创建部门，更新刷新更新时间与更新人；没有登录用户时不填人和部门，已有值不覆盖。
-- `com.kellen.datapermission.DataPermissionSqlHandler`：数据权限条件，直接构造 JSqlParser 表达式（本人与部门为等值条件，部门树与自定义为 `IN`），只对配了规则的表生效，默认本人列 `creator`、部门列 `create_dept`；内部异常不吞掉。
-- `com.kellen.entity.EntityBase`、`com.kellen.entity.TenantEntityBase`：实体基类两层，前者保留全部公共字段（审计字段按芋道命名），后者再加租户ID与创建部门。
+- `com.kellen.datapermission.DataPermissionSqlHandler`：数据权限条件，直接构造 JSqlParser 表达式（本人与部门为等值条件，部门树与自定义为 `IN`），只对配了规则的表生效，默认本人列 `create_by`、部门列 `create_dept`；内部异常不吞掉。
+- `com.kellen.entity.EntityBase`、`com.kellen.entity.TenantEntityBase`：实体基类两层，前者保留全部公共字段（审计字段按 RuoYi-Vue、RuoYi-Vue-Plus、JeecgBoot 等主流项目的多数命名），后者再加租户ID与创建部门。
 
 当前边界：
 
@@ -72,7 +72,7 @@
 
 ## 四、AOP 与幂等
 
-utils 当前没有切面。原有的请求日志切面与防重复提交从未生效，已在 1.6.8 删除（见文末）。以后需要防重复提交时，按芋道 ruoyi-vue-pro `@Idempotent` 的切面写法新增，键名包含租户、用户与方法，异常时释放。
+utils 当前没有切面。原有的请求日志切面与防重复提交从未生效，已在 1.6.8 删除（见文末）。以后需要防重复提交时，对照主流项目（RuoYi-Vue-Plus `@RepeatSubmit`、芋道 `@Idempotent` 等）的切面写法新增，键名包含租户、用户与方法，异常时释放。
 
 ## 五、Spring Boot 基础配置
 
@@ -158,7 +158,7 @@ utils 当前没有切面。原有的请求日志切面与防重复提交从未�
 
 - 如果类只服务单个业务项目，应迁回业务项目；只有个别服务用到的依赖或配置，由该服务自己声明。
 - 过时、小众、从未生效或已被替代且无人使用的工具直接删除，不为「以后可能用」保留；判断在用要看服务实际引用，以及 Spring 组件是否真正生效（注解要有切面驱动）。
-- 保留的工具，写法与命名对照同类里 GitHub 关注度最高的项目（如 Hutool、OkHttp、Redisson、MyBatis-Plus、Spring Boot、芋道 ruoyi-vue-pro）。
+- 保留的工具，写法与命名对照同类的多个主流项目，以多数做法为准，不以单个项目为准（如 Hutool、OkHttp、Redisson、MyBatis-Plus、Spring Boot；后台框架对照 RuoYi-Vue、RuoYi-Vue-Plus、JeecgBoot、芋道 ruoyi-vue-pro 等）。
 - 删除或迁移前必须先用 `rg` 检查 `utils` 与消费者项目引用。
 
 ### 已移除（1.6.8）
