@@ -6,7 +6,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from prepare_databases import prepare
+from migration_inventory import SERVICES as DATABASE_SERVICES, migration_inventory
 from render_nacos import yaml_documents, yaml_json
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -441,6 +441,15 @@ def check_frontend_routes(root, routes):
     return checked
 
 
+def check_entity_tables(root, inventory):
+    """每个 @TableName 引用的表都必须由本服务的 Flyway 迁移建出；缺了就报出服务与表名。"""
+    for service, tables in inventory.items():
+        used = set()
+        for file in (Path(root) / service / "src/main/java").rglob("*.java"):
+            used.update(re.findall(r'@TableName\([^\n]*?"([^"\n]+)"', file.read_text()))
+        assert used <= tables, (service, sorted(used - tables))
+
+
 def check():
     imported = set()
     consumers = {}
@@ -489,17 +498,14 @@ def check():
     auth = yaml_json((CONFIG / "security-auth.yaml").read_text())
     assert auth["security"]["auth"]["header-enabled"] is False
     assert auth["tenant"]["ignore-without-tenant"] is False
-    documents, manifest = prepare(ROOT)
-    sql = "\n".join(documents.values())
-    assert not re.search(r"INSERT(?: IGNORE)? INTO auth_user\b", sql, re.I)
+    inventory = migration_inventory(ROOT)
+    sql = "\n".join(file.read_text() for service in DATABASE_SERVICES
+                    for file in (ROOT / service / "src/main/resources/db/migration").glob("V*__*.sql"))
+    assert not re.search(r"INSERT(?: IGNORE)? INTO auth_user\b", sql, re.I), "迁移不得预置人员账号"
     assert not re.search(r"meilianshuke\.com|hz2y\.com", sql)
-    for service, inventory in manifest.items():
-        used = set()
-        for file in (ROOT / service / "src/main/java").rglob("*.java"):
-            used.update(re.findall(r'@TableName\([^\n]*?"([^"\n]+)"', file.read_text()))
-        assert used <= set(inventory["tables"]), (service, used - set(inventory["tables"]))
+    check_entity_tables(ROOT, inventory)
     print(f"PASS: {len(SERVICES)} 服务 / 27 profile / {len(imported)} dataId / "
-          f"{sum(len(v['tables']) for v in manifest.values())} 所需表 / "
+          f"{sum(len(tables) for tables in inventory.values())} 张表（Flyway 迁移后）/ "
           f"{frontend_paths} 前端路径（含 AI 分模块，仅静态校验）；隔离、路由和业务种子门禁通过")
 
 

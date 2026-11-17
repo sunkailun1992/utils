@@ -10,7 +10,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from verify_configuration import (check_route, route_destination, check_catalog,
                                   check_parameter_comments, effective_configuration)
 import verify_configuration as configuration
-from prepare_databases import SCRIPTS
 from render_nacos import yaml_json, render_document
 
 
@@ -185,25 +184,6 @@ class StorageConfigurationController {
 
 
 class NacosOrganizationTests(unittest.TestCase):
-    def test_minimal_schema_fixture_preserves_storage_tables_and_rejects_data_mutations(self):
-        # 只证明 prepare 的组合与只读结构门禁；不冒充检查相邻 AI 的真实 DDL。
-        with tempfile.TemporaryDirectory(prefix="fleet-schema-contract-") as temporary:
-            root = Path(temporary)
-            storage_tables = {"ai_storage_configuration", "ai_storage_setting", "ai_storage_operation"}
-            for service, names in SCRIPTS.items():
-                for name in names:
-                    source = root / service / "src/main/resources/db/postgresql" / name
-                    source.parent.mkdir(parents=True, exist_ok=True)
-                    tables = storage_tables if service == "ai" else {"fixture_" + service.replace("-", "_")}
-                    source.write_text("".join(f"CREATE TABLE IF NOT EXISTS {table} (id bigint);\n" for table in sorted(tables)))
-            documents, manifest = configuration.prepare(root)
-            self.assertEqual(set(manifest["ai"]["tables"]), storage_tables)
-            self.assertNotIn("INSERT INTO ai_storage_setting", documents["github_dev_ai"])
-            ai = root / "ai/src/main/resources/db/postgresql/ai-schema.sql"
-            ai.write_text(ai.read_text() + "INSERT INTO ai_storage_setting VALUES (1);\n")
-            with self.assertRaisesRegex(ValueError, "mutate records"):
-                configuration.prepare(root)
-
     def test_shared_model_configuration_is_retired_and_cannot_return(self):
         directory = Path(__file__).resolve().parents[1] / "nacos"
         active = {file.name: file.read_text() for file in (directory / "DEFAULT_GROUP").iterdir()}

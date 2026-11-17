@@ -21,29 +21,21 @@
 
 | 服务 | PostgreSQL 数据库 / 角色 | 表数 |
 |---|---|---:|
-| ai | `github_dev_ai` | 17 |
-| ai-memory | `github_dev_ai_memory` | 9 |
-| rag | `github_dev_rag` | 2 |
-| message | `github_dev_message` | 3 |
-| user | `github_dev_user` | 15 |
-| mcp | `github_dev_mcp` | 2 |
-| report | `github_dev_report` | 2 |
+| ai | `github_dev_ai` | 11 |
+| ai-memory | `github_dev_ai_memory` | 8 |
+| rag | `github_dev_rag` | 1 |
+| message | `github_dev_message` | 2 |
+| user | `github_dev_user` | 14 |
+| mcp | `github_dev_mcp` | 1 |
+| report | `github_dev_report` | 1 |
 
-共 50 张表，包含七组公共 `ddl_history` / Seata `undo_log`。`ai-agent`、gateway 不使用业务 JDBC 数据库。RAG 正文和向量继续由 Qdrant 保存，可重建图谱继续由 Neo4j 保存；不恢复旧关系库 RAG / 图谱表。现行 Entity 与 PostgreSQL 权威 DDL 是建表依据，历史 MySQL SQL 保留为历史材料，不在 PostgreSQL 执行。
+表数是各服务 Flyway 迁移执行完后的结果，共 38 张，含七个库各一张 Seata `undo_log`；旧 `ddl_history` 由各服务 `V2__drop_ddl_history.sql` 删除。表结构只由各服务自己的 `src/main/resources/db/migration` 管理，新库保持空库，服务首次启动时由 Flyway 建表；`scripts/migration_inventory.py` 按迁移目录汇总表清单（只读文件），`verify_configuration.py` 核对每个实体的表都由迁移建出、迁移不预置人员账号。`ai-agent`、gateway 不使用业务 JDBC 数据库。RAG 正文和向量继续由 Qdrant 保存，可重建图谱继续由 Neo4j 保存；不恢复旧关系库 RAG / 图谱表。历史 MySQL 建表 SQL 已随 Flyway 改造删除（Git 历史可查）。
 
 NAS 独立 Conductor OSS 的 PostgreSQL、隔离锁 Redis、UI/API 认证、安全观测和真实合成工作流验收，见 [Conductor 运维说明](../../docs/conductor-operations.md)。HTTP、404 重试、Cron、WAIT 恢复与日志链路对账已分别验证；旧 XXL-JOB 服务退役，原 MySQL 调度数据完整保留。完整私有 Compose 不进入本目录。
 
-生成逐库结构脚本（只写文件，不连接数据库）：
+迁移已有 MySQL 数据前，停止个人业务写入，确认所有 `undo_log` 为空；新库由 NAS 管理流程建好数据库与独立角色后保持空库，不提前启动应用。受控迁移工具先只读生成计划，执行时核对计划摘要、逐表行数与指纹、数据类型和自增序列；全部通过后才发布 PostgreSQL 连接配置并启动应用。原 MySQL 数据继续保留用于核对和回退，不因迁移成功自动删除。运行态切换状态以本轮实际验收回执为准，不能仅凭本文件判断已经切换。
 
-```bash
-python3 ops/github-dev/scripts/prepare_databases.py --output /tmp/github-dev-db-plan
-```
-
-输出七份 `github_dev_*.sql` 和 `database-manifest.json`。这些脚本只创建 schema 内结构，不创建数据库、不复制记录、不运行用户种子。先由 NAS 管理流程建立数据库与独立角色，再将对应脚本执行到相应空数据库。脚本读取各仓库权威 DDL，不维护第二套业务 SQL 副本。
-
-迁移已有 MySQL 数据前，停止个人业务写入，确认所有 `undo_log` 为空；保持新库全表为空，不提前启动应用 DDL runner 或用户 bootstrap。受控迁移工具先只读生成计划，执行时核对计划摘要、逐表行数与指纹、数据类型和自增序列；全部通过后才发布 PostgreSQL 连接配置并启动应用。原 MySQL 数据继续保留用于核对和回退，不因迁移成功自动删除。运行态切换状态以本轮实际验收回执为准，不能仅凭本文件判断已经切换。
-
-用户 bootstrap 只建立通用租户、管理员角色及资源权限，使用 PostgreSQL `ON CONFLICT DO NOTHING` 保留既有记录，不创建人员账号或默认密码、不覆盖已有权限。授权的管理用户由受控迁移保留；真实内容不写入公开 SQL、日志、聊天或 Wiki。
+user 的 `V1__baseline.sql` 种子段只建立通用租户、管理员角色及资源权限，使用 PostgreSQL `ON CONFLICT DO NOTHING` 保留既有记录，不创建人员账号或默认密码、不覆盖已有权限。授权的管理用户由受控迁移保留；真实内容不写入公开 SQL、日志、聊天或 Wiki。
 
 ## 统一存储
 
