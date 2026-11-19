@@ -4,26 +4,6 @@
 # 导入服务：mcp。
 # 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
-# mcp 主数据源旧键，utils 1.6.8 及以前的版本读取；全部服务升级到 utils 1.6.9 并验证后删除。
-postgresql:
-  # 个人 PostgreSQL JDBC URL；连接超时3秒、socket超时30秒，库名与服务匹配。
-  url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_mcp?connectTimeout=3&socketTimeout=30&tcpKeepAlive=true
-  # 个人主数据源的数据库账号；仅授予对应个人独立库所需权限。
-  username: ${GITHUB_POSTGRESQL_MCP_USERNAME}
-  # 个人主数据源的数据库密码；真实值仅在私有配置中。
-  password: ${GITHUB_POSTGRESQL_MCP_PASSWORD}
-  # 个人主数据源的PostgreSQL JDBC 驱动类。
-  driverClassName: org.postgresql.Driver
-# 灰度数据源；当前与主数据源同库，按灰度标签切换时使用。
-postgresql-gray:
-  # 灰度数据源复用主数据源的JDBC URL，库名与服务匹配。
-  url: ${postgresql.url}
-  # 灰度数据源复用主数据源的数据库账号；仅授予对应个人独立库所需权限。
-  username: ${postgresql.username}
-  # 灰度数据源复用主数据源的数据库密码；真实值仅在私有配置中。
-  password: ${postgresql.password}
-  # 灰度数据源复用主数据源的PostgreSQL JDBC 驱动类。
-  driverClassName: ${postgresql.driverClassName}
 # 数据源新键，utils 1.6.9 起由 dynamic-datasource 原生配置读取；连接池、Seata 等参数在服务 application.yml。
 spring:
   # Spring 数据源配置。

@@ -15,42 +15,37 @@ SERVICES = ("ai", "ai-memory", "mcp", "message", "rag", "report", "user")
 
 class PostgresqlConfigurationTests(unittest.TestCase):
     def test_each_service_has_its_own_postgresql_role_and_no_active_mysql(self):
+        """主库用本服务独立的 PostgreSQL 账号；不再有 MySQL 数据源，也不再有第3阶段删除的 postgresql 旧键。"""
         for service in SERVICES:
             with self.subTest(service=service):
                 source = (CONFIG / f"{service}-spring.yaml").read_text()
                 value = yaml_json(source)
-                self.assertNotIn("mysql", value)
-                self.assertNotIn("mysql-gray", value)
-                primary = value["postgresql"]
+                for retired in ("mysql", "mysql-gray", "postgresql", "postgresql-gray"):
+                    self.assertNotIn(retired, value)
+                master = value["spring"]["datasource"]["dynamic"]["datasource"]["master"]
                 suffix = service.replace("-", "_")
                 prefix = "GITHUB_POSTGRESQL_" + suffix.upper()
-                self.assertTrue(primary["url"].startswith("jdbc:postgresql://"))
-                self.assertIn(f"/github_dev_{suffix}", primary["url"])
-                self.assertEqual(primary["username"], "${" + prefix + "_USERNAME}")
-                self.assertEqual(primary["password"], "${" + prefix + "_PASSWORD}")
-                self.assertEqual(primary["driverClassName"], "org.postgresql.Driver")
-                self.assertEqual(value["postgresql-gray"], {
-                    key: "${postgresql." + key + "}" for key in primary})
+                self.assertTrue(master["url"].startswith("jdbc:postgresql://"))
+                self.assertIn(f"/github_dev_{suffix}?", master["url"])
+                self.assertEqual(master["username"], "${" + prefix + "_USERNAME}")
+                self.assertEqual(master["password"], "${" + prefix + "_PASSWORD}")
+                self.assertEqual(master["driver-class-name"], "org.postgresql.Driver")
                 check_parameter_comments(source)
 
-    def test_dynamic_datasource_keys_mirror_postgresql_without_timeout_options(self):
-        """utils 1.6.9 起读 dynamic-datasource 原生键；与旧键同库同账号，URL 去掉 Druid 会误读的超时参数。"""
+    def test_dynamic_datasource_keys_have_no_timeout_options(self):
+        """dynamic-datasource 原生键：URL 不带 Druid 会误读的超时参数，灰度库逐项复用主库。"""
         for service in SERVICES:
             with self.subTest(service=service):
                 source = (CONFIG / f"{service}-spring.yaml").read_text()
-                value = yaml_json(source)
-                old = value["postgresql"]
-                pools = value["spring"]["datasource"]["dynamic"]["datasource"]
+                pools = yaml_json(source)["spring"]["datasource"]["dynamic"]["datasource"]
                 self.assertEqual(set(pools), {"master", "gray"})
                 master = pools["master"]
-                self.assertEqual(master["url"], old["url"].replace("connectTimeout=3&socketTimeout=30&", ""))
+                suffix = service.replace("-", "_")
+                self.assertEqual(master["url"], "jdbc:postgresql://${custom.infra-postgresql-host}:"
+                                 "${custom.infra-postgresql-port}/github_dev_" + suffix + "?tcpKeepAlive=true")
                 self.assertNotRegex(master["url"], r"(?i)(connect|socket)Timeout")
-                self.assertEqual(master["username"], old["username"])
-                self.assertEqual(master["password"], old["password"])
-                self.assertEqual(master["driver-class-name"], "org.postgresql.Driver")
                 self.assertEqual(pools["gray"], {key: "${spring.datasource.dynamic.datasource.master." + key + "}"
                                                  for key in master})
-                check_parameter_comments(source)
         seata = yaml_json((CONFIG / "seata.yaml").read_text())["seata"]
         self.assertIs(seata["enable-auto-data-source-proxy"], False)
 

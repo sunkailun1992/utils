@@ -84,6 +84,7 @@
 | local-canary.yaml | `traffic.governance.instance.tag` | 无引用，服务直接使用 `local-canary.tag` |
 | redis.yaml | `redis.hostName`、`redis.port`、`redis.database`、`redis.password` | 只被同文件 `spring.data.redis.*` 转引，连接改为只声明一次 |
 | swagger.yaml | `swagger.enable` | 无读取方，文档开关以 `springdoc.*` 为准 |
+| user、ai-memory、message、ai、mcp、rag、report 的 `-spring.yaml` | `postgresql.*`、`postgresql-gray.*` | utils 1.6.9 起数据源改由 `spring.datasource.dynamic.datasource.master/gray` 读取，旧键无读取方、无 `${}` 引用（第3阶段删除） |
 
 ## 维护与验收
 
