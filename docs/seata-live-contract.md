@@ -55,6 +55,8 @@ TC 2.7 在 DB 存储模式下会延迟删除已完成会话：[SessionHelper.end
 
 TC 使用 MySQL 存储时，对照[官方 v2.7.0 完整 MySQL DDL](https://github.com/apache/incubator-seata/blob/v2.7.0/script/server/db/mysql.sql)核对存储库。`lock_table.status` 是 `TINYINT NOT NULL DEFAULT 0`，并配有 `idx_status`、`idx_xid`；旧表缺状态列会使真实分支注册报错。[官方升级指南](https://seata.apache.org/docs/ops/upgrade/)指出，1.5.0 起已要求补锁状态及调整全局状态索引，不能仅升级镜像而保留旧 schema。修复前备份结构、核对当前事务/分支/锁、明确差异，只对获准部分做迁移；不通过清空 TC 表或业务 undo 避开错误。
 
+2026-11-19 起，NAS 上的 TC 改用 `file` 存储：单节点，会话文件在容器内 `/seata-server/sessionStore`，容器重建会丢掉未完成的全局事务；不再依赖 MySQL，注册中心仍为 Nacos。上面两段关于 DB 存储的说明只在改回 `db` 模式时适用。
+
 ## 2026-11-10 现场修复与验收
 
 当日实际 TC 2.7.0 在 `7091` 同时提供健康 HTTP 和 Seata 原生协议；旧默认 `8091` 暴露项存在但连接被拒绝。2.6.0 客户端在 `7091` 的 TM/RM 注册由服务端版本回报确认，随后以本合同完成两库提交及强制下游失败后的两库补偿。合同实际执行 88.524 秒，1 项通过、0 失败、0 跳过；两轮最终 TC 状态均为 `Finished`，最终 global/branch/lock 计数均为 0。这是当日目标基础设施快照，后续运行仍应重验。
