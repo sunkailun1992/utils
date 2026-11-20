@@ -32,6 +32,40 @@ spring:
           password: ${spring.datasource.dynamic.datasource.master.password}
           # 灰度库复用主库的 PostgreSQL JDBC 驱动类。
           driver-class-name: ${spring.datasource.dynamic.datasource.master.driver-class-name}
+  # Spring Security；第5阶段起由 utils 2.0.0 的 OAuth2 资源服务器读取，还在用旧版 utils 的服务没有对应依赖，不读这些键。
+  security:
+    # OAuth2 相关配置。
+    oauth2:
+      # 资源服务器：只认 Keycloak 签发、受众正确的 RS256 访问令牌（utils docs/ai-coding/AUTH_SPEC.md）。
+      resourceserver:
+        # JWT 访问令牌的校验参数。
+        jwt:
+          # 签发方，引用 reuse-configuration.yaml 的 Keycloak 共享键；公钥按需从发现文档取，Keycloak 不可达时启动不受影响、受保护接口返回 401。
+          issuer-uri: ${custom.keycloak-issuer-uri}
+          # 只收 RS256 签名。
+          jws-algorithms: RS256
+          # 受众：后端接口统一为 github-api。
+          audiences: github-api
+      # 出站 OAuth2 客户端：由 utils 2.0.0 的 FleetOAuth2Clients 按注册 ID 取令牌。
+      client:
+        # 令牌端点所在的提供方；只配 token-uri、不配 issuer-uri，免得启动时做发现、Keycloak 不可达就起不来。
+        provider:
+          # Keycloak（github-dev 域）。
+          keycloak:
+            # 令牌端点，由签发方拼出。
+            token-uri: ${custom.keycloak-issuer-uri}/protocol/openid-connect/token
+        # 客户端注册，键为注册 ID。
+        registration:
+          # 调 ai-agent：RFC 8693 令牌交换，把当前用户的令牌换成受众 github-ai-agent 的令牌。
+          github-ai-agent:
+            # 令牌端点所在的提供方。
+            provider: keycloak
+            # Keycloak 客户端 ID。
+            client-id: github-ai
+            # 客户端密钥；真实值仅在私有配置中。
+            client-secret: ${GITHUB_KEYCLOAK_AI_CLIENT_SECRET}
+            # 授权类型：标准令牌交换。
+            authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
 
 # 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
 ai:
@@ -61,3 +95,16 @@ ai:
       client-id: ${GITHUB_AGENT_CLIENT_ID:github-ai}
       # 服务调用签名密钥；与人员 JWT 密钥分离，真实值不进 Git。
       client-secret: ${GITHUB_AGENT_CLIENT_SECRET:}
+
+# utils 资源服务器与出站 OAuth2 的扩展配置（第5阶段起由 utils 2.0.0 读取）。
+fleet:
+  # 安全相关。
+  security:
+    # OAuth2 扩展项。
+    oauth2:
+      # 出站令牌交换请求的受众，键为客户端注册 ID。
+      token-exchange:
+        # 调 ai-agent 时请求的受众。
+        github-ai-agent:
+          # RFC 8693 的 audience 参数。
+          audience: github-ai-agent

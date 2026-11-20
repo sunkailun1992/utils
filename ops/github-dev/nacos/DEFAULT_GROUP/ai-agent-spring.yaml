@@ -24,6 +24,20 @@ spring:
           options:
             # Google 原生模型 ID；沿用旧共享模板占位符和默认值，代理接入须验证原生路由可识别。
             model: ${GITHUB_GOOGLE_CHAT_MODEL:gemini-3.1-flash-lite}
+  # Spring Security；第5阶段起由 utils 2.0.0 的 OAuth2 资源服务器读取，还在用旧版 utils 的服务没有对应依赖，不读这些键。
+  security:
+    # OAuth2 相关配置。
+    oauth2:
+      # 资源服务器：只认 Keycloak 签发、受众正确的 RS256 访问令牌（utils docs/ai-coding/AUTH_SPEC.md）。
+      resourceserver:
+        # JWT 访问令牌的校验参数。
+        jwt:
+          # 签发方，引用 reuse-configuration.yaml 的 Keycloak 共享键；公钥按需从发现文档取，Keycloak 不可达时启动不受影响、受保护接口返回 401。
+          issuer-uri: ${custom.keycloak-issuer-uri}
+          # 只收 RS256 签名。
+          jws-algorithms: RS256
+          # 受众：只收 ai 经令牌交换换来的 github-ai-agent 令牌。
+          audiences: github-ai-agent
 
 # 服务专属参数，与上面的框架参数共同维护；原导入相邻且无重复键。
 ai:
@@ -98,3 +112,12 @@ ai:
       # 可选 Google Developer 原生 HTTP(S) 基址，无单位；代理路径止于 /gemini、不带 /v1beta，空值保持 SDK 官方入口。
       # 仅供 ai-agent；非空时须配套本服务 scoped vkey，恢复直连必须同时恢复对应密钥，不支持 Vertex 代理。
       base-url: ${GITHUB_GOOGLE_BASE_URL:}
+
+# utils 资源服务器与出站 OAuth2 的扩展配置（第5阶段起由 utils 2.0.0 读取）。
+fleet:
+  # 安全相关。
+  security:
+    # OAuth2 扩展项。
+    oauth2:
+      # 只收这些客户端（azp）的令牌：ai 经令牌交换换来的令牌 azp 为 github-ai。
+      required-azp: github-ai

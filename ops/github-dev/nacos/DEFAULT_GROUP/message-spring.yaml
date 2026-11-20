@@ -32,6 +32,20 @@ spring:
           password: ${spring.datasource.dynamic.datasource.master.password}
           # 灰度库复用主库的 PostgreSQL JDBC 驱动类。
           driver-class-name: ${spring.datasource.dynamic.datasource.master.driver-class-name}
+  # Spring Security；第5阶段起由 utils 2.0.0 的 OAuth2 资源服务器读取，还在用旧版 utils 的服务没有对应依赖，不读这些键。
+  security:
+    # OAuth2 相关配置。
+    oauth2:
+      # 资源服务器：只认 Keycloak 签发、受众正确的 RS256 访问令牌（utils docs/ai-coding/AUTH_SPEC.md）。
+      resourceserver:
+        # JWT 访问令牌的校验参数。
+        jwt:
+          # 签发方，引用 reuse-configuration.yaml 的 Keycloak 共享键；公钥按需从发现文档取，Keycloak 不可达时启动不受影响、受保护接口返回 401。
+          issuer-uri: ${custom.keycloak-issuer-uri}
+          # 只收 RS256 签名。
+          jws-algorithms: RS256
+          # 受众：后端接口统一为 github-api。
+          audiences: github-api
 
 # RocketMQ 消费配置，由 utils 1.7.2 起的消息模块与 rocketmq-spring 读取；监听容器缺省读 rocketmq.consumer 的账号，不建生产者。
 rocketmq:

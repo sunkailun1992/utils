@@ -35,6 +35,26 @@ class NacosRenderTests(unittest.TestCase):
         source = '# 已有中文说明\n---\nvalue: "${custom.namespace}"\nlist: [a, b]\n'
         self.assertEqual(render_document(source, {}), source)
 
+    def test_keycloak_placeholders_stay_for_runtime_resolution(self):
+        # Keycloak 的客户端密钥与签发方只由各服务运行时的环境变量解析（按服务限定分发），不以明文写进 Nacos；渲染时环境里有值也不替换。
+        source = ('custom:\n'
+                  '  # 签发方\n'
+                  '  keycloak-issuer-uri: ${GITHUB_KEYCLOAK_ISSUER_URI}\n'
+                  '  # 客户端密钥\n'
+                  '  client-secret: ${GITHUB_KEYCLOAK_AI_CLIENT_SECRET}\n'
+                  '  # 其它私有值照常渲染\n'
+                  '  host: ${GITHUB_POSTGRESQL_HOST}\n')
+        environment = {'GITHUB_KEYCLOAK_ISSUER_URI': 'https://issuer.invalid/realms/x',
+                       'GITHUB_KEYCLOAK_AI_CLIENT_SECRET': 'must-not-appear', 'GITHUB_POSTGRESQL_HOST': 'db.invalid'}
+        actual = render_document(source, environment)
+        self.assertIn('keycloak-issuer-uri: ${GITHUB_KEYCLOAK_ISSUER_URI}\n', actual)
+        self.assertIn('client-secret: ${GITHUB_KEYCLOAK_AI_CLIENT_SECRET}\n', actual)
+        self.assertNotIn('must-not-appear', actual)
+        self.assertEqual(yaml_json(actual)['custom']['host'], 'db.invalid')
+
+    def test_runtime_placeholders_need_no_private_value(self):
+        self.assertIn('${GITHUB_KEYCLOAK_RAG_CLIENT_SECRET}', render_document('secret: ${GITHUB_KEYCLOAK_RAG_CLIENT_SECRET}\n', {}))
+
     def test_duplicate_keys_fail_instead_of_silently_overwriting_a_value(self):
         with self.assertRaisesRegex(ValueError, '重复键'):
             render_document('service:\n  enabled: true\n  enabled: false\n', {})

@@ -24,3 +24,5 @@ custom:
   infra-rocketmq-port: ${GITHUB_ROCKETMQ_PORT:9876}
   # 个人 RPC 分组，所有 provider/consumer 必须使用同一值。
   dubbo-group: GITHUB_DEV_DUBBO
+  # Keycloak 签发方（github-dev 域，HTTPS，证书由 mkcert 签发）；各服务的资源服务器与出站令牌端点由它拼出，真实地址只在私有配置中。
+  keycloak-issuer-uri: ${GITHUB_KEYCLOAK_ISSUER_URI}

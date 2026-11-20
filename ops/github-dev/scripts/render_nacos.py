@@ -46,6 +46,11 @@ def yaml_documents(text):
     return json.loads(result.stdout)
 
 
+# Keycloak 的签发方与客户端密钥只由各服务运行时的环境变量解析（kellen-workspace 按服务限定分发），
+# 渲染时保留占位符，不以明文写进 Nacos。
+RUNTIME_ONLY_PREFIXES = ("GITHUB_KEYCLOAK_",)
+
+
 def render(value, environment):
     if isinstance(value, dict):
         return {key: render(item, environment) for key, item in value.items()}
@@ -55,6 +60,8 @@ def render(value, environment):
         return value
     def replace(match):
         key, separator, default = match.group(1).partition(":")
+        if key.startswith(RUNTIME_ONLY_PREFIXES):
+            return match.group(0)
         if key in environment:
             return environment[key]
         if separator:
@@ -85,9 +92,12 @@ def render_document(source, environment):
         offsets.append(offsets[-1] + len(line))
     result = source
     for start_line, start_column, end_line, end_column, value in reversed(json.loads(positions.stdout)):
+        rendered = render(value, environment)
+        if rendered == value:
+            continue  # 只有运行时占位符的标量保留原文，不加引号。
         start = offsets[start_line] + start_column
         end = offsets[end_line] + end_column
-        replacement = json.dumps(render(value, environment), ensure_ascii=False)
+        replacement = json.dumps(rendered, ensure_ascii=False)
         # 块标量的结束位置可能包含换行；保留下一个键的行边界。
         if source[start:end].endswith("\n"):
             replacement += "\n"
