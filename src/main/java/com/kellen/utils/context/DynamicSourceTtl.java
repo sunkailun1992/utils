@@ -10,7 +10,8 @@ import org.apache.commons.lang3.StringUtils;
  * 动态数据源上下文管理工具。
  *
  * <p>同时维护 TransmittableThreadLocal 和 dynamic-datasource 的上下文，
- * 用于普通请求、异步线程、Dubbo 与 RocketMQ 消息等链路里保持数据源一致。</p>
+ * 用于普通请求、异步线程、Dubbo 与 RocketMQ 消息等链路里保持数据源一致。新建线程不继承数据源标记，
+ * 线程池里执行时由 TtlRunnable、TtlExecutors（或 utils 的 {@code TraceContextTaskDecorator}）传递。</p>
  *
  * @author 孙凯伦
  */
@@ -28,9 +29,14 @@ public class DynamicSourceTtl {
     public final static String MASTER_DATASOURCE = "master";
 
     /**
-     * 当前线程数据源上下文。
+     * 当前线程数据源上下文；新建线程不继承（免得线程池懒建的工作线程一直沿用建它那次请求的数据源）。
      */
-    private static final TransmittableThreadLocal<String> DATA_SOURCE_CONTEXT = new TransmittableThreadLocal<>();
+    private static final TransmittableThreadLocal<String> DATA_SOURCE_CONTEXT = new TransmittableThreadLocal<>() {
+        @Override
+        protected String childValue(String parentValue) {
+            return null;
+        }
+    };
 
     /**
      * 写入当前线程数据源。

@@ -2,6 +2,9 @@ package com.kellen.security;
 
 import com.alibaba.ttl.TtlRunnable;
 import com.alibaba.ttl.threadpool.TtlExecutors;
+import com.kellen.datapermission.DataPermissionContextHolder;
+import com.kellen.traffic.TrafficGovernanceContext;
+import com.kellen.utils.context.DynamicSourceTtl;
 import com.kellen.utils.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 用户与租户上下文不向新建线程继承：新线程读不到建它的线程的上下文；只有经 TtlRunnable、TtlExecutors 包装的任务才传递。
+ * 线程上下文不向新建线程继承：用户、租户、数据源标记、忽略数据权限标记与流量治理快照，新线程都读不到建它的线程的值；
+ * 只有经 TtlRunnable、TtlExecutors 包装的任务才传递。
  */
 class ContextInheritanceTest {
 
@@ -23,6 +27,9 @@ class ContextInheritanceTest {
     void clearContext() {
         UserContextHolder.clear();
         TenantContextHolder.clear();
+        DynamicSourceTtl.clear();
+        DataPermissionContextHolder.clear();
+        TrafficGovernanceContext.clear();
     }
 
     @Test
@@ -49,6 +56,53 @@ class ContextInheritanceTest {
 
         assertThat(tenant.get()).isNull();
         assertThat(ignore.get()).isFalse();
+    }
+
+    @Test
+    void newThreadDoesNotInheritDataSource() throws InterruptedException {
+        DynamicSourceTtl.push(DynamicSourceTtl.SLAVE_DATASOURCE);
+        AtomicReference<Object> seen = new AtomicReference<>("未执行");
+
+        runInNewThread(() -> seen.set(DynamicSourceTtl.peek()));
+
+        assertThat(seen.get()).isNull();
+    }
+
+    @Test
+    void newThreadDoesNotInheritDataPermissionIgnore() throws InterruptedException {
+        DataPermissionContextHolder.ignore();
+        AtomicReference<Boolean> ignore = new AtomicReference<>();
+
+        runInNewThread(() -> ignore.set(DataPermissionContextHolder.isIgnore()));
+
+        assertThat(ignore.get()).isFalse();
+    }
+
+    @Test
+    void newThreadDoesNotInheritTrafficSnapshot() throws InterruptedException {
+        TrafficGovernanceContext.set(new TrafficGovernanceContext.Snapshot("v2", "canary", "kellen-local", null));
+        AtomicReference<Object> seen = new AtomicReference<>("未执行");
+
+        runInNewThread(() -> seen.set(TrafficGovernanceContext.get()));
+
+        assertThat(seen.get()).isNull();
+    }
+
+    @Test
+    void ttlRunnableStillPropagatesDataSourceAndTraffic() throws InterruptedException {
+        TrafficGovernanceContext.Snapshot snapshot = new TrafficGovernanceContext.Snapshot("v2", "canary", "kellen-local", null);
+        DynamicSourceTtl.push(DynamicSourceTtl.SLAVE_DATASOURCE);
+        TrafficGovernanceContext.set(snapshot);
+        AtomicReference<Object> dataSource = new AtomicReference<>("未执行");
+        AtomicReference<Object> traffic = new AtomicReference<>("未执行");
+
+        runInNewThread(TtlRunnable.get(() -> {
+            dataSource.set(DynamicSourceTtl.peek());
+            traffic.set(TrafficGovernanceContext.get());
+        }));
+
+        assertThat(dataSource.get()).isEqualTo(DynamicSourceTtl.SLAVE_DATASOURCE);
+        assertThat(traffic.get()).isSameAs(snapshot);
     }
 
     @Test

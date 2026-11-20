@@ -59,7 +59,7 @@
 - 动态数据源只允许 `DynamicSourceTtl.MASTER_DATASOURCE` 与 `DynamicSourceTtl.SLAVE_DATASOURCE`。
 - `MASTER_DATASOURCE` 的值为 `master`，`SLAVE_DATASOURCE` 的值为 `gray`。
 - 不得新增或恢复 `bank`、`hz`、`hx`、`jghx` 等历史数据源。
-- `UserContextHolder` 与 `TenantContextHolder` 不向新建线程继承；在线程池里执行要带上下文的任务时，用 `TtlRunnable`、`TtlExecutors` 包装，或用 utils 配好 `TraceContextTaskDecorator` 的异步线程池，不靠新建线程继承。
+- `UserContextHolder`、`TenantContextHolder`、`DynamicSourceTtl`、`DataPermissionContextHolder` 与 `TrafficGovernanceContext` 都不向新建线程继承；在线程池里执行要带上下文的任务时，用 `TtlRunnable`、`TtlExecutors` 包装，或用 utils 配好 `TraceContextTaskDecorator` 的异步线程池，不靠新建线程继承。
 
 ## 消息队列
 

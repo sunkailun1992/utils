@@ -10,9 +10,14 @@ import com.alibaba.ttl.TransmittableThreadLocal;
 public class DataPermissionContextHolder {
 
     /**
-     * 忽略数据权限标记。
+     * 忽略数据权限标记；新建线程不继承（免得线程池懒建的工作线程一直跳过数据权限），经 TTL 包装的任务照常传递。
      */
-    private static final TransmittableThreadLocal<Boolean> IGNORE_CONTEXT = new TransmittableThreadLocal<>();
+    private static final TransmittableThreadLocal<Boolean> IGNORE_CONTEXT = new TransmittableThreadLocal<>() {
+        @Override
+        protected Boolean childValue(Boolean parentValue) {
+            return null;
+        }
+    };
 
     /**
      * 私有构造方法。

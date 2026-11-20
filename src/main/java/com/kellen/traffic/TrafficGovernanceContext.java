@@ -6,14 +6,20 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * 当前请求流量治理上下文。
  *
- * <p>该上下文用于 HTTP 入口、异步线程和 Dubbo RPC 之间透传发布版本、泳道和灰度 tag。</p>
+ * <p>该上下文用于 HTTP 入口、异步线程和 Dubbo RPC 之间透传发布版本、泳道和灰度 tag。
+ * 新建线程不继承；线程池里执行时由 TtlRunnable、TtlExecutors（或 utils 的 {@code TraceContextTaskDecorator}）传递。</p>
  */
 public final class TrafficGovernanceContext {
 
     /**
-     * 当前线程流量治理快照。
+     * 当前线程流量治理快照；新建线程不继承（免得线程池懒建的工作线程一直沿用建它那次请求的泳道）。
      */
-    private static final TransmittableThreadLocal<Snapshot> CONTEXT = new TransmittableThreadLocal<>();
+    private static final TransmittableThreadLocal<Snapshot> CONTEXT = new TransmittableThreadLocal<>() {
+        @Override
+        protected Snapshot childValue(Snapshot parentValue) {
+            return null;
+        }
+    };
 
     /**
      * 工具类不允许实例化。
