@@ -2,3 +2,4 @@ com.kellen.config.json.JsonUtilAutoConfiguration
 com.kellen.config.redis.RedisLockAutoConfiguration
 com.kellen.config.flyway.EarlyFlywayMigrationAutoConfiguration
 com.kellen.config.mq.MqAutoConfiguration
+com.kellen.security.oauth2.FleetResourceServerAutoConfiguration
