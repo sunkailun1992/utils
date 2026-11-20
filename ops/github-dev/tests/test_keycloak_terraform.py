@@ -27,6 +27,19 @@ def blocks(kind):
     return found
 
 
+def sub_blocks(block, kind):
+    """返回块里所有名为 kind 的子块正文（按花括号配对）。"""
+    found = []
+    for match in re.finditer(r'(?m)^\s*' + kind + r'\s*\{', block):
+        depth, start = 1, match.end()
+        for index in range(start, len(block)):
+            depth += {'{': 1, '}': -1}.get(block[index], 0)
+            if depth == 0:
+                found.append(block[start:index])
+                break
+    return found
+
+
 def attr(block, name):
     match = re.search(r'^\s*' + name + r'\s*=\s*(.+)$', block, re.M)
     return match.group(1).strip() if match else ''
@@ -108,6 +121,26 @@ class KeycloakTerraformTests(unittest.TestCase):
         mapper = blocks('keycloak_openid_audience_protocol_mapper')['ai_agent_audience']
         self.assertIn('keycloak_openid_client.ai.id', mapper)
         self.assertIn('keycloak_openid_client.ai_agent.client_id', mapper)
+
+    def test_user_profile_declares_admin_only_user_id(self):
+        # Keycloak 24 起启用声明式用户档案，未声明的属性会被丢弃：user_id 必须声明，且只许管理员查看与修改，用户不能自改冒充他人。
+        profile = blocks('keycloak_realm_user_profile')['github_dev']
+        self.assertIn('keycloak_realm.github_dev.id', profile)
+        self.assertNotIn('unmanaged_attribute_policy', profile)
+        user_id = [b for b in sub_blocks(profile, 'attribute') if attr(b, 'name') == '"user_id"']
+        self.assertEqual(len(user_id), 1)
+        permissions = sub_blocks(user_id[0], 'permissions')[0]
+        self.assertEqual(attr(permissions, 'view'), '["admin"]')
+        self.assertEqual(attr(permissions, 'edit'), '["admin"]')
+
+    def test_user_profile_keeps_keycloak_default_attributes(self):
+        profile = blocks('keycloak_realm_user_profile')['github_dev']
+        names = [attr(b, 'name').strip('"') for b in sub_blocks(profile, 'attribute')]
+        self.assertEqual(names, ['username', 'email', 'firstName', 'lastName', 'user_id'])
+        required = {attr(b, 'name').strip('"'): attr(b, 'required_for_roles') for b in sub_blocks(profile, 'attribute')}
+        for name in ('email', 'firstName', 'lastName'):
+            self.assertEqual(required[name], '["user"]', name)
+        self.assertEqual(required['user_id'], '')
 
     def test_no_plaintext_secrets_or_hosts(self):
         text = source()
