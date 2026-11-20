@@ -1,8 +1,12 @@
 package com.kellen.security.oauth2;
 
 import dasniko.testcontainers.keycloak.KeycloakContainer;
+import org.slf4j.LoggerFactory;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+
+import java.time.Duration;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -17,9 +21,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers(disabledWithoutDocker = true)
 class KeycloakContainerIT extends KeycloakEndToEndTestSupport {
 
+    /**
+     * 开发模式首次启动要做一次构建再导入测试域，CI 的两核机器上可能超过默认的 2 分钟，放宽到 5 分钟；容器输出接到测试日志，失败时随测试报告上传。
+     */
     @Container
     static final KeycloakContainer KEYCLOAK = new KeycloakContainer("quay.io/keycloak/keycloak:26.8.2")
-            .withRealmImportFile("/keycloak/github-dev-test-realm.json");
+            .withRealmImportFile("/keycloak/github-dev-test-realm.json")
+            .withStartupTimeout(Duration.ofMinutes(5))
+            .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("keycloak-container")));
 
     @DynamicPropertySource
     static void container(DynamicPropertyRegistry registry) {
