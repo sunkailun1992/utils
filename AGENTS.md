@@ -48,6 +48,7 @@
 15. `docs/ai-coding/UTILS_TOOL_CATALOG.md`：新增或迁移工具类前确认目标包和现有能力。
 16. `docs/ai-coding/NACOS_CONFIG_SPEC.md`：涉及公共 `@ConfigurationProperties` 归属、共享 dataId 或 Nacos 配置中心拆分时必读。
 17. `docs/ai-coding/MQ_SPEC.md`：涉及消息收发、主题与消费组、RocketMQ 账号或泳道时必读。
+18. `docs/ai-coding/AUTH_SPEC.md`：涉及登录、访问令牌、接口鉴权、服务间调用身份、令牌交换或 Keycloak 配置时必读。
 
 ## 项目边界
 

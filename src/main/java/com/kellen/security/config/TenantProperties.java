@@ -34,7 +34,7 @@ public class TenantProperties {
     private String field = "tenantId";
 
     /**
-     * HTTP/RPC 请求头里读取租户 ID 的 key。
+     * Dubbo 调用附件里读取与透传租户 ID 的键（HTTP 请求的租户只取认证上下文，不读这些头）。
      */
     private List<String> headerNames = new ArrayList<>(Arrays.asList("tenantId", "tenant-id", "X-Tenant-Id"));
 

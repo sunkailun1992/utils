@@ -18,7 +18,7 @@
 10. 再读 [项目版本变更规范](VERSIONING_SPEC.md)，确认 `group = 'com'`、补丁递增和公共包消费者同步规则。
 11. 再读 [RPC API 协作规范](RPC_API_CODING_SPEC.md)，确认 `utils` 只维护 Dubbo 上下文透传等横切能力，不维护业务 RPC 契约。
 12. 再读 [测试分层规范](TESTING_SPEC.md)，确认公共包单元测试、组件测试、Spring 上下文测试和消费者编译验证边界。
-13. 涉及认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，读 [安全编码规范](SECURITY_CODING_SPEC.md)。
+13. 涉及登录、访问令牌、接口鉴权、服务间调用身份或 Keycloak 配置时，先读 [认证规范](AUTH_SPEC.md)。涉及认证、权限、脱敏、水平越权、文件遍历、退出清理 token、XSS、SQL 注入、文件上传校验、CSRF、SSRF、限流资源消耗、加密密钥、批量赋值、字段级授权、供应链、配置安全、异常失败关闭、安全日志告警时，读 [安全编码规范](SECURITY_CODING_SPEC.md)。
 14. 涉及 MyBatis-Plus 动态字段、排序、数据权限、租户、乐观锁、SQL 插件或 Mapper 扩展时，必须确认 `SqlInjector` 只用于扩展 SQL 方法，不能作为 SQL 注入防护方案。
 15. MyBatis-Plus SQL 安全优先使用后端字段白名单、参数绑定、LambdaWrapper、`SqlInjectionUtils.check(...)` 或 `checkSqlInjection()` 补充校验，以及 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 默认拦截。
 16. 涉及业务微服务标准分层、RESTful Controller、ServiceQuery、ServiceResults、BO、Query、VO、Mapper 示例时，读 [公共示例模板](examples/README.md) 和 `examples/Example*`。

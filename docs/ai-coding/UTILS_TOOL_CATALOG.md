@@ -27,19 +27,20 @@
 
 核心类：
 
-- `com.kellen.security.config.SecurityAuthConfig`：安全认证配置入口。
-- `com.kellen.security.config.SecurityAuthProperties`：认证白名单与请求头配置。
+- `com.kellen.security.oauth2.FleetResourceServerAutoConfiguration`：OAuth2 资源服务器自动配置（配了 issuer-uri 的服务自动接入），配置前缀 `fleet.security.oauth2`（`FleetOAuth2Properties`），详见 [认证规范](AUTH_SPEC.md)。
+- `com.kellen.security.oauth2.SecurityContextRpcService` / `SecurityContextResult`：按 `user_id` 加载业务上下文的 Dubbo 契约，由 user 服务提供。
+- `com.kellen.security.oauth2.SecurityUserCache`：业务上下文两级缓存（Caffeine → Redis 版本分键），user 服务改动用户后调用 `bumpVersion`。
+- `com.kellen.security.oauth2.FleetAuthenticationToken` / `MachineAuthenticationToken`：用户令牌与机器令牌的认证结果。
+- `com.kellen.security.oauth2.client.FleetOAuth2Clients`：出站令牌（客户端凭证、RFC 8693 令牌交换）的 `RestClient` 拦截器与 `WebClient` 过滤器。
 - `com.kellen.security.config.ActuatorSecurityConfig`：独立 Actuator 安全链，health 公开，其余端点使用外置 `security.actuator.token` 与 `actuatorReq` 校验，缺失时失败关闭。
-- `com.kellen.security.SecurityAuthenticationFilter`：认证过滤器。
 - `com.kellen.security.SecurityUser`：当前登录用户模型。
 - `com.kellen.security.UserContextHolder`：用户上下文（TransmittableThreadLocal）。
-- `com.kellen.utils.auth.JwtUtils`：JWT 生成与解析工具（jjwt 0.9.1，第5阶段由 Keycloak 取代）。
 
 使用原则：
 
 - 业务代码通过 `UserContextHolder.get()` 读取当前用户。
 - 请求结束必须清理用户上下文。
-- JWT 是身份承载方式之一，不再使用旧 Redis token 用户模式。
+- 身份只来自 Keycloak 访问令牌；自签 JWT（jjwt、`JwtUtils`）与旧 Redis token 用户模式已在第5阶段删除。
 - 密钥、token、签名串不得写入普通业务日志。
 
 ## 三、租户、数据源与 MyBatis-Plus

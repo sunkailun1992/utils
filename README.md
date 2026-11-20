@@ -63,9 +63,9 @@
 
 ## 管理端点与私有文件存储
 
-- `ActuatorSecurityConfig` 为已暴露的 Actuator 端点建立独立安全链，与 `security.auth.enabled` 无关。health 及探针保持公开；其它端点需要 `actuatorReq` 请求头匹配运行时 `security.actuator.token`，配置缺失时拒绝访问。令牌每次请求重新读取，轮换无需重启。旧 MVC `ActuatorInterceptor` 已停用，不能再注册为保护措施。
-- JWT 的 create/parse 静态 API 保留，由 `JwtKeyConfig` 从当前 Spring `Environment` 读取 `security.jwt.secret`；必须为 Base64 且解码后至少 32 字节，未初始化、缺值、格式错误或弱密钥均拒绝签发和解析，不使用历史固定口令。`security.jwt.issuer` 控制默认 issuer，显式传入的 OAuth issuer 保持原值。个人与其它环境使用独立随机密钥，切换密钥会使旧 token 失效。
-- MVC 租户上下文优先采用已认证 JWT/OAuth 的 `SecurityUser`，不能被 `tenantId`、`tenant-id` 或 `X-Tenant-Id` HTTP 头覆盖。已认证但无租户的请求返回 403；公开登录入口不从匿名头建立租户，由业务验证登录参数。`tenant.ignore-without-tenant=false` 防止 SQL 层缺上下文时跳过租户条件；Dubbo/MQ 的既有租户头契约保留。
+- `ActuatorSecurityConfig` 为已暴露的 Actuator 端点建立独立安全链，与是否接入资源服务器无关。health 及探针保持公开；其它端点需要 `actuatorReq` 请求头匹配运行时 `security.actuator.token`，配置缺失时拒绝访问。令牌每次请求重新读取，轮换无需重启。旧 MVC `ActuatorInterceptor` 已停用，不能再注册为保护措施。
+- 身份由 NAS 上的 Keycloak 签发：配了 `spring.security.oauth2.resourceserver.jwt.issuer-uri` 的服务自动成为 OAuth2 资源服务器（只收 RS256、校验签发方与受众，Keycloak 不可达时启动不受影响、受保护接口返回 401），业务上下文经 `SecurityContextRpcService` 按请求取自 user 服务并缓存；出站服务间调用用客户端凭证或 RFC 8693 令牌交换。自签 JWT（jjwt、`JwtUtils`）、网关透传身份头已删除。接入方式见 [认证规范](docs/ai-coding/AUTH_SPEC.md)。
+- MVC 租户上下文只取认证上下文：活动租户由 `X-Tenant-Id` 在用户所属租户里选择（user 服务校验归属），`tenantId`、`tenant-id` 等其它 HTTP 头不认；已认证但无租户的请求返回 403，匿名请求不带租户上下文。`tenant.ignore-without-tenant=false` 防止 SQL 层缺上下文时跳过租户条件；Dubbo/MQ 的既有租户头契约保留。
 - 文件存储统一入口是 `com.kellen.storage.PrivateObjectStorageService`，使用 X File Storage `2.3.0` 管理 OSS / MinIO / 腾讯 COS 平台与客户端。`1.6.3` 补充 COS 原生 POST 表单签名，固定官方 SDK `com.qcloud:cos_api:5.6.283`，保留原方法与构造器。MinIO SDK 固定 `8.6.0`，也用于兼容 S3 的平台。
 - 静态配置使用官方 `dromara.x-file-storage.default-platform`、`minio[]`、`aliyun-oss[]` 或 `tencent-cos[]`。MinIO/OSS 使用 `end-point`、`access-key/secret-key`，COS 使用 `region`、`secret-id/secret-key`；平台项有稳定 `platform` 和私有 `bucket-name`。Spring 配置另有 `enable-storage`，core Builder 不使用该字段；`base-path` 必须为空，由业务 `baseDir` 形成对象键。凭据仅在服务端注入，不进入源码、日志或管理元数据响应。AI 的 DB 加密配置、权限和动态句柄管理属于 AI 业务控制面，不放进公共包。
 - `createUploadPolicy(...)` 返回 `UploadPolicy`，保持 POST 表单上传；`formFields` 是完整表单字段，客户端原样提交。MinIO 使用 S3 V4 签名字段，COS 使用官方 `COSSigner.buildPostObjectSignature` 及其专用表单协议。三者均固定精确对象 key、MIME、大小范围和到期时间，不能用普通请求签名冒充 POST 签名。真实云端权限/CORS、私有访问和读写仍需单独验收。

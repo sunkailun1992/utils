@@ -13,10 +13,10 @@
 ## 命名规范
 
 - public 类型使用 PascalCase，文件名必须与 public 类型名完全一致。
-- 工具类使用 `XxxUtils`，例如 `JwtUtils`、`OkHttpUtils`。
+- 工具类使用 `XxxUtils`，例如 `OkHttpUtils`、`ExcelUtils`。
 - 配置类使用 `XxxConfig`，例如 `MyBatisPlusConfig`、`RedisCacheConfig`。
 - AOP 切面使用业务语义命名，例如 `IdempotentAspect`。
-- 缩写保持项目当前写法：`JwtUtils`、`OkHttpUtils`、`MyBatisPlusConfig`、`ApiResponse`。
+- 缩写保持项目当前写法：`OkHttpUtils`、`MyBatisPlusConfig`、`ApiResponse`。
 - 不新增含糊类名，例如 `TestUtil`、`CommonUtil`、`BaseUtil2`。
 
 ## 统一响应
@@ -37,10 +37,10 @@
 
 ## 认证与用户上下文
 
-- 当前认证来源是 JWT 或网关透传身份头，最终写入 `SecurityUser`。
+- 身份来自 Keycloak 签发、经资源服务器校验的访问令牌，业务上下文由 user 服务按请求提供，最终写入 `SecurityUser`（见 [认证规范](AUTH_SPEC.md)）。
 - 业务代码读取当前用户必须通过 `UserContextHolder.get()`。
 - 请求结束后必须清理 `UserContextHolder`，避免线程复用导致身份串号。
-- 退出登录、密码变更、用户禁用、刷新 token 失败等认证状态变化必须清理或失效 token、登录态缓存和线程上下文。
+- 用户停用、改权限、改部门或租户等变化后，user 服务必须调用 `SecurityUserCache.bumpVersion` 让业务上下文失效；退出登录由网关结束会话并通知 Keycloak。
 - 不得恢复旧 `token` 请求头认证。
 - 不得通过 Redis token 用户对象作为授权来源。
 

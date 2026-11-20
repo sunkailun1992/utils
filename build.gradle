@@ -72,6 +72,8 @@ ext {
     rocketmqSpringVersion = '2.3.6'
     // RocketMQ 客户端版本：与 NAS 上 5.5 服务端同一版本线；5.5.1 的 rocketmq-common 不再依赖 fastjson 1.x。
     rocketmqClientVersion = '5.5.1'
+    // Testcontainers Keycloak 版本（4.4.0 对应 Keycloak 26.8、Testcontainers 2.0）。
+    testcontainersKeycloakVersion = '4.4.0'
 }
 
 // 项目级仓库配置是依赖拉取的唯一入口，避免 settings.gradle 覆盖私库注入策略。
@@ -260,6 +262,10 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    // Testcontainers Keycloak：CI 里起真实 Keycloak 26.8 做资源服务器与令牌交换的端到端测试，本机没有 Docker 时跳过。
+    testImplementation "com.github.dasniko:testcontainers-keycloak:${testcontainersKeycloakVersion}"
+    // Testcontainers JUnit 5 扩展（@Testcontainers、@Container），版本由 Spring Boot BOM 管理。
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
     // MockWebServer：为 OkHttpUtils 起本地 HTTP/HTTPS 测试服务。
     testImplementation "com.squareup.okhttp3:mockwebserver3:${okhttpVersion}"
     // OkHttp TLS：在测试里签发自签名证书，验证默认证书校验会拒绝它。
