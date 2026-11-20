@@ -4,14 +4,12 @@ import dasniko.testcontainers.keycloak.KeycloakContainer;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-
-import java.time.Duration;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * 对容器里真实 Keycloak 26.8.2 的端到端测试（导入 src/test/resources/keycloak/github-dev-test-realm.json）。
+ * 对容器里真实 Keycloak 26.8.2 的端到端测试（导入 src/test/resources/keycloak/github-dev-realm.json；Keycloak 按目录导入时要求文件名为“域名-realm.json”）。
  *
  * <p>测试域与 utils/ops/github-dev/keycloak/terraform 一致；github-api 作用域的三个映射器（受众 github-api、github-ai 与 user_id）
  * 直接挂在网关客户端上：导入文件里写 clientScopes 会让 Keycloak 不再建内置作用域，签出的令牌声明与正式域相同。口令与密钥只用于容器。</p>
@@ -22,12 +20,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class KeycloakContainerIT extends KeycloakEndToEndTestSupport {
 
     /**
-     * 开发模式首次启动要做一次构建再导入测试域，CI 的两核机器上可能超过默认的 2 分钟，放宽到 5 分钟；容器输出接到测试日志，失败时随测试报告上传。
+     * 容器输出接到测试日志，CI 失败时随测试报告上传。
      */
     @Container
     static final KeycloakContainer KEYCLOAK = new KeycloakContainer("quay.io/keycloak/keycloak:26.8.2")
-            .withRealmImportFile("/keycloak/github-dev-test-realm.json")
-            .withStartupTimeout(Duration.ofMinutes(5))
+            .withRealmImportFile("/keycloak/github-dev-realm.json")
             .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("keycloak-container")));
 
     @DynamicPropertySource

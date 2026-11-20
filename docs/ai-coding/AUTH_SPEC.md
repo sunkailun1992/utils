@@ -99,7 +99,7 @@ fleet:
 ## 测试
 
 - 单元测试：`TestKeycloak`（本地随机端口提供发现文档与公钥集、签发 RS256 令牌）配 `MockMvc`，走 Spring Boot 真实的 issuer 发现；业务上下文用 `StubSecurityContextRpcService`。
-- CI 集成测试：`KeycloakContainerIT` 用 Testcontainers 起 Keycloak 26.8.2，导入 `src/test/resources/keycloak/github-dev-test-realm.json`，验证真实登录、受众拒绝与令牌交换；本机没有 Docker 时跳过。
+- CI 集成测试：`KeycloakContainerIT` 用 Testcontainers 起 Keycloak 26.8.2，导入 `src/test/resources/keycloak/github-dev-realm.json`，验证真实登录、受众拒绝与令牌交换；本机没有 Docker 时跳过。
 - 真库测试：`KeycloakLiveTest` 对 NAS 的 `github-dev` 域跑同样三条，只在设置了 `FLEET_KC_TEST_ISSUER` 时运行。测试用户与私有 env 由本机工具 `~/.config/kellen-github/tools/kc_test_user.py ensure` 建立；运行方法：
 
 ```bash
