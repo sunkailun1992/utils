@@ -18,5 +18,9 @@ custom:
   infra-seata-host: ${GITHUB_SEATA_HOST}
   # Seata 客户端协议端口，默认 7091；NAS 上的 2.7.0 在 7091 同时提供健康检查与客户端协议，8091 不可连。
   infra-seata-port: ${GITHUB_SEATA_PORT:7091}
+  # 开发 RocketMQ NameServer 主机，与其它共享中间件同在 NAS；发送、消费服务在各自 -spring.yaml 里拼 rocketmq.name-server。
+  infra-rocketmq-host: ${GITHUB_ROCKETMQ_HOST}
+  # RocketMQ NameServer 端口，默认 9876。
+  infra-rocketmq-port: ${GITHUB_ROCKETMQ_PORT:9876}
   # 个人 RPC 分组，所有 provider/consumer 必须使用同一值。
   dubbo-group: GITHUB_DEV_DUBBO

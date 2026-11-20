@@ -39,3 +39,25 @@ oauth:
   authorization-server:
     # OAuth 对外公开入口，用于授权服务器元数据；通过网关访问时保持一致。
     external-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
+
+# RocketMQ 发送配置，由 utils 1.7.2 起的消息模块与 rocketmq-spring 读取；配了 name-server 与 producer.group 才建生产者。
+rocketmq:
+  # NameServer 地址，引用 reuse-configuration.yaml 的 RocketMQ 共享键。
+  name-server: ${custom.infra-rocketmq-host}:${custom.infra-rocketmq-port}
+  # 生产者配置。
+  producer:
+    # 生产者组，命名 github-dev-<服务>-producer。
+    group: github-dev-user-producer
+    # user 的 RocketMQ 账号（ACL 2.0），只授权发送账号已创建事件。
+    access-key: ${GITHUB_ROCKETMQ_USER_ACCESS_KEY}
+    # user 的 RocketMQ 口令；真实值仅在私有配置中。
+    secret-key: ${GITHUB_ROCKETMQ_USER_SECRET_KEY}
+
+# 消息主题名，代码用 ${fleet.mq.topic.*} 引用，不在代码里写死。
+fleet:
+  # 消息队列相关名称。
+  mq:
+    # 本服务发送的主题。
+    topic:
+      # 账号已创建事件的主题，message 订阅。
+      user-account-created: github-dev-user-account-created
