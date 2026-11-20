@@ -55,6 +55,11 @@ public class FleetOAuth2Properties {
     private Map<String, TokenExchange> tokenExchange = new LinkedHashMap<>();
 
     /**
+     * 出站取令牌（客户端凭证、令牌交换）访问 Keycloak 令牌端点的超时。
+     */
+    private TokenEndpoint tokenEndpoint = new TokenEndpoint();
+
+    /**
      * 创建带缺省值的配置，由 Spring Boot 按前缀绑定。
      */
     public FleetOAuth2Properties() {
@@ -76,6 +81,31 @@ public class FleetOAuth2Properties {
          * 创建空的令牌交换设置，由 Spring Boot 按前缀绑定。
          */
         public TokenExchange() {
+        }
+    }
+
+    /**
+     * 令牌端点的 HTTP 超时。HTTP 客户端库缺省不限读取时间，Keycloak 卡住时取令牌的请求与线程会一直挂着，
+     * 所以给出有限的缺省值；令牌端点通常在百毫秒内响应。
+     */
+    @Getter
+    @Setter
+    public static class TokenEndpoint {
+
+        /**
+         * 建立连接的超时，缺省 5 秒。
+         */
+        private Duration connectTimeout = Duration.ofSeconds(5);
+
+        /**
+         * 等待响应数据的超时，缺省 10 秒。
+         */
+        private Duration readTimeout = Duration.ofSeconds(10);
+
+        /**
+         * 创建带缺省值的超时设置，由 Spring Boot 按前缀绑定。
+         */
+        public TokenEndpoint() {
         }
     }
 }

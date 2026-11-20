@@ -30,6 +30,7 @@ import org.springframework.boot.webmvc.autoconfigure.DispatcherServletAutoConfig
 import org.springframework.boot.webmvc.autoconfigure.WebMvcAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.ClientAuthorizationException;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
@@ -41,12 +42,14 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.net.InetAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,7 +72,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
                 "spring.security.oauth2.client.registration.github-ai-agent.client-id=github-ai",
                 "spring.security.oauth2.client.registration.github-ai-agent.client-secret=ai-test-secret",
                 "spring.security.oauth2.client.registration.github-ai-agent.authorization-grant-type=urn:ietf:params:oauth:grant-type:token-exchange",
-                "fleet.security.oauth2.token-exchange.github-ai-agent.audience=github-ai-agent"
+                "fleet.security.oauth2.token-exchange.github-ai-agent.audience=github-ai-agent",
+                "fleet.security.oauth2.token-endpoint.read-timeout=500ms"
         }
 )
 class FleetOAuth2ClientTest {
@@ -86,6 +90,8 @@ class FleetOAuth2ClientTest {
 
     static volatile boolean rejectTokenRequests;
 
+    static volatile long tokenResponseDelayMillis;
+
     static {
         SERVER.setDispatcher(new Dispatcher() {
             @Override
@@ -101,6 +107,7 @@ class FleetOAuth2ClientTest {
                     }
                     String prefix = form.get("grant_type").endsWith("token-exchange") ? "exchanged-" : "cc-";
                     return new MockResponse.Builder().code(200).addHeader("Content-Type", "application/json")
+                            .headersDelay(tokenResponseDelayMillis, TimeUnit.MILLISECONDS)
                             .body("{\"access_token\":\"" + prefix + ISSUED.incrementAndGet() + "\",\"token_type\":\"Bearer\",\"expires_in\":"
                                     + expiresIn + "}").build();
                 }
@@ -149,6 +156,7 @@ class FleetOAuth2ClientTest {
         DOWNSTREAM_AUTHORIZATION.clear();
         expiresIn = 300;
         rejectTokenRequests = false;
+        tokenResponseDelayMillis = 0;
     }
 
     @AfterEach
@@ -209,6 +217,30 @@ class FleetOAuth2ClientTest {
         RestClient client = RestClient.builder().requestInterceptor(clients.interceptor("github-ai-agent")).build();
         assertThatThrownBy(() -> client.get().uri(DOWNSTREAM).retrieve().body(String.class)).isInstanceOf(RuntimeException.class);
         assertThat(TOKEN_REQUESTS).hasSize(1);
+        assertThat(DOWNSTREAM_AUTHORIZATION).isEmpty();
+    }
+
+    @Test
+    void hangingTokenEndpointFailsWithinTheReadTimeoutAndNeverCallsDownstream() {
+        tokenResponseDelayMillis = 3000;
+        signIn("u-hanging", "subject-hanging");
+        RestClient client = RestClient.builder().requestInterceptor(clients.interceptor("github-ai-agent")).build();
+        long started = System.nanoTime();
+        assertThatThrownBy(() -> client.get().uri(DOWNSTREAM).retrieve().body(String.class))
+                .isInstanceOf(ClientAuthorizationException.class);
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofMillis(2500));
+        assertThat(TOKEN_REQUESTS).hasSize(1);
+        assertThat(DOWNSTREAM_AUTHORIZATION).isEmpty();
+    }
+
+    @Test
+    void hangingTokenEndpointAlsoBoundsClientCredentials() {
+        tokenResponseDelayMillis = 3000;
+        RestClient client = RestClient.builder().requestInterceptor(clients.interceptor("github-rag-engine")).build();
+        long started = System.nanoTime();
+        assertThatThrownBy(() -> client.get().uri(DOWNSTREAM).retrieve().body(String.class))
+                .isInstanceOf(ClientAuthorizationException.class);
+        assertThat(Duration.ofNanos(System.nanoTime() - started)).isLessThan(Duration.ofMillis(2500));
         assertThat(DOWNSTREAM_AUTHORIZATION).isEmpty();
     }
 
