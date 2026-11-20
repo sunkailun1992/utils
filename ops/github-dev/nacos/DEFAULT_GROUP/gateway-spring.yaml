@@ -1,6 +1,6 @@
 # 配置分类：服务配置
 # dataId：gateway-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：网关路由、Redis 限流和浏览器 CORS 白名单。
+# 用途：网关路由、Redis 限流、浏览器 CORS 白名单与 BFF 登录（Keycloak 登录注册、Bearer 校验、令牌转发、会话）。
 # 导入服务：gateway。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
@@ -28,6 +28,10 @@ spring:
                 redis-rate-limiter.requestedTokens: 1
                 # 使用网关已有的 IP key resolver；不直接信任任意代理头。
                 key-resolver: '#{@ipKeyResolver}'
+            # 会话请求：把会话里的 Keycloak 访问令牌换成 Bearer 头转发（到期用刷新令牌续期）；带 Bearer 的请求原样转发。
+            - TokenRelay
+            # 网关会话 Cookie（__Host-SESSION、XSRF-TOKEN）不进下游；下游只认 Bearer 访问令牌。
+            - RemoveRequestHeader=Cookie
           # 按 order 升序匹配，数值相同时保留列表顺序；专属路径在 /api/** 兜底前。
           routes:
             # 路由唯一标识，便于诊断匹配结果。
@@ -38,8 +42,8 @@ spring:
               order: 0
               # 本路由断言列表；Path 中逗号分隔的模式为可选匹配，多个断言同时满足才转发。
               predicates:
-                # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
-                - Path=/auth/**,/oauth2/**,/.well-known/oauth-authorization-server,/.well-known/openid-configuration
+                # 客户端请求路径匹配规则；/oauth2/**、/login/**、/logout 是网关自己的登录入口、Keycloak 回调与注销，不能配成转发。
+                - Path=/auth/**
             # 路由唯一标识，便于诊断匹配结果。
             - id: github-user-prefixed
               # 按 Nacos 服务名负载均衡转发；目标服务必须在同一隔离空间注册。
@@ -132,6 +136,54 @@ spring:
               predicates:
                 # 客户端请求路径匹配规则；按 Controller 原生前缀配置，不能额外添加 /rag 等前缀。
                 - Path=/api/**
+  # Spring Security（网关 BFF）。
+  security:
+    # OAuth2 客户端与资源服务器。
+    oauth2:
+      # 浏览器登录用的 OAuth2 客户端（授权码加 PKCE，PKCE 在网关代码里打开）。
+      client:
+        # 客户端注册；键名 keycloak 即登录入口 /oauth2/authorization/keycloak 与回调 /login/oauth2/code/keycloak 里的注册名。
+        registration:
+          # Keycloak github-dev 域的网关客户端。
+          keycloak:
+            # 对应下面的 provider.keycloak。
+            provider: keycloak
+            # Keycloak 里的机密客户端；回调与注销后回跳地址已由 Terraform 登记（7100 与 8000）。
+            client-id: github-gateway
+            # 客户端密钥：只由网关进程的私有环境变量在运行时给出，Nacos 里只放占位符。
+            client-secret: ${GITHUB_KEYCLOAK_GATEWAY_CLIENT_SECRET}
+            # 授权码模式。
+            authorization-grant-type: authorization_code
+            # OIDC 登录；受众与 user_id 声明由 Keycloak 按客户端缺省作用域加上。
+            scope: openid
+        # 身份提供方。
+        provider:
+          # Keycloak github-dev 域。
+          keycloak:
+            # 签发方地址；网关启动时读发现文档（授权、令牌、JWKS、注销端点），Keycloak 不可达时网关起不来。
+            issuer-uri: ${custom.keycloak-issuer-uri}
+      # 脚本与工具直接带 Bearer 访问令牌时的校验。
+      resourceserver:
+        # JWT 访问令牌。
+        jwt:
+          # 签发方，必须是 Keycloak github-dev 域。
+          issuer-uri: ${custom.keycloak-issuer-uri}
+          # 只收 RS256 签名（网关代码让它在 issuer-uri 方式下也生效）。
+          jws-algorithms: RS256
+          # 受众：令牌 aud 含其中之一才放行，覆盖网关转发的 API。
+          audiences:
+            # 业务 API 受众（多数服务）。
+            - github-api
+            # MCP 资源受众。
+            - github-mcp
+  # Spring Session：网关会话。
+  session:
+    # 会话存储。
+    data:
+      # Redis 会话（连接沿用 redis.yaml）。
+      redis:
+        # 会话键前缀，与其他 Redis 键分开。
+        namespace: fleet:gateway:session
 # 网关服务自定义参数，由 gateway 的 CORS 配置读取。
 gateway:
   # 浏览器跨域访问控制。
@@ -142,3 +194,11 @@ gateway:
       - http://localhost:8000
       # 允许携带凭据的浏览器 Origin，必须精确匹配协议、主机、端口，不使用 *。
       - http://127.0.0.1:8000
+# Springdoc（网关自身的 Swagger UI）。
+springdoc:
+  # Swagger UI。
+  swagger-ui:
+    # 会话登录后的调试请求要带 CSRF 头。
+    csrf:
+      # Swagger UI 从 XSRF-TOKEN Cookie 读值、写请求带 X-XSRF-TOKEN；文档开关仍由 swagger.yaml 控制。
+      enabled: true

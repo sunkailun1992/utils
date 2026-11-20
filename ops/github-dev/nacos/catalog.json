@@ -59,7 +59,7 @@
     },
     {
       "dataId": "gateway-spring.yaml",
-      "description": "网关路由、Redis 限流和浏览器 CORS 白名单；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "网关路由、Redis 限流、浏览器 CORS 白名单与 BFF 登录（Keycloak 登录注册、Bearer 校验、令牌转发、会话）；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "gateway"
@@ -193,12 +193,10 @@
         "ai",
         "ai-agent",
         "ai-memory",
-        "gateway",
         "mcp",
         "message",
         "rag",
-        "report",
-        "user"
+        "report"
       ]
     },
     {

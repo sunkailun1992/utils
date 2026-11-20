@@ -1,7 +1,7 @@
 # 配置分类：安全与可观测性
 # dataId：security-jwt.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：人员访问 JWT 的签名密钥与签发方。
-# 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
+# 导入服务：ai、ai-agent、ai-memory、mcp、message、rag、report。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
 # utils 安全组件参数。

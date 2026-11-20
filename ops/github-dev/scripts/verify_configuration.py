@@ -19,8 +19,8 @@ LOCAL_CANARY_RPC_SOURCES = {
     "rag": {"[com.kellen.rpc.rag.RagRetrievalRpcService]": ["ai"]},
     "user": {
         "[com.kellen.rpc.user.UserRpcService]": ["message"],
-        "[com.kellen.rpc.auth.AuthOpenApiRpcService]": ["ai-agent"],
-        "[com.kellen.rpc.auth.AuthSessionRpcService]": ["ai", "ai-agent"],
+        # 各服务的资源服务器向 user 取业务上下文（第5阶段起替代旧的令牌校验 RPC）。
+        "[com.kellen.security.oauth2.SecurityContextRpcService]": ["ai", "ai-agent", "ai-memory", "mcp", "message", "rag", "report"],
     },
 }
 
