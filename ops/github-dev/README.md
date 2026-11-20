@@ -45,7 +45,8 @@ user 的 `V1__baseline.sql` 种子段只建立通用租户、管理员角色及�
 - broker 开 ACL 2.0 认证与授权、关自动建主题、开属性过滤（SQL92 订阅要用）。新主题与账号写进初始化任务后重跑它，不在 dashboard 上手工建。
 - 账号：`github-dev-user`（发送）、`github-dev-message`（消费）、`github-dev-utils-test`（utils 真库测试），另有只给 dashboard 与初始化任务用的管理账号。授权规则见消息队列规范的「命名与账号」。
 - 私有变量：dev.env 里的 `GITHUB_ROCKETMQ_HOST`、`GITHUB_ROCKETMQ_PORT`、`GITHUB_ROCKETMQ_USER_ACCESS_KEY`、`GITHUB_ROCKETMQ_USER_SECRET_KEY`、`GITHUB_ROCKETMQ_MESSAGE_ACCESS_KEY`、`GITHUB_ROCKETMQ_MESSAGE_SECRET_KEY`；utils 真库测试的 `FLEET_MQ_TEST_NAMESRV`、`FLEET_MQ_TEST_ACCESS_KEY`、`FLEET_MQ_TEST_SECRET_KEY` 放 `~/.config/kellen-github/phase4/fleet-mq-test.env`。管理账号与 dashboard 口令只在 NAS 编排与本机私有文件里，不进 Git 与 Wiki。
-- 只读查询（集群、主题、消费进度与堆积、在线消费者、账号授权）用本机私有工具目录里的 `nas_mq.py`：在 compose 网络上起临时容器执行 `mqadmin`，不在 broker 容器里执行（`mqadmin` 的堆固定 1GB）。
+- 内存：2026-11-20 上线后 NAS 可用内存约 5.1GB、交换区已用约 4.0GB（新基线；涨的是闲置服务被挤出的冷页，RocketMQ 自身几乎不用交换）。以后按“可用内存不低于 3.5GB、`vmstat` 持续采样没有换出（so 为 0）”判断，不以交换区已用量本身为准。
+- 只读查询（集群、主题、消费进度与堆积、在线消费者、账号授权、按 key 查消息）与定向重投（`resend`，与 dashboard 的“重新投递”同一接口，消费方按事件 ID 去重）用本机私有工具目录里的 `nas_mq.py`：在 compose 网络上起临时容器执行 `mqadmin`，不在 broker 容器里执行（`mqadmin` 的堆固定 1GB）。
 
 ## 统一存储
 
