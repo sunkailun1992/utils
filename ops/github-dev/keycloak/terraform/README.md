@@ -28,3 +28,5 @@ TF_DATA_DIR=~/.config/kellen-github/phase5/terraform/.terraform terraform init -
 - `github-api` 作用域的受众带 `github-ai`：Keycloak 标准令牌交换要求被交换的用户令牌受众包含发起交换的客户端。
 - 账号（`github-dev` 域的用户）由 user 服务经 Admin API 管理，不进 Terraform；新账号要带邮箱与姓名（档案对普通用户必填，缺了首次登录会要求补填），`user_id` 由管理接口写入。
 - 首次部署用 Keycloak 的临时引导管理客户端 apply，之后改用 `terraform-admin`，临时客户端与编排里的引导环境变量已删除。
+- `terraform-admin` 丢失或密钥泄露时，按 Keycloak 官方的管理员恢复做法（`kc.sh bootstrap-admin service`，连同一个库）建一个临时管理客户端，把它的 ID 与密钥写进 `keycloak.env` 的 `KC_BOOTSTRAP_ADMIN_CLIENT_ID`、`KC_BOOTSTRAP_ADMIN_CLIENT_SECRET`，以 `KC_TF_USE_BOOTSTRAP=1` 运行 `kc_terraform.py apply` 轮换 `terraform-admin` 的密钥，再 `export-secrets`；完成后删除临时客户端与这两个键。
+- 真库测试用户 `fleet-live-test`（`user_id` 为 `live-test-0001`，邮箱用保留域 `example.invalid`）由 `~/.config/kellen-github/tools/kc_test_user.py` 维护，不进 Terraform；它生成 `fleet-kc-test.env` 供 utils 的 `KeycloakLiveTest` 使用。

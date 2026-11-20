@@ -49,6 +49,20 @@ resource "keycloak_openid_audience_protocol_mapper" "ai_agent_audience" {
   add_to_id_token          = false
 }
 
+# 交换出的 ai-agent 令牌按 github-ai 自己的映射器生成：github-ai 不分配 github-api 作用域（否则受众会扩大到所有后端），
+# 只在客户端上挂 user_id 映射器，让 ai-agent 认得出是哪个用户。只写访问令牌。
+resource "keycloak_openid_user_attribute_protocol_mapper" "ai_user_id" {
+  realm_id            = keycloak_realm.github_dev.id
+  client_id           = keycloak_openid_client.ai.id
+  name                = "user_id"
+  user_attribute      = "user_id"
+  claim_name          = "user_id"
+  claim_value_type    = "String"
+  add_to_access_token = true
+  add_to_id_token     = false
+  add_to_userinfo     = false
+}
+
 # rag：调 RAG 引擎的纯机器调用，只开客户端凭证。
 resource "keycloak_openid_client" "rag" {
   realm_id                     = keycloak_realm.github_dev.id

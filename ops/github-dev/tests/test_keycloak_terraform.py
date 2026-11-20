@@ -142,6 +142,19 @@ class KeycloakTerraformTests(unittest.TestCase):
             self.assertEqual(required[name], '["user"]', name)
         self.assertEqual(required['user_id'], '')
 
+    def test_ai_tokens_carry_user_id_for_token_exchange(self):
+        # 交换出的令牌按 github-ai 自己的映射器生成；它不带 github-api 作用域（避免受众扩大），所以 user_id 映射器挂在客户端上。
+        mappers = [b for b in blocks('keycloak_openid_user_attribute_protocol_mapper').values()
+                   if 'keycloak_openid_client.ai.id' in b]
+        self.assertEqual(len(mappers), 1)
+        mapper = mappers[0]
+        self.assertEqual(attr(mapper, 'user_attribute'), '"user_id"')
+        self.assertEqual(attr(mapper, 'claim_name'), '"user_id"')
+        self.assertEqual(attr(mapper, 'add_to_access_token'), 'true')
+        self.assertEqual(attr(mapper, 'add_to_id_token'), 'false')
+        assignments = blocks('keycloak_client_scope_assignments')
+        self.assertFalse(any('keycloak_openid_client.ai.id' in b and 'github_api' in b for b in assignments.values()))
+
     def test_no_plaintext_secrets_or_hosts(self):
         text = source()
         self.assertNotRegex(text, r'(client_secret|password|secret)\s*=\s*"[^"$]')
