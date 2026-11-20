@@ -70,6 +70,10 @@ ext {
     seataVersion = '2.6.0'
     // TTL 版本，用于线程池场景下的 ThreadLocal 上下文传递。
     ttlVersion = '2.14.5'
+    // rocketmq-spring 版本：主流项目多数采用的 RocketMQ Spring 集成（RocketMQTemplate、@RocketMQMessageListener）。
+    rocketmqSpringVersion = '2.3.6'
+    // RocketMQ 客户端版本：与 NAS 上 5.5 服务端同一版本线；5.5.1 的 rocketmq-common 不再依赖 fastjson 1.x。
+    rocketmqClientVersion = '5.5.1'
 }
 
 // 项目级仓库配置是依赖拉取的唯一入口，避免 settings.gradle 覆盖私库注入策略。
@@ -160,6 +164,12 @@ configurations.configureEach {
             details.useVersion seataVersion
             details.because 'Seata client modules must stay on the latest published Apache Seata 2.x client line.'
         }
+        // rocketmq-spring 2.3.6 自带 5.3.2、SCA BOM 管理为 5.3.1；客户端三个模块统一锁到服务端同一版本线。
+        if (details.requested.group == 'org.apache.rocketmq'
+                && details.requested.name in ['rocketmq-client', 'rocketmq-remoting', 'rocketmq-common']) {
+            details.useVersion rocketmqClientVersion
+            details.because 'RocketMQ client modules follow the 5.5 server line deployed on the NAS.'
+        }
     }
 }
 
@@ -231,6 +241,11 @@ dependencies {
     api "com.alibaba:transmittable-thread-local:${ttlVersion}"
     // Nacos Discovery：提供服务注册发现和优雅停机端点依赖的 Nacos 注册对象。
     api 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery'
+    // rocketmq-spring：RocketMQTemplate 与 @RocketMQMessageListener；没配 rocketmq.name-server 的服务不创建生产者与监听容器。
+    api("org.apache.rocketmq:rocketmq-spring-boot-starter:${rocketmqSpringVersion}") {
+        // rocketmq-client 5.3.3 起自带 ACL 签名类（org.apache.rocketmq.acl.common），rocketmq-acl 只发到 5.3.2，排除以免同名类冲突。
+        exclude group: 'org.apache.rocketmq', module: 'rocketmq-acl'
+    }
     // Lombok 编译期注解：源码中使用 @Getter、@Data、@Slf4j 等注解。
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     // Lombok 注解处理器：编译时生成 Lombok 代码。
