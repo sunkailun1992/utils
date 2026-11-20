@@ -12,7 +12,7 @@
 
 `ReqInterceptor` 的既有响应 `traceId` 头仅在当前有效OTel span存在时设置，不能采用旧业务MDC值冒充链路身份。
 
-HTTP和AI内容投影坚持字段/类型白名单；AI自由正文始终不从普通HTTP日志导出。可选AI诊断API当前只接受受控元数据，不声称具备任意患者自由文脱敏能力。运行时默认不输出任意message、异常或MDC，扩展后的ECS/Collector/ES字段须单独按实际采集链验收。
+HTTP和AI内容投影坚持字段/类型白名单；AI自由正文始终不从普通HTTP日志导出。可选AI诊断API当前只接受受控元数据，不声称具备任意患者自由文脱敏能力。落盘并经Collector进ES的ECS日志默认不输出任意message、异常或MDC，扩展后的ECS/Collector/ES字段须单独按实际采集链验收；本机控制台按Spring Boot默认文本格式输出正文与异常堆栈，只在本机查看、不被采集。
 
 ## 验收与开发手册
 

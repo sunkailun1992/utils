@@ -79,7 +79,7 @@ docker compose run --rm --no-deps jaeger validate --config=/etc/jaeger/config.ya
 
 ## 日志到ES
 
-运行日志与旧请求审计索引分离。Java用共享`logging.yml`的真实ECS字段白名单（没有message/原始异常/任意MDC）；Python使用metadata-only单行JSON，带UTC`@timestamp`。本机文件收集器只读指定日志目录，发出前清空body、白名单属性；中心再次清理。
+运行日志与旧请求审计索引分离。Java用共享`logging.yml`的真实ECS字段白名单（没有message/原始异常/任意MDC），它约束落盘ECS；控制台为文本格式、不被采集；Python使用metadata-only单行JSON，带UTC`@timestamp`。本机文件收集器只读指定日志目录，发出前清空body、白名单属性；中心再次清理。
 
 Java文件输出需在运行环境显式设置`LOGGING_FILE_NAME`到本机安全日志目录，并设置`LOGGING_STRUCTURED_FORMAT_FILE=ecs`，文件轮转有界。不要同步写NAS远程文件造成业务请求阻塞；应用主机的Collector再异步发送。Python stderr采集/轮转按engine说明，不更改业务容器资源。
 

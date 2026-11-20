@@ -58,7 +58,7 @@ class StructuredLoggingBaselineTests(unittest.TestCase):
                 path, value = mutation
                 parent = effective['logging']['structured']
                 for key in path[:-1]:
-                    parent = parent[key]
+                    parent = parent.setdefault(key, {})
                 parent[path[-1]] = value
             return effective
 
@@ -78,6 +78,7 @@ class StructuredLoggingBaselineTests(unittest.TestCase):
             (('format', 'file'), 'logstash'),
             (('json', 'add'), {'sensitive': 'unapproved'}),
             (('format', 'console'), ['ecs']),
+            (('format', 'console'), 'ecs'),
             (('json', 'include'), ['@timestamp']),
             (('json', 'include'), verifier.APPROVED_STRUCTURED_INCLUDE + ',message'),
             (('json', 'include'), verifier.APPROVED_STRUCTURED_INCLUDE + ',ai_input'),

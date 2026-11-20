@@ -16,7 +16,8 @@ logging:
     org.springframework.ai.chat.model.MessageAggregator: "OFF"
     # 禁止观察处理器重复输出模型正文/原始异常，失败由安全结果指标表达。
     org.springframework.ai.model.observation.ErrorLoggingObservationHandler: "OFF"
-  # Boot 4 结构化日志：控制台输出 ECS JSON，供本机 Collector 采集。
+  # Boot 4 结构化日志：落盘文件由运行环境的 LOGGING_FILE_NAME 与 LOGGING_STRUCTURED_FORMAT_FILE=ecs 开启 ECS JSON，供本机 Collector 采集；
+  # 控制台不设结构化格式，按 Spring Boot 默认文本输出（含异常堆栈），只在本机查看、不被采集。
   structured:
     # ECS 格式的服务身份字段。
     ecs:
@@ -28,10 +29,6 @@ logging:
         version: ${spring.application.version:unknown}
         # 本共享模板只属于 github-dev；环境不能由活动 trace 或业务 MDC 推定。
         environment: github-dev
-    # 各输出目标使用的结构化格式。
-    format:
-      # Boot 4 ECS；OTel agent 的 trace_id/span_id 作为 MDC 元数据关联。
-      console: ecs
     # JSON 字段筛选；只输出白名单里的字段。
     json:
       # Boot 自带的 MDC/KVP 上下文合流设置。

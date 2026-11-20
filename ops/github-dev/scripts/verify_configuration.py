@@ -256,7 +256,6 @@ def check_consolidation_baseline(baseline_file):
             "ecs": {"service": {"name": "${spring.application.name:unknown}",
                                   "version": "${spring.application.version:unknown}",
                                   "environment": "github-dev"}},
-            "format": {"console": "ecs"},
             "json": {"include": APPROVED_STRUCTURED_INCLUDE,
                      "context": {"include": False}},
         }

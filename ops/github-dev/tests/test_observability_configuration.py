@@ -29,7 +29,9 @@ class ObservabilityConfigurationTests(unittest.TestCase):
                        'org.springframework.ai.model.observation.ErrorLoggingObservationHandler'):
             self.assertEqual(complete_logging['level'][logger], 'OFF')
         logging = complete_logging['structured']
-        self.assertEqual(logging['format']['console'], 'ecs')
+        # 控制台不设结构化格式，按 Spring Boot 默认文本输出（含异常堆栈），只在本机查看、不被采集；
+        # 落盘 ECS 由运行环境的 LOGGING_FILE_NAME 与 LOGGING_STRUCTURED_FORMAT_FILE=ecs 开启，受下面白名单约束。
+        self.assertNotIn('format', logging)
         fields = logging['json']['include'].split(',')
         self.assertNotIn('message', fields)
         self.assertNotIn('log.stack_trace', fields)
