@@ -9,6 +9,12 @@
 - 模块提供三样东西：发送工具 `MqTemplate`；收发钩子（租户、操作人、数据源标记随消息传递）；按实例泳道隔离消费组与订阅。消费直接用 rocketmq-spring 的 `@RocketMQMessageListener`。
 - 只在服务配置了 `rocketmq.name-server` 时生效。没配的服务不建任何 RocketMQ Bean，也不连 RocketMQ。
 
+## 服务接入
+
+- 收发消息的服务在自己的 `build.gradle` 里照 Nacos、Seata 的写法，用 `resolutionStrategy.eachDependency` 把 `rocketmq-client`、`rocketmq-remoting`、`rocketmq-common` 锁到 `5.5.1`（与 NAS 上的服务端同一版本线），并加一条测试锁住（参照 user、message 的 `RocketMqClientCompatibilityTest`）。
+- 原因：Spring Cloud Alibaba 的 BOM 会把客户端管成 5.3.1；utils 排除了只发到 5.3.2 的 `rocketmq-acl`，5.3.1 里没有 ACL 签名类 `AclClientRPCHook`，配了账号的生产者或监听容器一创建就 `NoClassDefFoundError`，服务启动失败。utils 自己的版本锁定不会写进发布的 POM，消费方必须自己锁。
+- 只依赖 utils、不配 `rocketmq.*` 的服务不受影响，不用锁。
+
 ## Nacos 配置
 
 地址是共享键，放 `reuse-configuration.yaml`：`custom.infra-rocketmq-host`、`custom.infra-rocketmq-port`。账号与口令只来自私有 dev.env 渲染（`GITHUB_ROCKETMQ_*`），不写进 Git。不建共享的 `rocketmq.yaml`：每个服务的账号不同，放各自的 `<服务>-spring.yaml`。

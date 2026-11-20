@@ -77,6 +77,7 @@
 - 基于 rocketmq-spring 2.3.6（`api` 依赖 `rocketmq-spring-boot-starter`），RocketMQ 客户端锁 5.5.1，与 NAS 上的 5.5 服务端同一版本线；只在服务配了 `rocketmq.name-server` 时装配，没配的服务不连 RocketMQ。
 - 发送用 `MqTemplate`（同步发送；`sendAfterCommit` 事务提交后才发），选项有 tag、key、延时与顺序键。消费用 rocketmq-spring 的 `@RocketMQMessageListener` 加 `RocketMQListener<T>`，只支持单条，必须幂等。
 - 收发钩子让租户、操作人与数据源标记随消息传递；消费组与订阅按本实例的泳道（Nacos 注册元数据 `traffic.lane`、`canary.tag`）自动隔离。
+- 收发消息的服务要在自己的 `build.gradle` 把 RocketMQ 客户端锁到 5.5.1（Spring Cloud Alibaba 的 BOM 会压回 5.3.1，缺 ACL 签名类、启动失败），见规范的「服务接入」。
 - 配置模板、命名、账号授权与禁止事项见 [消息队列规范](docs/ai-coding/MQ_SPEC.md)。
 
 ## 远程发布
