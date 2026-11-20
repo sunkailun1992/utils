@@ -9,19 +9,32 @@ import org.apache.commons.lang3.StringUtils;
  * <p>租户上下文主要供 MyBatis-Plus 租户插件、Dubbo 透传和业务代码读取。
  * 请求结束或跨租户逻辑结束后必须调用 {@link #clear()} 或 {@link #clearIgnore()}。</p>
  *
+ * <p>两个上下文都不向新建线程继承（免得线程池懒建的工作线程一直沿用建它那次请求的租户或忽略标记），
+ * 线程池异步执行时由 TtlRunnable、TtlExecutors（或 utils 的 {@code TraceContextTaskDecorator}）传递。</p>
+ *
  * @author 孙凯伦
  */
 public class TenantContextHolder {
 
     /**
-     * 当前租户ID上下文。
+     * 当前租户ID上下文；新建线程不继承。
      */
-    private static final TransmittableThreadLocal<String> TENANT_CONTEXT = new TransmittableThreadLocal<>();
+    private static final TransmittableThreadLocal<String> TENANT_CONTEXT = new TransmittableThreadLocal<>() {
+        @Override
+        protected String childValue(String parentValue) {
+            return null;
+        }
+    };
 
     /**
-     * 是否忽略租户条件上下文。
+     * 是否忽略租户条件上下文；新建线程不继承。
      */
-    private static final TransmittableThreadLocal<Boolean> IGNORE_CONTEXT = new TransmittableThreadLocal<>();
+    private static final TransmittableThreadLocal<Boolean> IGNORE_CONTEXT = new TransmittableThreadLocal<>() {
+        @Override
+        protected Boolean childValue(Boolean parentValue) {
+            return null;
+        }
+    };
 
     /**
      * 工具类不允许实例化。

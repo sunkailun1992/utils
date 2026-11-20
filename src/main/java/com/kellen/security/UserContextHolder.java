@@ -5,17 +5,23 @@ import com.alibaba.ttl.TransmittableThreadLocal;
 /**
  * 当前线程用户上下文持有器。
  *
- * <p>使用 TransmittableThreadLocal 是为了兼容线程池异步执行时的上下文传递，
- * 请求结束必须调用 {@link #clear()} 清理上下文。</p>
+ * <p>使用 TransmittableThreadLocal，线程池异步执行时由 TtlRunnable、TtlExecutors（或 utils 的
+ * {@code TraceContextTaskDecorator}）在提交时捕获、执行时回放；新建线程不继承，免得线程池懒建的工作线程
+ * 一直沿用建它那次请求的用户。请求结束必须调用 {@link #clear()} 清理上下文。</p>
  *
  * @author 孙凯伦
  */
 public class UserContextHolder {
 
     /**
-     * 当前用户上下文。
+     * 当前用户上下文；新建线程不继承（childValue 返回 null），经 TTL 包装的任务照常传递。
      */
-    private static final TransmittableThreadLocal<SecurityUser> USER_CONTEXT = new TransmittableThreadLocal<>();
+    private static final TransmittableThreadLocal<SecurityUser> USER_CONTEXT = new TransmittableThreadLocal<>() {
+        @Override
+        protected SecurityUser childValue(SecurityUser parentValue) {
+            return null;
+        }
+    };
 
     /**
      * 工具类不允许实例化。
