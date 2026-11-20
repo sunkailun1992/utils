@@ -37,6 +37,21 @@ jobs:
       - name: Test
         run: ./gradlew test
 
+      # 容器集成测试（*IT）在 CI 里必须实际运行：打印计数，缺报告或被跳过（如 Docker 不可用）就判失败。
+      - name: Container test summary
+        run: |
+          python3 - <<'PY'
+          import glob, re, sys
+          rows = []
+          for path in sorted(glob.glob('build/test-results/test/TEST-*IT.xml')):
+              counts = re.search(r'tests="(\d+)" skipped="(\d+)" failures="(\d+)" errors="(\d+)"', open(path, encoding='utf-8').read())
+              rows.append((path.split('TEST-')[-1][:-4], *map(int, counts.groups())))
+          for name, tests, skipped, failures, errors in rows:
+              print(f'{name}: tests={tests} skipped={skipped} failures={failures} errors={errors}')
+          if not rows or any(skipped for _, _, skipped, _, _ in rows):
+              sys.exit('容器集成测试没有在 CI 里实际运行（缺少报告或被跳过）')
+          PY
+
       # 测试失败时上传测试报告（含 Keycloak 容器日志），便于排查；只保留 7 天。
       - name: Upload test reports
         if: failure()
