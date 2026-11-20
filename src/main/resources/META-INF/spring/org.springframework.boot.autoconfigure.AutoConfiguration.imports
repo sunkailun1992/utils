@@ -3,3 +3,4 @@ com.kellen.config.redis.RedisLockAutoConfiguration
 com.kellen.config.flyway.EarlyFlywayMigrationAutoConfiguration
 com.kellen.config.mq.MqAutoConfiguration
 com.kellen.security.oauth2.FleetResourceServerAutoConfiguration
+com.kellen.security.oauth2.client.FleetOAuth2ClientAutoConfiguration

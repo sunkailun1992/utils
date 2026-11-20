@@ -14,6 +14,7 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterProperties;
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
+import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerProperties;
 import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.JwkSetUriJwtDecoderBuilderCustomizer;
 import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.OAuth2ResourceServerAutoConfiguration;
@@ -37,6 +38,9 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 /**
  * 标准 OAuth2 资源服务器（servlet）：配了 {@code spring.security.oauth2.resourceserver.jwt.issuer-uri} 的服务自动接入。
  *
+ * <p>注册顺序排在 Spring Boot 的资源服务器、OAuth2 客户端（oauth2Login 默认链）与默认安全链之前，这些默认链都以
+ * 「没有自定义链」为条件，先注册本链它们就不再创建。</p>
+ *
  * <ul>
  *     <li>令牌校验用 Spring Boot 按 issuer-uri 延迟发现的解码器：签发方、受众（{@code audiences}）、有效期（默认允许 60 秒时钟偏差），
  *     并让 {@code jws-algorithms}（缺省 RS256）在 issuer 方式下同样生效。</li>
@@ -49,8 +53,9 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
  *
  * @author 孙凯伦
  */
-@AutoConfiguration(before = {OAuth2ResourceServerAutoConfiguration.class, ManagementWebSecurityAutoConfiguration.class,
-        SecurityAutoConfiguration.class, ServletWebSecurityAutoConfiguration.class, UserDetailsServiceAutoConfiguration.class})
+@AutoConfiguration(before = {OAuth2ResourceServerAutoConfiguration.class, OAuth2ClientWebSecurityAutoConfiguration.class,
+        ManagementWebSecurityAutoConfiguration.class, SecurityAutoConfiguration.class, ServletWebSecurityAutoConfiguration.class,
+        UserDetailsServiceAutoConfiguration.class})
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(BearerTokenAuthenticationToken.class)
 @ConditionalOnProperty("spring.security.oauth2.resourceserver.jwt.issuer-uri")
