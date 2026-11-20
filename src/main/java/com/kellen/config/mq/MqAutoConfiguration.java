@@ -28,7 +28,7 @@ public class MqAutoConfiguration {
     }
 
     /**
-     * 收发钩子、泳道与转换器的后置处理器；静态方法，免得提前创建本配置类。
+     * 挂收发钩子、按泳道改写消费组与订阅的后置处理器；静态方法，免得提前创建本配置类。
      *
      * @param environment Spring 环境
      * @return 后置处理器

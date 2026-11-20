@@ -1,6 +1,8 @@
 package com.kellen.config.mq;
 
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.common.filter.ExpressionType;
+import org.apache.rocketmq.remoting.protocol.heartbeat.SubscriptionData;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -14,7 +16,7 @@ import org.springframework.mock.env.MockEnvironment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 后置处理器：给 RocketMQTemplate 的生产者与监听容器的消费者挂上收发钩子；转换器缺省忽略未知字段。
+ * 后置处理器：给 RocketMQTemplate 的生产者与监听容器的消费者挂上收发钩子，按泳道改写消费组与订阅；转换器缺省忽略未知字段。
  */
 class MqRocketMqInitializerTest {
 
@@ -35,6 +37,24 @@ class MqRocketMqInitializerTest {
         container.afterPropertiesSet();
         initializer.postProcessAfterInitialization(container, "container");
         assertThat(container.getConsumer().getDefaultMQPushConsumerImpl().hasHook()).isTrue();
+    }
+
+    @Test
+    void initializerRewritesContainerGroupAndSubscription() throws Exception {
+        MockEnvironment environment = new MockEnvironment()
+                .withProperty("spring.cloud.nacos.discovery.metadata[traffic.lane]", "canary")
+                .withProperty("spring.cloud.nacos.discovery.metadata[canary.tag]", "kellen-local");
+        MqRocketMqInitializer initializer = new MqRocketMqInitializer(environment);
+        DefaultRocketMQListenerContainer container = container();
+        initializer.postProcessBeforeInitialization(container, "container");
+        container.afterPropertiesSet();
+        initializer.postProcessAfterInitialization(container, "container");
+
+        assertThat(container.getConsumerGroup()).isEqualTo(GROUP + "-canary-kellen-local");
+        assertThat(container.getConsumer().getConsumerGroup()).isEqualTo(GROUP + "-canary-kellen-local");
+        SubscriptionData subscription = container.getConsumer().getDefaultMQPushConsumerImpl().getSubscriptionInner().get(TOPIC);
+        assertThat(subscription.getExpressionType()).isEqualTo(ExpressionType.SQL92);
+        assertThat(subscription.getSubString()).isEqualTo("(fleet_lane = 'canary' AND fleet_canary_tag = 'kellen-local')");
     }
 
     /**

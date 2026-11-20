@@ -1,5 +1,8 @@
 package com.kellen.config.mq;
 
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.MessageSelector;
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.impl.consumer.DefaultMQPushConsumerImpl;
 import org.apache.rocketmq.client.impl.producer.DefaultMQProducerImpl;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
@@ -10,7 +13,8 @@ import org.springframework.core.env.Environment;
 
 /**
  * rocketmq-spring 的 Bean 后置处理器（照芋道的 {@code TenantRocketMQInitializer}）：
- * 给 {@link RocketMQTemplate} 的生产者挂发送钩子，给每个监听容器的消费者挂消费钩子。
+ * 给 {@link RocketMQTemplate} 的生产者挂发送钩子，给每个监听容器的消费者挂消费钩子，
+ * 并按本实例泳道改写消费组名与订阅（见 {@link MqLaneSelector}）。
  */
 public class MqRocketMqInitializer implements BeanPostProcessor {
 
@@ -29,14 +33,40 @@ public class MqRocketMqInitializer implements BeanPostProcessor {
         this.environment = environment;
     }
 
+    /**
+     * 监听容器在 {@code afterPropertiesSet} 里按消费组名创建消费者，所以组名要在初始化前改。
+     */
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) {
+        if (bean instanceof DefaultRocketMQListenerContainer container && container.getConsumerGroup() != null) {
+            container.setConsumerGroup(new MqLaneSelector(lane()).consumerGroup(container.getConsumerGroup()));
+        }
+        return bean;
+    }
+
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) {
         if (bean instanceof RocketMQTemplate template) {
             registerSendHook(template.getProducer());
         } else if (bean instanceof DefaultRocketMQListenerContainer container) {
             registerConsumeHook(container);
+            subscribeByLane(container);
         }
         return bean;
+    }
+
+    /** 消费者已创建、还没启动：按泳道把订阅改成 SQL92，覆盖容器按注解做的订阅。 */
+    private void subscribeByLane(DefaultRocketMQListenerContainer container) {
+        DefaultMQPushConsumer consumer = container.getConsumer();
+        if (consumer == null) {
+            return;
+        }
+        String expression = new MqLaneSelector(lane()).sqlExpression(container.getSelectorType(), container.getSelectorExpression());
+        try {
+            consumer.subscribe(container.getTopic(), MessageSelector.bySql(expression));
+        } catch (MQClientException ex) {
+            throw new IllegalStateException("按泳道重设 RocketMQ 订阅失败：" + container.getTopic(), ex);
+        }
     }
 
     private void registerSendHook(DefaultMQProducer producer) {
