@@ -62,6 +62,8 @@ class KeycloakTerraformTests(unittest.TestCase):
         self.assertEqual(attr(realm, 'sso_session_max_lifespan'), '"10h"')
         self.assertEqual(attr(realm, 'default_locale'), '"zh-CN"')
         self.assertRegex(realm, r'brute_force_detection\s*\{')
+        # 管理员在 user 服务改用户名要同步到 Keycloak；用户自己能否改由用户档案的 edit 权限决定（只许管理员）。
+        self.assertEqual(attr(realm, 'edit_username_allowed'), 'true')
 
     def test_gateway_is_confidential_auth_code_with_pkce_and_both_callbacks(self):
         gateway = blocks('keycloak_openid_client')['gateway']
@@ -133,14 +135,24 @@ class KeycloakTerraformTests(unittest.TestCase):
         self.assertEqual(attr(permissions, 'view'), '["admin"]')
         self.assertEqual(attr(permissions, 'edit'), '["admin"]')
 
-    def test_user_profile_keeps_keycloak_default_attributes(self):
+    def test_user_profile_keeps_keycloak_default_attributes_and_requires_none(self):
+        # user 服务不收集邮箱与姓，昵称可空：资料都选填，首次登录只要求改临时口令，不会被要求补填资料（VERIFY_PROFILE）。
         profile = blocks('keycloak_realm_user_profile')['github_dev']
         names = [attr(b, 'name').strip('"') for b in sub_blocks(profile, 'attribute')]
         self.assertEqual(names, ['username', 'email', 'firstName', 'lastName', 'user_id'])
-        required = {attr(b, 'name').strip('"'): attr(b, 'required_for_roles') for b in sub_blocks(profile, 'attribute')}
-        for name in ('email', 'firstName', 'lastName'):
-            self.assertEqual(required[name], '["user"]', name)
-        self.assertEqual(required['user_id'], '')
+        for block in sub_blocks(profile, 'attribute'):
+            self.assertEqual(attr(block, 'required_for_roles'), '', attr(block, 'name'))
+            self.assertEqual(attr(block, 'required_for_scopes'), '', attr(block, 'name'))
+
+    def test_user_center_owned_attributes_are_admin_edit_only(self):
+        # 用户名与昵称（firstName）以 user 服务为准、由它经 Admin API 写入：用户能看不能改，避免账户页里改了与用户中心不一致。
+        profile = blocks('keycloak_realm_user_profile')['github_dev']
+        owned = {attr(b, 'name').strip('"'): sub_blocks(b, 'permissions')[0] for b in sub_blocks(profile, 'attribute')
+                 if attr(b, 'name').strip('"') in ('username', 'firstName')}
+        self.assertEqual(sorted(owned), ['firstName', 'username'])
+        for name, permissions in owned.items():
+            self.assertEqual(attr(permissions, 'view'), '["admin", "user"]', name)
+            self.assertEqual(attr(permissions, 'edit'), '["admin"]', name)
 
     def test_ai_tokens_carry_user_id_for_token_exchange(self):
         # 交换出的令牌按 github-ai 自己的映射器生成；它不带 github-api 作用域（避免受众扩大），所以 user_id 映射器挂在客户端上。
