@@ -103,3 +103,7 @@ python3 ops/github-dev/scripts/start_service.py user
 - 首次迁移时 ES `7.17.9` 与 Java client 不兼容，user 聚合 health 曾为 `503`。后续已升级 ES 并修正两边 dev 的 ES 连接配置；该次 9 个服务 health/readiness 均为 `200 UP`，user 保留真实 ES 健康检查。旧的失败记录保留在历史验收 JSON，不应据此再次关闭健康检查。
 - 业务演示种子、Prompt 自动同步、AgentCard 自动发布均关闭，避免重新导入既有医疗资源。模型配置接通不等于 AI 对话或付费模型效果验收；本轮不发付费推理请求。微信登录、真实业务流程、RPC/模型组合仍分别验收。
 - 本轮功能源分支为 `codex/sync-security-architecture-20261103`，Git 集成目标为 `main`。交付清单和运行验收 JSON 是 Git 发布前的验证快照；当前提交与推送状态以各仓库 Git refs 及远端读回为准。MavenLocal、GitHub CI、远程 Maven 制品和真实服务部署分别验收。
+
+## Keycloak（第5阶段）
+
+NAS 上的 `orb-keycloak`（26.8.2，HTTPS 18443，mkcert 证书）负责统一登录；域配置在 `keycloak/terraform/`（官方 Terraform Provider），运行方法与注意事项见该目录 README。镜像在 NAS 连不上镜像仓库时，由 Mac 上的 crane 按摘要下载后 `docker load` 导入。

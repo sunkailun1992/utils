@@ -1,0 +1,32 @@
+# 按 GitHub 官方 Terraform 忽略模板（github/gitignore 的 Terraform.gitignore）。
+# 正常运行时状态与插件目录在仓库外（见 README），这里兜底：即使在本目录直接 init，也不会把含密钥的文件加进 Git。
+# .terraform.lock.hcl 不忽略：HashiCorp 建议提交，固定 Provider 版本与校验和。
+
+# 插件与模块缓存
+.terraform/
+
+# 状态文件（含客户端密钥）与 apply 期间的锁信息
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+
+# 崩溃日志
+crash.log
+crash.*.log
+
+# 变量文件（可能含口令与密钥）
+*.tfvars
+*.tfvars.json
+
+# 本地覆盖文件
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# plan -out 的输出（含敏感值）
+*.tfplan
+
+# CLI 配置
+.terraformrc
+terraform.rc
