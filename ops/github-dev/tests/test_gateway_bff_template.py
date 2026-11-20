@@ -45,7 +45,10 @@ class GatewayBffTemplateTests(unittest.TestCase):
         jwt = self.config["spring"]["security"]["oauth2"]["resourceserver"]["jwt"]
         self.assertEqual(jwt["issuer-uri"], "${custom.keycloak-issuer-uri}")
         self.assertEqual(jwt["jws-algorithms"], "RS256")
-        self.assertEqual(jwt["audiences"], ["github-api", "github-mcp"])
+        # 受众覆盖网关转发的 API：业务服务、MCP，以及 ai 经网关调 ai-agent 的交换令牌（AgentCard 地址是网关）。
+        self.assertEqual(jwt["audiences"], ["github-api", "github-mcp", "github-ai-agent"])
+        routes = {route["id"] for route in self.webflux["routes"]}
+        self.assertIn("github-ai-agent", routes)
 
     def test_sessions_live_in_their_own_redis_namespace(self):
         self.assertEqual(self.config["spring"]["session"]["data"]["redis"]["namespace"], "fleet:gateway:session")

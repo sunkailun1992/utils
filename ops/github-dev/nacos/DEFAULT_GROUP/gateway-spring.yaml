@@ -170,12 +170,14 @@ spring:
           issuer-uri: ${custom.keycloak-issuer-uri}
           # 只收 RS256 签名（网关代码让它在 issuer-uri 方式下也生效）。
           jws-algorithms: RS256
-          # 受众：令牌 aud 含其中之一才放行，覆盖网关转发的 API。
+          # 受众：令牌 aud 含其中之一才放行，覆盖网关转发的 API；各服务仍只认自己的受众。
           audiences:
             # 业务 API 受众（多数服务）。
             - github-api
             # MCP 资源受众。
             - github-mcp
+            # ai-agent 受众：ai 经令牌交换取得，AgentCard 登记的调用地址是网关，ai 调 ai-agent 经这里转发。
+            - github-ai-agent
   # Spring Session：网关会话。
   session:
     # 会话存储。
