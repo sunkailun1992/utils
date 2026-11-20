@@ -154,7 +154,24 @@ utils 当前没有切面。原有的请求日志切面与防重复提交从未�
 - 明显业务专属枚举应迁回业务项目，避免公共包变成业务字典仓库。
 - 校验工具和校验注解需要同时说明校验目标、空值策略和错误提示。
 
-## 十、收敛原则
+## 十、消息队列（RocketMQ）
+
+核心类（rocketmq-spring 2.3.6，客户端 5.5.1；只在服务配了 `rocketmq.name-server` 时装配）：
+
+- `com.kellen.utils.mq.MqTemplate`：发送工具，底层是 `RocketMQTemplate`。`send` 同步发送，失败抛 `MqSendException`；`sendAfterCommit` 在事务提交后发送、回滚不发，提交后失败只记日志。
+- `com.kellen.utils.mq.MqSendOptions`：发送选项，`withTag`、`withKeys`、`withDelay`（1 秒到 3 天）、`withOrderKey`（不能与延时同用）。
+- `com.kellen.utils.mq.MqHeaders`：消息属性名（`fleet_` 前缀）：租户、操作人用户与部门、数据源标记、泳道与灰度标签。
+- `com.kellen.config.mq.MqRocketMqInitializer`：Bean 后置处理器（照芋道的 `TenantRocketMQInitializer`），给生产者挂发送钩子、给每个监听容器的消费者挂消费钩子，并按实例泳道改写消费组与订阅。
+- `com.kellen.config.mq.MqContextSendMessageHook`、`MqContextConsumeMessageHook`：发送时补上下文属性；消费前还原租户、操作人与数据源标记，消费后恢复原值。
+- `com.kellen.config.mq.MqInstanceLane`、`MqLaneSelector`：本实例的泳道与灰度标签（Nacos 注册元数据 `traffic.lane`、`canary.tag`），以及按泳道算出的消费组名与 SQL92 订阅。
+
+使用原则：
+
+- 发送用 `MqTemplate`，消费用 `@RocketMQMessageListener` 加 `RocketMQListener<T>`；不直接用 RocketMQ 原生客户端，不用 `RocketMQTemplate` 的异步发送与单向发送。
+- 只支持单条消费；消费必须幂等；消费逻辑不调需要灰度授权的 RPC。
+- 配置、命名、账号授权与泳道规则见 [消息队列规范](MQ_SPEC.md)。
+
+## 十一、收敛原则
 
 - 如果类只服务单个业务项目，应迁回业务项目；只有个别服务用到的依赖或配置，由该服务自己声明。
 - 过时、小众、从未生效或已被替代且无人使用的工具直接删除，不为「以后可能用」保留；判断在用要看服务实际引用，以及 Spring 组件是否真正生效（注解要有切面驱动）。
@@ -166,7 +183,7 @@ utils 当前没有切面。原有的请求日志切面与防重复提交从未�
 - 钉钉机器人、阿里云短信、直播、函数工作流、旧 `OssUtils`，以及 `CommonAliyunProperties`、`CommonWechatProperties`、`SmsEnum`：无人使用，告警已由 Grafana 负责。
 - 请求日志写 ES（`RequestRequiredAspect`、`@RequestRequired`、`com.kellen.log.*`、`ElasticsearchConfig`、`RequestUtil`、`MethodsBean`、`MethodsJudge`）：切面从未生效，日志已由 OTel 进 ES，参数校验用 Bean Validation。
 - 防重复提交（`@PreventRepeat`、`PreventRepeatInit`、`PreventRepeatException`、`@Methods`、`MethodsInit`、`MethodsParam`、`ReflectionUtils`）：唯一驱动者是上面的切面，从未生效。
-- `PdfUtils`（PDF 由 rag 引擎、OCR 与 Gotenberg 处理）、`RabbitMqConfig`（第4阶段换 RocketMQ）、`ActuatorInterceptor`、`@DynamicDataSource`（用 dynamic-datasource 自带的 `@DS`）。
+- `PdfUtils`（PDF 由 rag 引擎、OCR 与 Gotenberg 处理）、`RabbitMqConfig`（1.7.2 起由第十节的 RocketMQ 消息模块取代）、`ActuatorInterceptor`、`@DynamicDataSource`（用 dynamic-datasource 自带的 `@DS`）。
 - `DateException`、`ParameterNullException`、`SignException`、`SmsException`：无人抛出。
 - `ServiceShutDownEndpoint`、`MultipartConfig`、`DataSourceUtil`、`SensitiveStrategyConfig`、`ConfigClientController`：分别改用 Spring Boot 优雅停机与 `serviceregistry` 端点、服务自配 `spring.servlet.multipart.*`、`DynamicSourceTtl`、mybatis-mate 默认策略、Spring Boot 与 Redisson 自动配置。
 - 依赖：Dozer（换 Hutool）、Orika、Aviator、javax.mail、commons-collections4、Guava 的显式声明（Guava 仍由 Seata 传递引入并锁定版本）、Jedis、iText、font-asian、PDFBox、`spring-boot-starter-amqp`、`spring-boot-starter-data-elasticsearch`、`aliyun-java-sdk-core` 的显式声明、`aliyun-java-sdk-fnf`；`spring-boot-starter-websocket` 与 `poi-ooxml` 改由使用它们的服务声明。

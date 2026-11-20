@@ -22,7 +22,7 @@
 14. 涉及 MyBatis-Plus 动态字段、排序、数据权限、租户、乐观锁、SQL 插件或 Mapper 扩展时，必须确认 `SqlInjector` 只用于扩展 SQL 方法，不能作为 SQL 注入防护方案。
 15. MyBatis-Plus SQL 安全优先使用后端字段白名单、参数绑定、LambdaWrapper、`SqlInjectionUtils.check(...)` 或 `checkSqlInjection()` 补充校验，以及 `IllegalSQLInnerInterceptor`、`BlockAttackInnerInterceptor` 默认拦截。
 16. 涉及业务微服务标准分层、RESTful Controller、ServiceQuery、ServiceResults、BO、Query、VO、Mapper 示例时，读 [公共示例模板](examples/README.md) 和 `examples/Example*`。
-17. 再读 [工具类归类目录](UTILS_TOOL_CATALOG.md)，确认目标能力应该放在哪个包、复用哪个类、哪些历史工具需要谨慎使用。
+17. 再读 [工具类归类目录](UTILS_TOOL_CATALOG.md)，确认目标能力应该放在哪个包、复用哪个类、哪些历史工具需要谨慎使用；涉及消息收发、主题与消费组、RocketMQ 账号或泳道时读 [消息队列规范](MQ_SPEC.md)。
 18. 如果涉及工具类新增或包名调整，阅读 [包结构分类说明](PACKAGE_REFACTOR_GUIDE.md)，确认目标子包。
 19. 最后阅读目标 Java 类及其上下游调用点，避免只根据类名猜测行为。
 

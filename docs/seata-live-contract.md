@@ -41,7 +41,7 @@
 2. 第二分支失败：A、B 都先完成本地第一阶段提交，B 从独立连接看到 `120` 和 undo 后，再在 RPC 层主动抛错。A 收到真实远程失败并请求 TC 全局回滚；两库均恢复 `100/100`，该 XID 两边 undo 最终清理。这样同时验证两个已提交分支的补偿，避免 B 自己的本地回滚掩盖未参与全局事务。
 3. 两端 XID 一致；每轮完成后调用方 ThreadLocal 清理，并通过 TM 协议向 TC 查询该 XID 达到 `Finished`，排除悬挂全局事务。所有写入只针对生成表和合成租户，不查询业务记录，不删除其它 XID 的 undo。
 
-测试直接复用公共动态数据源 Bean，使用最小 Spring 上下文；不全量扫描和连接 Redis、RabbitMQ、Elasticsearch、模型或业务服务。测试自身不启用 Seata 自动数据源代理，沿用公共配置手动代理方式，不改变业务服务的代理开关。
+测试直接复用公共动态数据源 Bean，使用最小 Spring 上下文；不全量扫描和连接 Redis、RocketMQ、Elasticsearch、模型或业务服务。测试自身不启用 Seata 自动数据源代理，沿用公共配置手动代理方式，不改变业务服务的代理开关。
 
 TC 2.7 在 DB 存储模式下会延迟删除已完成会话：[SessionHelper.endRollbacked](https://github.com/apache/incubator-seata/blob/v2.7.0/server/src/main/java/org/apache/seata/server/session/SessionHelper.java) 保留延迟处理路径，[DefaultValues](https://github.com/apache/incubator-seata/blob/v2.7.0/common/src/main/java/org/apache/seata/common/DefaultValues.java) 的 retry dead threshold 默认 70 秒。探针对最终 `Finished` 使用 120 秒的有界轮询，整体测试上限 360 秒；不修改 TC 参数，不把分支已回滚与全局会话已清理混为一个断言。
 

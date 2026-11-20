@@ -67,7 +67,7 @@ class PostgresqlConfigurationTests(unittest.TestCase):
         check_parameter_comments(source)
 
     def test_data_permission_uses_utils_default_columns(self):
-        """每行记创建部门：没写表规则列时用 utils 默认的 creator、create_dept，Nacos 不再覆盖成旧列名。"""
+        """每行记创建部门：没写表规则列时用 utils 默认的 create_by、create_dept，Nacos 不再覆盖成旧列名。"""
         source = (CONFIG / "security-auth.yaml").read_text()
         permission = yaml_json(source)["security"]["data-permission"]
         self.assertNotIn("default-user-column", permission)

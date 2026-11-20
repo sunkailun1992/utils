@@ -47,6 +47,7 @@
 14. `docs/ai-coding/SECURITY_CODING_SPEC.md`：涉及认证、权限、SQL、文件、脱敏、日志、第三方 SDK 或安全扩展点时必须阅读。
 15. `docs/ai-coding/UTILS_TOOL_CATALOG.md`：新增或迁移工具类前确认目标包和现有能力。
 16. `docs/ai-coding/NACOS_CONFIG_SPEC.md`：涉及公共 `@ConfigurationProperties` 归属、共享 dataId 或 Nacos 配置中心拆分时必读。
+17. `docs/ai-coding/MQ_SPEC.md`：涉及消息收发、主题与消费组、RocketMQ 账号或泳道时必读。
 
 ## 项目边界
 

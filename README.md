@@ -2,7 +2,7 @@
 
 `utils` 是面向 Spring Boot 4 / Java 21 的公共基础能力包，是 `user`、`message` 等业务服务复用通用能力的唯一来源。业务项目和网关项目不要复制本仓库里的工具类源码；需要公共能力时，先在本仓库维护并发布 Maven 制品，再让消费者项目升级依赖。
 
-当前提供统一响应、错误码、统一异常处理、认证上下文、多租户、数据权限、MyBatis-Plus 基础配置、Redis/Redisson、HTTP、JSON、对象存储等通用工具；写法对照同类里 GitHub 关注度最高的项目，过时或无人使用的工具直接删除。
+当前提供统一响应、错误码、统一异常处理、认证上下文、多租户、数据权限、MyBatis-Plus 基础配置、Redis/Redisson、RocketMQ 消息收发、HTTP、JSON、对象存储等通用工具；写法对照同类里 GitHub 关注度最高的项目，过时或无人使用的工具直接删除。
 
 ## 当前定位
 
@@ -71,6 +71,13 @@
 - `createUploadPolicy(...)` 返回 `UploadPolicy`，保持 POST 表单上传；`formFields` 是完整表单字段，客户端原样提交。MinIO 使用 S3 V4 签名字段，COS 使用官方 `COSSigner.buildPostObjectSignature` 及其专用表单协议。三者均固定精确对象 key、MIME、大小范围和到期时间，不能用普通请求签名冒充 POST 签名。真实云端权限/CORS、私有访问和读写仍需单独验收。
 - `verifyObjectExists(platform, key)`、`signedViewUri(platform, key, expiry)` 支持读取持久化平台；调用方必须先完成所有者和展示 token 校验（`DisplayTokenUtils.matches`，库里只存哈希），不能把此通用门面当成授权服务。历史文件保留原平台，切换默认平台不会迁移已有对象。
 - 上传下载统一走 X File Storage，OSS 只是其中一个平台；阿里云 OSS 专用的静态配置（`aliyun.oss.*`、`AliyunKey`）与直传工具已删除。
+
+## 消息队列（RocketMQ）
+
+- 基于 rocketmq-spring 2.3.6（`api` 依赖 `rocketmq-spring-boot-starter`），RocketMQ 客户端锁 5.5.1，与 NAS 上的 5.5 服务端同一版本线；只在服务配了 `rocketmq.name-server` 时装配，没配的服务不连 RocketMQ。
+- 发送用 `MqTemplate`（同步发送；`sendAfterCommit` 事务提交后才发），选项有 tag、key、延时与顺序键。消费用 rocketmq-spring 的 `@RocketMQMessageListener` 加 `RocketMQListener<T>`，只支持单条，必须幂等。
+- 收发钩子让租户、操作人与数据源标记随消息传递；消费组与订阅按本实例的泳道（Nacos 注册元数据 `traffic.lane`、`canary.tag`）自动隔离。
+- 配置模板、命名、账号授权与禁止事项见 [消息队列规范](docs/ai-coding/MQ_SPEC.md)。
 
 ## 远程发布
 
@@ -143,6 +150,7 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 4. [项目编码规范](docs/ai-coding/PROJECT_CODING_SPEC.md)：确认响应、异常、认证、租户、动态数据源、乐观锁和注释规则。
 5. [安全编码规范](docs/ai-coding/SECURITY_CODING_SPEC.md)：修改认证、权限、SQL、文件、脱敏、上传下载、日志和第三方 SDK 前必须阅读。
 6. [工具类归类目录](docs/ai-coding/UTILS_TOOL_CATALOG.md)：确认现有能力应该复用哪个包和哪个类。
+   涉及消息收发时读 [消息队列规范](docs/ai-coding/MQ_SPEC.md)。
 7. [包结构整理建议](docs/ai-coding/PACKAGE_REFACTOR_GUIDE.md)：新增或迁移工具类前确认目标包。
 
 ## AI 修改流程

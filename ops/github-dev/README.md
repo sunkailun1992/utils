@@ -12,7 +12,7 @@
 - `~/.config/kellen-github/nacos-rendered/DEFAULT_GROUP/`：包含真实连接值及通用模型密钥的私有渲染结果，文件权限 `0600`。禁止复制到仓库或 Wiki。
 - 模型密钥经用户明确确认沿用其通用自有密钥；没有复制医院、患者、问卷、报告模板、企微或设备业务配置。微信应用身份未因模型密钥授权而复制。
 - Nacos 引导只接受 `GITHUB_NACOS_*`，不再回落到旧 `NACOS_NAMESPACE`。Spring discovery/config、Dubbo 与未来启用的 AI SDK namespace 都引用同一个 `custom.namespace`。
-- Dubbo 使用独立 `GITHUB_DEV_DUBBO` 分组；Redis 使用独立逻辑库 `12`；RabbitMQ 使用 `/github-dev` vhost；RAG 使用 `github_dev_rag` collection。
+- Dubbo 使用独立 `GITHUB_DEV_DUBBO` 分组；Redis 使用独立逻辑库 `12`；RocketMQ 的主题、消费组、生产者组与账号统一用 `github-dev-` 前缀；RAG 使用 `github_dev_rag` collection。
 - ES 请求日志由 `elasticsearch.request-log-index=github_dev_request_log` 隔离，要求消费者使用 `com:utils:1.6.0` 并重启载入实体映射；仅切换 Nacos namespace 不会自动隔离 ES 索引。单节点开发索引使用零副本，既有 `request_log` 和 Kibana 系统索引保持原样。
 
 ## 数据库
@@ -36,6 +36,16 @@ NAS 独立 Conductor OSS 的 PostgreSQL、隔离锁 Redis、UI/API 认证、安�
 迁移已有 MySQL 数据前，停止个人业务写入，确认所有 `undo_log` 为空；新库由 NAS 管理流程建好数据库与独立角色后保持空库，不提前启动应用。受控迁移工具先只读生成计划，执行时核对计划摘要、逐表行数与指纹、数据类型和自增序列；全部通过后才发布 PostgreSQL 连接配置并启动应用。原 MySQL 数据继续保留用于核对和回退，不因迁移成功自动删除。运行态切换状态以本轮实际验收回执为准，不能仅凭本文件判断已经切换。
 
 user 的 `V1__baseline.sql` 种子段只建立通用租户、管理员角色及资源权限，使用 PostgreSQL `ON CONFLICT DO NOTHING` 保留既有记录，不创建人员账号或默认密码、不覆盖已有权限。授权的管理用户由受控迁移保留；真实内容不写入公开 SQL、日志、聊天或 Wiki。
+
+## 消息队列
+
+个人服务的消息队列是 NAS 上的 RocketMQ 5.5，用法与规则见 [消息队列规范](../../docs/ai-coding/MQ_SPEC.md)。RabbitMQ 已于 2026-11-20 退役（数据与定义备份在 NAS 编排目录的 `backups/` 下）。
+
+- 容器：`orb-rocketmq-namesrv`（9876）、`orb-rocketmq-broker`（10911，单 broker、异步刷盘、文件保留 48 小时）、`orb-rocketmq-dashboard`（宿主 18082，须登录）；`orb-rocketmq-prepare` 与 `orb-rocketmq-init` 是一次性任务，分别准备数据卷与写入主题、账号和授权，可重复执行。镜像按摘要固定。
+- broker 开 ACL 2.0 认证与授权、关自动建主题、开属性过滤（SQL92 订阅要用）。新主题与账号写进初始化任务后重跑它，不在 dashboard 上手工建。
+- 账号：`github-dev-user`（发送）、`github-dev-message`（消费）、`github-dev-utils-test`（utils 真库测试），另有只给 dashboard 与初始化任务用的管理账号。授权规则见消息队列规范的「命名与账号」。
+- 私有变量：dev.env 里的 `GITHUB_ROCKETMQ_HOST`、`GITHUB_ROCKETMQ_PORT`、`GITHUB_ROCKETMQ_USER_ACCESS_KEY`、`GITHUB_ROCKETMQ_USER_SECRET_KEY`、`GITHUB_ROCKETMQ_MESSAGE_ACCESS_KEY`、`GITHUB_ROCKETMQ_MESSAGE_SECRET_KEY`；utils 真库测试的 `FLEET_MQ_TEST_NAMESRV`、`FLEET_MQ_TEST_ACCESS_KEY`、`FLEET_MQ_TEST_SECRET_KEY` 放 `~/.config/kellen-github/phase4/fleet-mq-test.env`。管理账号与 dashboard 口令只在 NAS 编排与本机私有文件里，不进 Git 与 Wiki。
+- 只读查询（集群、主题、消费进度与堆积、在线消费者、账号授权）用本机私有工具目录里的 `nas_mq.py`：在 compose 网络上起临时容器执行 `mqadmin`，不在 broker 容器里执行（`mqadmin` 的堆固定 1GB）。
 
 ## 统一存储
 

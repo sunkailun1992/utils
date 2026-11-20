@@ -21,7 +21,8 @@
 
 ## 外部环境
 
-- 不默认连接真实 Nacos、数据库、Redis、RabbitMQ、OSS 或 MQ。
+- 不默认连接真实 Nacos、数据库、Redis、RocketMQ 或 OSS。
+- 真库测试只在设置了对应环境变量时运行（`@EnabledIfEnvironmentVariable`），变量放本机私有 env，CI 里没有、整类跳过：PostgreSQL 用 `FLEET_PG_TEST_URL`、`FLEET_PG_TEST_USERNAME`、`FLEET_PG_TEST_PASSWORD`；RocketMQ 用 `FLEET_MQ_TEST_NAMESRV`、`FLEET_MQ_TEST_ACCESS_KEY`、`FLEET_MQ_TEST_SECRET_KEY`（写法见 [消息队列规范](MQ_SPEC.md) 的「测试」）。
 - 涉及外部组件时优先 fake、stub、Testcontainers 或专用测试 profile。
 - 不把测试依赖的真实账号、密钥或生产配置写入仓库。
 

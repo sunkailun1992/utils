@@ -59,6 +59,13 @@
 - 动态数据源只允许 `DynamicSourceTtl.MASTER_DATASOURCE` 与 `DynamicSourceTtl.SLAVE_DATASOURCE`。
 - `MASTER_DATASOURCE` 的值为 `master`，`SLAVE_DATASOURCE` 的值为 `gray`。
 - 不得新增或恢复 `bank`、`hz`、`hx`、`jghx` 等历史数据源。
+- `UserContextHolder` 与 `TenantContextHolder` 不向新建线程继承；在线程池里执行要带上下文的任务时，用 `TtlRunnable`、`TtlExecutors` 包装，或用 utils 配好 `TraceContextTaskDecorator` 的异步线程池，不靠新建线程继承。
+
+## 消息队列
+
+- 消息收发统一用 utils 的消息模块（RocketMQ）：发送用 `MqTemplate`，消费用 `@RocketMQMessageListener` 加 `RocketMQListener<T>`；不直接用 RocketMQ 原生客户端。
+- 主题、消费组写在服务的 Nacos 配置里，代码用 `${fleet.mq.topic.*}`、`${fleet.mq.group.*}` 引用；命名、账号授权与泳道规则见 [消息队列规范](MQ_SPEC.md)。
+- 只支持单条消费；消费必须幂等（按事件 ID 去重）；消费逻辑不调需要灰度授权的 RPC；消息里不放凭据与完整个人信息。
 
 ## MyBatis-Plus
 

@@ -64,6 +64,7 @@ AI 修改本项目时，必须先判断能力归属：
 | `AI_ENGINEERING_GUARDRAILS.md` | 风险分级、Definition of Done、测试门禁、安全门禁和交付模板 |
 | `SECURITY_CODING_SPEC.md` | 认证、权限、脱敏、SQL、文件、日志、依赖、供应链和配置安全 |
 | `UTILS_TOOL_CATALOG.md` | 工具类归类和复用清单 |
+| `MQ_SPEC.md` | RocketMQ 配置、发送、消费、泳道、命名、账号授权与禁止事项 |
 | `PACKAGE_REFACTOR_GUIDE.md` | 新增或迁移工具类时的目标包判断 |
 | `examples/README.md` | 业务微服务标准分层示例模板入口 |
 
