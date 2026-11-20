@@ -2,8 +2,6 @@ package com.kellen.security.oauth2;
 
 import com.kellen.utils.json.JsonUtil;
 
-import java.net.CookieManager;
-import java.net.CookiePolicy;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -26,7 +24,8 @@ import java.util.stream.Collectors;
  * 不开浏览器完成 Keycloak 的授权码加 PKCE 登录：取登录页、提交用户名口令表单、从回调地址取授权码、用机密客户端换令牌。
  *
  * <p>走的是网关 BFF 正式用的客户端与流程，不为测试开直接授权（密码模式，RFC 9700 要求不再使用）。
- * 只认 Keycloak 默认登录主题（表单 id 为 kc-form-login）。</p>
+ * 只认 Keycloak 默认登录主题（表单 id 为 kc-form-login）。登录页种下的会话 Cookie 显式带回：Keycloak 给它们加了 Secure，
+ * 浏览器对 http://localhost 照样发送（安全上下文），JDK 的 CookieManager 对非 https 地址不返回，容器测试会因此失败。</p>
  */
 public final class KeycloakBrowserlessLogin {
 
@@ -51,8 +50,7 @@ public final class KeycloakBrowserlessLogin {
      */
     public static String accessToken(String issuer, String clientId, String clientSecret, String redirectUri,
                                      String username, String password) throws Exception {
-        HttpClient http = HttpClient.newBuilder().cookieHandler(new CookieManager(null, CookiePolicy.ACCEPT_ALL))
-                .followRedirects(HttpClient.Redirect.NEVER).connectTimeout(Duration.ofSeconds(10)).build();
+        HttpClient http = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).connectTimeout(Duration.ofSeconds(10)).build();
         String verifier = randomUrlSafe(48);
         String state = UUID.randomUUID().toString();
         Map<String, String> authorize = new LinkedHashMap<>();
@@ -70,7 +68,7 @@ public final class KeycloakBrowserlessLogin {
         }
         String action = loginAction(page.body());
         HttpResponse<String> submitted = http.send(HttpRequest.newBuilder(URI.create(action)).timeout(Duration.ofSeconds(20))
-                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("Content-Type", "application/x-www-form-urlencoded").header("Cookie", cookies(page))
                 .POST(HttpRequest.BodyPublishers.ofString(form(Map.of("username", username, "password", password, "credentialId", ""))))
                 .build(), HttpResponse.BodyHandlers.ofString());
         String location = submitted.headers().firstValue("Location").orElse("");
@@ -108,6 +106,13 @@ public final class KeycloakBrowserlessLogin {
     public static Map<String, Object> claims(String token) {
         String payload = token.split("\\.")[1];
         return JsonUtil.toBean(new String(Base64.getUrlDecoder().decode(payload), StandardCharsets.UTF_8), Map.class);
+    }
+
+    private static String cookies(HttpResponse<?> response) {
+        return response.headers().allValues("Set-Cookie").stream()
+                .map(header -> header.split(";", 2)[0].trim())
+                .filter(pair -> pair.contains("=") && !pair.endsWith("="))
+                .collect(Collectors.joining("; "));
     }
 
     private static String loginAction(String html) {
