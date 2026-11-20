@@ -30,7 +30,7 @@ import org.springframework.util.StringUtils;
  * 每次请求都从 {@link Environment} 读取当前值：Nacos 刷新新增、轮换或删除令牌都无需重启即可生效，
  * 删除配置即可立即撤销旧令牌。</p>
  *
- * <p>这条链与 {@code security.auth.enabled} 无关，未开启统一认证的服务同样受保护；配置独立管理端口时，
+ * <p>这条链与是否接入资源服务器（{@code spring.security.oauth2.resourceserver.jwt.issuer-uri}）无关，没有接入的服务同样受保护；配置独立管理端口时，
  * Spring Boot 会把同一个 {@code springSecurityFilterChain} 挂到管理端口上。消费者若确需放开其它端点，
  * 应在服务内显式声明顺序值小于 {@link #FILTER_CHAIN_ORDER} 的过滤链并说明原因，公共包不提供关闭开关。</p>
  *
@@ -42,7 +42,7 @@ public class ActuatorSecurityConfig {
     /**
      * Actuator 专用过滤链的顺序。
      *
-     * <p>排在统一认证主链（无 {@code @Order}）和业务服务的路径专用链之前；在 {@link Ordered#HIGHEST_PRECEDENCE}
+     * <p>排在资源服务器默认链（Spring Boot 默认链的顺序）和业务服务的路径专用链之前；在 {@link Ordered#HIGHEST_PRECEDENCE}
      * 之后留出位置，顺序固定，不会和服务里已有的最高优先级链（短信登录路径、ASYNC 派发）因注册顺序互换。</p>
      */
     public static final int FILTER_CHAIN_ORDER = Ordered.HIGHEST_PRECEDENCE + 100;
@@ -79,8 +79,8 @@ public class ActuatorSecurityConfig {
     /**
      * 创建 Actuator 专用过滤链。
      *
-     * <p>必须排在统一认证主链之前：主链在认证关闭时放行全部请求，开启认证时也只校验登录用户，
-     * 都不能替代运维令牌。</p>
+     * <p>必须排在资源服务器默认链之前：默认链只校验用户或机器访问令牌，不能替代运维令牌；
+     * 没有接入资源服务器的服务也没有别的链保护这些端点。</p>
      *
      * @param http Spring Security HTTP 配置对象
      * @return Actuator 专用过滤链

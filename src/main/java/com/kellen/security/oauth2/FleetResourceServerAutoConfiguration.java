@@ -2,8 +2,11 @@ package com.kellen.security.oauth2;
 
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.apache.dubbo.config.spring.ReferenceBean;
+import org.apache.dubbo.config.spring.beans.factory.annotation.ReferenceAnnotationBeanPostProcessor;
+import org.apache.dubbo.spring.boot.autoconfigure.DubboAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -55,7 +58,7 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
  */
 @AutoConfiguration(before = {OAuth2ResourceServerAutoConfiguration.class, OAuth2ClientWebSecurityAutoConfiguration.class,
         ManagementWebSecurityAutoConfiguration.class, SecurityAutoConfiguration.class, ServletWebSecurityAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class})
+        UserDetailsServiceAutoConfiguration.class}, after = DubboAutoConfiguration.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(BearerTokenAuthenticationToken.class)
 @ConditionalOnProperty("spring.security.oauth2.resourceserver.jwt.issuer-uri")
@@ -156,10 +159,12 @@ public class FleetResourceServerAutoConfiguration {
     }
 
     /**
-     * 本服务不提供 {@link SecurityContextRpcService} 时，经 Dubbo 引用 user 服务的实现。
+     * 本服务不提供 {@link SecurityContextRpcService} 时，经 Dubbo 引用 user 服务的实现。只在 Dubbo 已启用
+     * （{@code @EnableDubbo} 或 Dubbo 自动配置注册了引用注解处理器）时创建；没有引用也没有本地实现时，令牌用户按不存在处理（401）。
      */
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(ReferenceBean.class)
+    @ConditionalOnBean(ReferenceAnnotationBeanPostProcessor.class)
     static class DubboSecurityContextConfiguration {
 
         /**

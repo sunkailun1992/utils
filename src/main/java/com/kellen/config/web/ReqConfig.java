@@ -1,8 +1,6 @@
 package com.kellen.config.web;
 
 import com.kellen.security.config.TenantProperties;
-import com.kellen.security.config.SecurityAuthProperties;
-import org.springframework.beans.factory.annotation.Autowired;
 import com.kellen.traffic.TrafficGovernanceProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +16,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author 孙凯伦
  */
 @Configuration
-@EnableConfigurationProperties({TenantProperties.class, TrafficGovernanceProperties.class, SecurityAuthProperties.class})
+@EnableConfigurationProperties({TenantProperties.class, TrafficGovernanceProperties.class})
 public class ReqConfig implements WebMvcConfigurer {
 
     /**
@@ -31,7 +29,6 @@ public class ReqConfig implements WebMvcConfigurer {
      */
     private final TrafficGovernanceProperties trafficGovernanceProperties;
 
-    private final SecurityAuthProperties securityAuthProperties;
 
     /**
      * 构造 Web MVC 请求拦截器配置。
@@ -40,15 +37,8 @@ public class ReqConfig implements WebMvcConfigurer {
      * @param trafficGovernanceProperties 流量治理配置属性
      */
     public ReqConfig(TenantProperties tenantProperties, TrafficGovernanceProperties trafficGovernanceProperties) {
-        this(tenantProperties, trafficGovernanceProperties, new SecurityAuthProperties());
-    }
-
-    @Autowired
-    public ReqConfig(TenantProperties tenantProperties, TrafficGovernanceProperties trafficGovernanceProperties,
-                     SecurityAuthProperties securityAuthProperties) {
         this.tenantProperties = tenantProperties; // 保存租户配置，供请求拦截器使用。
         this.trafficGovernanceProperties = trafficGovernanceProperties; // 保存流量治理配置，供请求拦截器使用。
-        this.securityAuthProperties = securityAuthProperties;
     }
 
     /**
@@ -58,6 +48,6 @@ public class ReqConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new ReqInterceptor(tenantProperties, trafficGovernanceProperties, securityAuthProperties)).addPathPatterns("/**");
+        registry.addInterceptor(new ReqInterceptor(tenantProperties, trafficGovernanceProperties)).addPathPatterns("/**");
     }
 }

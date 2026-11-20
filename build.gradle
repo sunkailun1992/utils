@@ -60,8 +60,6 @@ ext {
     aliyunOssVersion = '3.18.5'
     // Redisson 版本，4.x 适配 Spring Boot 4 自动配置包名。
     redissonVersion = '4.8.0'
-    // JJWT 版本，当前代码使用 0.9.x API，暂不跨到 0.12+ 新 API。
-    jjwtVersion = '0.9.1'
     // OkHttp 版本，5.x 稳定线；RequestBody.create 参数顺序调整为 (content, MediaType)。
     okhttpVersion = '5.5.1'
     // Guava 版本：utils 不再直接使用，但 Seata 仍传递引入；锁定为原先显式声明的版本，避免 BOM 规则降到旧版。
@@ -237,8 +235,6 @@ dependencies {
     api "org.redisson:redisson-spring-boot-starter:${redissonVersion}"
     // Springdoc OpenAPI：提供标准 OpenAPI3 /v3/api-docs 能力，不引入第三方文档 UI。
     api "org.springdoc:springdoc-openapi-starter-webmvc-api:${springdocVersion}"
-    // JJWT：提供 JWT 生成和解析能力。
-    api "io.jsonwebtoken:jjwt:${jjwtVersion}"
     // OkHttp：提供 HTTP 客户端请求能力。
     api "com.squareup.okhttp3:okhttp:${okhttpVersion}"
     // Spring Cloud Alibaba Seata：提供 Spring Cloud Alibaba 体系下的 Seata 集成能力。

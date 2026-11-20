@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * 假的 user 服务提供方：按登记的用户返回业务上下文，并按提供方的规则判断所请求的租户。
  */
-final class StubSecurityContextRpcService implements SecurityContextRpcService {
+public final class StubSecurityContextRpcService implements SecurityContextRpcService {
 
     private final Map<String, SecurityContextResult> results = new ConcurrentHashMap<>();
 
@@ -27,7 +27,7 @@ final class StubSecurityContextRpcService implements SecurityContextRpcService {
      * @param authorities      权限码
      * @param otherTenantIds   用户还属于的其他租户
      */
-    void enabledUser(String userId, String defaultTenantId, String deptId, List<String> authorities, String... otherTenantIds) {
+    public void enabledUser(String userId, String defaultTenantId, String deptId, List<String> authorities, String... otherTenantIds) {
         List<String> tenantIds = new java.util.ArrayList<>(List.of(defaultTenantId));
         tenantIds.addAll(List.of(otherTenantIds));
         results.put(userId, SecurityContextResult.ok(SecurityUser.builder().userId(userId).username(userId + "-name")
@@ -36,11 +36,21 @@ final class StubSecurityContextRpcService implements SecurityContextRpcService {
     }
 
     /**
+     * 登记一个启用但没有任何租户的用户。
+     *
+     * @param userId 用户 ID
+     */
+    public void tenantlessUser(String userId) {
+        results.put(userId, SecurityContextResult.ok(SecurityUser.builder().userId(userId).username(userId + "-name")
+                .enabled(true).tenantIds(List.of()).build()));
+    }
+
+    /**
      * 登记一个被停用的用户。
      *
      * @param userId 用户 ID
      */
-    void disabledUser(String userId) {
+    public void disabledUser(String userId) {
         results.put(userId, SecurityContextResult.of(SecurityContextResult.Status.DISABLED));
     }
 
@@ -49,14 +59,14 @@ final class StubSecurityContextRpcService implements SecurityContextRpcService {
      *
      * @param failure 异常
      */
-    void failWith(RuntimeException failure) {
+    public void failWith(RuntimeException failure) {
         this.failure = failure;
     }
 
     /**
      * 清空登记与调用记录。
      */
-    void reset() {
+    public void reset() {
         results.clear();
         calls.clear();
         failure = null;
@@ -67,7 +77,7 @@ final class StubSecurityContextRpcService implements SecurityContextRpcService {
      *
      * @return 调用记录
      */
-    List<String> calls() {
+    public List<String> calls() {
         return List.copyOf(calls);
     }
 

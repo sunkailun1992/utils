@@ -30,12 +30,12 @@ import java.util.function.Consumer;
  *
  * <p>资源服务器走的是 Spring Boot 真实的按 issuer-uri 发现流程，只把对端换成本地进程。</p>
  */
-final class TestKeycloak implements AutoCloseable {
+public final class TestKeycloak implements AutoCloseable {
 
     /**
      * 测试域路径，与正式环境的 github-dev 域同名。
      */
-    static final String REALM_PATH = "/realms/github-dev";
+    public static final String REALM_PATH = "/realms/github-dev";
 
     private final MockWebServer server = new MockWebServer();
 
@@ -72,7 +72,7 @@ final class TestKeycloak implements AutoCloseable {
      *
      * @return 已启动的替身
      */
-    static TestKeycloak start() {
+    public static TestKeycloak start() {
         try {
             return new TestKeycloak();
         } catch (Exception ex) {
@@ -85,7 +85,7 @@ final class TestKeycloak implements AutoCloseable {
      *
      * @return 签发方地址
      */
-    String issuer() {
+    public String issuer() {
         return issuer;
     }
 
@@ -95,7 +95,7 @@ final class TestKeycloak implements AutoCloseable {
      * @param userId 业务用户 ID
      * @return 已签名的令牌
      */
-    String userToken(String userId) {
+    public String userToken(String userId) {
         return token(claims -> claims.claim("user_id", userId));
     }
 
@@ -105,7 +105,7 @@ final class TestKeycloak implements AutoCloseable {
      * @param clientId 客户端 ID
      * @return 已签名的令牌
      */
-    String machineToken(String clientId) {
+    public String machineToken(String clientId) {
         return token(claims -> claims.claim("azp", clientId));
     }
 
@@ -115,7 +115,7 @@ final class TestKeycloak implements AutoCloseable {
      * @param customizer 声明改写
      * @return 已签名的 RS256 令牌
      */
-    String token(Consumer<JWTClaimsSet.Builder> customizer) {
+    public String token(Consumer<JWTClaimsSet.Builder> customizer) {
         try {
             SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(signingKey.getKeyID())
                     .type(JOSEObjectType.JWT).build(), defaultClaims(customizer));
@@ -132,7 +132,7 @@ final class TestKeycloak implements AutoCloseable {
      * @param userId 业务用户 ID
      * @return 已签名的 RS512 令牌
      */
-    String rs512Token(String userId) {
+    public String rs512Token(String userId) {
         try {
             SignedJWT jwt = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS512).keyID(signingKey.getKeyID())
                     .type(JOSEObjectType.JWT).build(), defaultClaims(claims -> claims.claim("user_id", userId)));
@@ -149,7 +149,7 @@ final class TestKeycloak implements AutoCloseable {
      * @param userId 业务用户 ID
      * @return 已签名的 HS256 令牌
      */
-    String hs256Token(String userId) {
+    public String hs256Token(String userId) {
         try {
             byte[] secret = new byte[32];
             new SecureRandom().nextBytes(secret);

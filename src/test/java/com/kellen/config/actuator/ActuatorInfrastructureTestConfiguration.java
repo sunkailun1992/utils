@@ -16,6 +16,8 @@ import org.springframework.boot.health.autoconfigure.contributor.HealthContribut
 import org.springframework.boot.health.autoconfigure.registry.HealthContributorRegistryAutoConfiguration;
 import org.springframework.boot.http.converter.autoconfigure.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.SecurityAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
 import org.springframework.boot.servlet.autoconfigure.actuate.web.ServletManagementContextAutoConfiguration;
 import org.springframework.boot.webmvc.autoconfigure.DispatcherServletAutoConfiguration;
 import org.springframework.boot.webmvc.autoconfigure.WebMvcAutoConfiguration;
@@ -48,7 +50,9 @@ import org.springframework.context.annotation.Configuration;
         HealthContributorRegistryAutoConfiguration.class,
         HealthEndpointAutoConfiguration.class,
         AvailabilityProbesAutoConfiguration.class,
-        WebMvcHealthEndpointExtensionAutoConfiguration.class
+        WebMvcHealthEndpointExtensionAutoConfiguration.class,
+        SecurityAutoConfiguration.class,
+        ServletWebSecurityAutoConfiguration.class
 })
 class ActuatorInfrastructureTestConfiguration {
 }
