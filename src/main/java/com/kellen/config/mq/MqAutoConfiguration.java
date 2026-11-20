@@ -28,6 +28,17 @@ public class MqAutoConfiguration {
     }
 
     /**
+     * 收发钩子、泳道与转换器的后置处理器；静态方法，免得提前创建本配置类。
+     *
+     * @param environment Spring 环境
+     * @return 后置处理器
+     */
+    @Bean
+    public static MqRocketMqInitializer mqRocketMqInitializer(Environment environment) {
+        return new MqRocketMqInitializer(environment);
+    }
+
+    /**
      * 本实例的泳道与灰度标签。
      *
      * @param environment Spring 环境
