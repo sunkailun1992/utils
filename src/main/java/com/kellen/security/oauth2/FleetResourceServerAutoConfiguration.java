@@ -24,13 +24,20 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimNames;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationEntryPointFailureHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+
+import java.util.List;
 
 /**
  * 标准 OAuth2 资源服务器（servlet）：配了 {@code spring.security.oauth2.resourceserver.jwt.issuer-uri} 的服务自动接入。
@@ -39,7 +46,8 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
  * 「没有自定义链」为条件，先注册本链它们就不再创建。</p>
  *
  * <ul>
- *     <li>令牌校验用 Spring Boot 按 issuer-uri 延迟发现的解码器：签发方、受众（{@code audiences}）、有效期（默认允许 60 秒时钟偏差），
+ *     <li>令牌校验用 Spring Boot 按 issuer-uri 延迟发现的解码器：签发方、受众（{@code audiences}，没配时要求 {@value #DEFAULT_AUDIENCE}）、
+ *     有效期（默认允许 60 秒时钟偏差），
  *     并让 {@code jws-algorithms}（缺省 RS256）在 issuer 方式下同样生效。</li>
  *     <li>默认过滤链：无状态、关 CSRF（只接 Bearer 令牌）、{@code fleet.security.oauth2.permit-paths} 放行，其余要求业务上下文可用的用户
  *     或名单里的机器客户端；401、403、503 返回统一 JSON。顺序与 Spring Boot 默认链相同（{@link SecurityFilterProperties#BASIC_AUTH_ORDER}），
@@ -62,9 +70,29 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 public class FleetResourceServerAutoConfiguration {
 
     /**
+     * 服务没有配置 {@code spring.security.oauth2.resourceserver.jwt.audiences} 时要求的受众：网关 BFF 转给业务后端的用户令牌受众。
+     */
+    public static final String DEFAULT_AUDIENCE = "github-api";
+
+    /**
      * 由 Spring Boot 按自动配置加载。
      */
     public FleetResourceServerAutoConfiguration() {
+    }
+
+    /**
+     * 受众缺省值：服务没配 {@code spring.security.oauth2.resourceserver.jwt.audiences} 时只收受众含 {@value #DEFAULT_AUDIENCE} 的令牌，
+     * 漏配不会变成不校验受众（否则会接受本域发给别的服务的令牌）；配了就交给 Spring Boot 的受众校验，这里放行。
+     * Spring Boot 按 issuer-uri 建解码器时会装上容器里的 {@link OAuth2TokenValidator} Bean。
+     *
+     * @param resourceServer Spring Boot 的资源服务器配置
+     * @return 令牌校验器
+     */
+    @Bean
+    public OAuth2TokenValidator<Jwt> fleetDefaultAudienceValidator(OAuth2ResourceServerProperties resourceServer) {
+        JwtClaimValidator<List<String>> defaultAudience = new JwtClaimValidator<>(JwtClaimNames.AUD,
+                audience -> audience != null && audience.contains(DEFAULT_AUDIENCE));
+        return jwt -> resourceServer.getJwt().getAudiences().isEmpty() ? defaultAudience.validate(jwt) : OAuth2TokenValidatorResult.success();
     }
 
     /**

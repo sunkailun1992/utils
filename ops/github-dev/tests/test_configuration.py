@@ -309,6 +309,25 @@ class NacosCredentialTests(unittest.TestCase):
                 self.profile("${GITHUB_NACOS_USERNAME:nacos}", "${GITHUB_NACOS_PASSWORD}"), "svc/application-dev.yml")
 
 
+class ResourceServerAudienceTests(unittest.TestCase):
+    """配了签发方的服务模板必须写明受众；utils 2.0.6 起漏配时回落到 github-api，但模板仍要显式写出，避免依赖缺省值。"""
+
+    def test_templates_with_an_issuer_declare_their_audiences(self):
+        templates = {file.name: file.read_text() for file in configuration.CONFIG.iterdir()}
+        configuration.check_resource_server_audiences(templates)
+
+    def test_an_issuer_without_audiences_is_reported_by_data_id(self):
+        templates = {
+            "ok-spring.yaml": "spring:\n  security:\n    oauth2:\n      resourceserver:\n        jwt:\n"
+                              "          issuer-uri: x\n          audiences: github-api\n",
+            "missing-spring.yaml": "spring:\n  security:\n    oauth2:\n      resourceserver:\n        jwt:\n"
+                                   "          issuer-uri: x\n",
+            "plain.yaml": "a: 1\n",
+        }
+        with self.assertRaisesRegex(AssertionError, r"missing-spring\.yaml"):
+            configuration.check_resource_server_audiences(templates)
+
+
 class RetiredKeyTests(unittest.TestCase):
     """第5阶段退役的键（自签令牌、共享密钥、服务签名与旧 OAuth 设置）不得留在模板里。"""
 

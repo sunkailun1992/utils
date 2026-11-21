@@ -32,7 +32,7 @@ fleet:
       context-cache-ttl: 30s     # 业务上下文本地缓存时长
 ```
 
-- 令牌校验：签发方、受众、有效期（允许 60 秒时钟偏差）、只收 RS256。issuer 元数据按需延迟发现，Keycloak 不可达时服务照常启动，受保护接口返回 401，不放行、不打印堆栈，恢复后无需重启。
+- 令牌校验：签发方、受众（`audiences`；没配时只收受众含 `github-api` 的令牌，2.0.6 起，模板仍须显式写出）、有效期（允许 60 秒时钟偏差）、只收 RS256。issuer 元数据按需延迟发现，Keycloak 不可达时服务照常启动，受保护接口返回 401，不放行、不打印堆栈，恢复后无需重启。
 - 默认过滤链：无状态、关 CSRF（只接 Bearer 令牌）、`permit-paths` 放行，其余要求业务上下文可用的用户或名单里的机器客户端。顺序与 Spring Boot 默认链相同，服务自己的路径专用链要用更小的顺序值；Actuator 仍由 `ActuatorSecurityConfig` 的运维令牌保护，访问令牌不能替代。
 - 受保护资源元数据（RFC 9728，2.0.3 起）：Spring Security 7 在默认链上发布 `/.well-known/oauth-protected-resource`（及 `/.well-known/oauth-protected-resource/<资源路径>`），免认证；`resource` 按取元数据的地址推出，`authorization_servers` 为 `issuer-uri`，`bearer_methods_supported` 为 `header`。401 质询带 `resource_metadata`。服务在网关后要让元数据给出网关地址，须开转发头（`server.forward-headers-strategy`）。
 - 响应：401（A0220）没带令牌、令牌无效或过期、令牌用户不存在、签发方不可达；403（A0301）停用、无权访问所请求的租户、客户端不在名单、缺少接口权限；503（C0110）user 服务暂时给不出业务上下文。都带 RFC 6750 的 `WWW-Authenticate` 头，不回显令牌。

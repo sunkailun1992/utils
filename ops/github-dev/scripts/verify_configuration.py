@@ -126,6 +126,19 @@ def check_nacos_credentials(value, file):
         assert nacos[kind].get("password") == "${custom.nacos-password}", f"{file}：spring.cloud.nacos.{kind}.password"
 
 
+def check_resource_server_audiences(config):
+    # 配了签发方（资源服务器）的模板必须显式写受众：漏写时 utils 2.0.6 起回落到 github-api，但不能依赖缺省值。
+    missing = []
+    for data_id, text in sorted(config.items()):
+        document = yaml_json(text)
+        jwt = document if isinstance(document, dict) else {}
+        for part in ("spring", "security", "oauth2", "resourceserver", "jwt"):
+            jwt = jwt.get(part) if isinstance(jwt, dict) else None
+        if isinstance(jwt, dict) and jwt.get("issuer-uri") and not jwt.get("audiences"):
+            missing.append(data_id)
+    assert not missing, f"配了 issuer-uri 的模板没有写受众 audiences：{', '.join(missing)}"
+
+
 def check_retired_keys(config):
     found = []
     for data_id, paths in RETIRED_KEYS.items():
@@ -534,6 +547,7 @@ def check():
                                    json.loads((CONFIG.parent / "catalog.json").read_text()),
                                    json.loads((CONFIG.parent / "retired-dataids.json").read_text()))
     check_retired_keys({file.name: file.read_text() for file in CONFIG.iterdir()})
+    check_resource_server_audiences({file.name: file.read_text() for file in CONFIG.iterdir()})
     auth = yaml_json((CONFIG / "security-auth.yaml").read_text())
     assert auth["tenant"]["ignore-without-tenant"] is False
     inventory = migration_inventory(ROOT)
