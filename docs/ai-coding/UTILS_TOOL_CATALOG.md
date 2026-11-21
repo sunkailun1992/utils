@@ -48,6 +48,7 @@
 核心类：
 
 - `com.kellen.utils.context.TenantContextHolder`：租户上下文（TransmittableThreadLocal）。
+- `com.kellen.security.TenantBoundary`：请求点名的目标租户与活动租户的边界（2.0.7 起）；`require(tenantId)` 只放行自己的活动租户，平台超级管理员可点名任一租户，否则 403。
 - `com.kellen.security.config.TenantProperties`：租户请求头配置。
 - `com.kellen.config.dubbo.DubboContextPropagationFilter`：Dubbo RPC 上下文透传。
 - `com.kellen.config.web.ReqInterceptor`：HTTP 请求租户上下文初始化。
@@ -69,6 +70,7 @@
 - `IllegalSQLInnerInterceptor` 与 `BlockAttackInnerInterceptor` 属于默认安全边界，关闭前必须补充原因、替代防护和测试。
 - MyBatis-Plus `SqlInjector` 只允许作为 Mapper 通用方法扩展点，不作为 SQL 注入防护能力。
 - 需要租户隔离的调用必须显式维护 `TenantContextHolder` 生命周期。
+- 接口参数或请求体里的 `tenantId` 不能直接写进 `TenantContextHolder`：先过 `TenantBoundary.require(tenantId)`，越出活动租户就拒绝（平台超级管理员除外）。
 - Dubbo 透传只透传可信上下文，不把业务参数当作租户隔离依据。
 
 ## 四、AOP 与幂等

@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:2.0.6`
+- 发布坐标：`com:utils:2.0.7`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -199,3 +199,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `2.0.5` 让业务上下文的 Dubbo 引用与各服务既有引用一样在启动时不初始化（`init = false`）：2.0.4 的引用沿用 Dubbo 默认在启动时初始化全部引用，没配注册中心的完整上下文测试（ai、ai-agent 的测试启动类）因此起不来（No such any registry to reference）；现在第一次需要业务上下文的请求才初始化并连接，初始化失败与调用失败一样按 user 服务不可用返回 503。测试覆盖不配注册中心时上下文照常启动、首个请求 503，以及本进程有提供方时首个请求才初始化并放行；user 服务里用不到的那个自引用也不再在启动时初始化。公共 API 不变。
 
 `2.0.6` 落实设计里的“受众默认 github-api”：服务没配 `spring.security.oauth2.resourceserver.jwt.audiences` 时，只收受众含 `github-api` 的令牌（`fleetDefaultAudienceValidator`，Spring Boot 按 issuer-uri 建解码器时装上容器里的 `OAuth2TokenValidator`），漏配不再变成不校验受众、接受本域发给别的服务的令牌；配了就照旧由 Spring Boot 校验。运维的 `verify_configuration` 同时要求配了签发方的模板显式写受众。第5阶段整体复查发现。公共 API 只增不改。
+
+`2.0.7` 新增 `com.kellen.security.TenantBoundary`：接口参数或请求体里点名的 `tenantId` 只能等于当前用户的活动租户（资源服务器按 `X-Tenant-Id` 经 user 核实后写入 `UserContextHolder`），平台超级管理员（`ROLE_PLATFORM_SUPER_ADMIN`）可以点名任一租户；不满足时抛 `AccessDeniedException`，回 403。服务在把请求里的租户写进 `TenantContextHolder` 之前先调 `TenantBoundary.require(tenantId)`。做法同芋道 `TenantSecurityWebFilter`（登录用户的租户与请求租户不一致即拒绝），依据 OWASP API Security Top 10 2023 的 API1。起因是第 5 阶段最终复核发现 user 与 message 的管理接口用请求里的 tenantId 覆盖已核实的活动租户。

@@ -41,7 +41,8 @@ fleet:
 
 ## 租户与业务上下文
 
-- 活动租户只能由请求头 `X-Tenant-Id` 在用户所属租户里选择，缺省为用户的默认租户；是否属于该租户由 user 服务判断（`TENANT_DENIED` 返回 403）。`tenantId`、`tenant-id` 等其它 HTTP 头一律不认，匿名请求不带租户上下文。
+- 活动租户只能由请求头 `X-Tenant-Id` 在用户所属租户里选择，缺省为用户的默认租户；是否属于该租户由 user 服务判断（`TENANT_DENIED` 返回 403）。`tenantId`、`tenant-id` 等其它 HTTP 头一律不认，匿名请求不带租户上下文。权限码、角色与数据权限都按活动租户计算。
+- 接口参数或请求体里点名的 `tenantId` 不能覆盖活动租户（2.0.7 起）：服务把它写进 `TenantContextHolder` 之前先调 `TenantBoundary.require(tenantId)`，只放行自己的活动租户；平台超级管理员（`ROLE_PLATFORM_SUPER_ADMIN`，管理员分类与租户无关）可以点名任一租户；不满足时 403（A0301），且在任何业务查询之前拒绝。跨租户只给平台超级管理员，租户管理员要管理别的租户，先在 `X-Tenant-Id` 换到该租户（在那里按那个租户的权限计算）。做法同芋道 `TenantSecurityWebFilter`，依据 OWASP API Security Top 10 2023 的 API1。
 - 缓存：本地 Caffeine（`context-cache-ttl`，上限 10000）→ Redis（键 `fleet:security:ctx:<userId>:<版本>:<租户或_>`，30 分钟）→ Dubbo 调 user 服务。只缓存加载成功的结果。
 - user 服务改动用户（停用、改权限、改部门或租户）后必须调用 `SecurityUserCache.bumpVersion(userId)`：本实例立刻失效，其他实例最多 `context-cache-ttl` 后失效。
 - 提供方：user 服务实现 `SecurityContextRpcService` 并标 `@Primary`（它只用 `@DubboService` 时由 Dubbo 扫描注册，自动配置看不到，会同时生成一个自引用）。其它服务在 Dubbo 已启用时自动得到 Dubbo 引用，参数与各服务既有引用相同：启动时不初始化（`init = false`，2.0.5 起；Dubbo 默认启动时初始化全部引用，没配注册中心的上下文会起不来），首次调用才初始化并连接，不在启动时检查、不重试、3 秒超时、跟随灰度路由；初始化失败与调用失败一样返回 503（`FleetSecurityContextReferenceWithoutRegistryTest`、`FleetSecurityContextReferenceFirstCallTest` 约束）。引用由独立的 `FleetSecurityContextDubboAutoConfiguration` 创建（排在 Dubbo 自动配置之后，2.0.4 起）；utils 的自动配置不写成嵌套配置——消费服务默认扫描整个 `com.kellen`，嵌套配置会被提前扫描处理，`@ConditionalOnBean` 提前判定（`AutoConfigurationScanBoundaryTest` 约束）。
