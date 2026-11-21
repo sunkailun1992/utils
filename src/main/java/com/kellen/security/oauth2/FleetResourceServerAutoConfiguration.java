@@ -1,12 +1,7 @@
 package com.kellen.security.oauth2;
 
-import org.apache.dubbo.config.annotation.DubboReference;
-import org.apache.dubbo.config.spring.ReferenceBean;
-import org.apache.dubbo.config.spring.beans.factory.annotation.ReferenceAnnotationBeanPostProcessor;
-import org.apache.dubbo.spring.boot.autoconfigure.DubboAutoConfiguration;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -22,7 +17,6 @@ import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OA
 import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.JwkSetUriJwtDecoderBuilderCustomizer;
 import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.OAuth2ResourceServerAutoConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.config.ObjectPostProcessor;
@@ -51,14 +45,14 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
  *     或名单里的机器客户端；401、403、503 返回统一 JSON。顺序与 Spring Boot 默认链相同（{@link SecurityFilterProperties#BASIC_AUTH_ORDER}），
  *     排在 Actuator 链和服务自己的路径专用链之后。</li>
  *     <li>业务上下文经 {@link SecurityUserCache} 取自 {@link SecurityContextRpcService}：本服务提供时用本地实现（提供方标 {@code @Primary}），
- *     否则用 Dubbo 引用。</li>
+ *     否则用 {@link FleetSecurityContextDubboAutoConfiguration} 建的 Dubbo 引用；转换器在请求时才取提供方。</li>
  * </ul>
  *
  * @author 孙凯伦
  */
 @AutoConfiguration(before = {OAuth2ResourceServerAutoConfiguration.class, OAuth2ClientWebSecurityAutoConfiguration.class,
         ManagementWebSecurityAutoConfiguration.class, SecurityAutoConfiguration.class, ServletWebSecurityAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class}, after = DubboAutoConfiguration.class)
+        UserDetailsServiceAutoConfiguration.class})
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ConditionalOnClass(BearerTokenAuthenticationToken.class)
 @ConditionalOnProperty("spring.security.oauth2.resourceserver.jwt.issuer-uri")
@@ -163,27 +157,5 @@ public class FleetResourceServerAutoConfiguration {
         http.exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(errors).accessDeniedHandler(errors));
         http.addFilterAfter(new FleetSecurityContextFilter(), BearerTokenAuthenticationFilter.class);
         return http.build();
-    }
-
-    /**
-     * 本服务不提供 {@link SecurityContextRpcService} 时，经 Dubbo 引用 user 服务的实现。只在 Dubbo 已启用
-     * （{@code @EnableDubbo} 或 Dubbo 自动配置注册了引用注解处理器）时创建；没有引用也没有本地实现时，令牌用户按不存在处理（401）。
-     */
-    @Configuration(proxyBeanMethods = false)
-    @ConditionalOnClass(ReferenceBean.class)
-    @ConditionalOnBean(ReferenceAnnotationBeanPostProcessor.class)
-    static class DubboSecurityContextConfiguration {
-
-        /**
-         * user 服务的业务上下文接口；参数沿用各服务既有引用的写法（不在启动时检查、首次调用才连接、不重试、3 秒超时、跟随灰度路由）。
-         *
-         * @return Dubbo 引用
-         */
-        @Bean
-        @ConditionalOnMissingBean(SecurityContextRpcService.class)
-        @DubboReference(check = false, lazy = true, timeout = 3000, retries = 0, parameters = {"traffic.canary.enabled", "true"})
-        public ReferenceBean<SecurityContextRpcService> securityContextRpcService() {
-            return new ReferenceBean<>();
-        }
     }
 }

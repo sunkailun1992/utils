@@ -93,6 +93,7 @@ class FleetResourceServerDubboReferenceTest {
             DubboRelaxedBinding2AutoConfiguration.class,
             DubboAutoConfiguration.class,
             FleetResourceServerAutoConfiguration.class,
+            FleetSecurityContextDubboAutoConfiguration.class,
             OAuth2ResourceServerAutoConfiguration.class,
             SecurityAutoConfiguration.class,
             ServletWebSecurityAutoConfiguration.class
