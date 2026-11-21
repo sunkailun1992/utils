@@ -112,6 +112,20 @@ RETIRED_KEYS = {
 }
 
 
+# 服务连 Nacos 的账号只引用私有环境、不带默认值：缺值时启动即失败，不能静默回落到默认账号（默认值 nacos 即管理员，CWE-1392）。
+NACOS_CREDENTIALS = {"nacos-username": "${GITHUB_NACOS_USERNAME}", "nacos-password": "${GITHUB_NACOS_PASSWORD}"}
+
+
+def check_nacos_credentials(value, file):
+    custom = value["custom"]
+    for key, expected in NACOS_CREDENTIALS.items():
+        assert custom.get(key) == expected, f"{file}：custom.{key} 必须写成 {expected}，不带默认值"
+    nacos = value["spring"]["cloud"]["nacos"]
+    for kind in ("config", "discovery"):
+        assert nacos[kind].get("username") == "${custom.nacos-username}", f"{file}：spring.cloud.nacos.{kind}.username"
+        assert nacos[kind].get("password") == "${custom.nacos-password}", f"{file}：spring.cloud.nacos.{kind}.password"
+
+
 def check_retired_keys(config):
     found = []
     for data_id, paths in RETIRED_KEYS.items():
@@ -490,6 +504,7 @@ def check():
             assert value["custom"]["nacos-ip"].startswith(
                 "${GITHUB_NACOS_DEV_SERVER_ADDR:${GITHUB_NACOS_SERVER_ADDR:"), file
             assert "cfbf4c42-" not in text and "${NACOS_NAMESPACE" not in text, file
+            check_nacos_credentials(value, file)
             nacos = value["spring"]["cloud"]["nacos"]
             for kind in ("config", "discovery"):
                 assert nacos[kind]["namespace"] == "${custom.namespace}", file

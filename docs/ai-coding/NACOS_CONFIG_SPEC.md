@@ -25,7 +25,7 @@
 | 本地引导 | `application*.yml`，私有 `config/application-dev.yml` | 连接 Nacos 前需要的服务与环境入口。私有文件已忽略且未跟踪，兼容旧 `.properties` |
 | 共享变量 | `reuse-configuration.yaml` | 跨文件引用的中间件地址（含 RocketMQ 的 `custom.infra-rocketmq-host`、`custom.infra-rocketmq-port`）、Dubbo 分组等 `custom.*` 变量 |
 | 共享基础设施 | `redis.yaml`、`dubbo.yaml`、`mybatis-plus.yaml`、`seata.yaml` | 中间件连接、隔离边界及模块开关 |
-| 安全与可观测性 | `security-auth.yaml`、`actuator.yaml`、`logging.yml`、`traffic-governance.yaml`、`local-canary.yaml`、`swagger.yaml` | 认证/租户、管理端点、日志、流量治理和本地灰度授权 |
+| 安全与可观测性 | `security-auth.yaml`、`actuator.yaml`、`logging.yml`、`traffic-governance.yaml`、`local-canary.yaml`、`swagger.yaml` | 数据权限/租户、管理端点、日志、流量治理和本地灰度授权 |
 | 服务配置 | `{service}-spring.yaml` | 同一服务的数据源地址与账号（`spring.datasource.dynamic.datasource.master/gray` 的 `url`、`username`、`password`、`driver-class-name`；连接池与 Seata 参数在服务 `application.yml`）、模型选择、路由及服务专属参数；Google 凭据、模型与可选原生代理入口由 `ai-agent-spring.yaml` 显式维护 |
 
 分类是维护索引，不是新的目录或 group。当前保留 21 个活跃 dataId 和 `DEFAULT_GROUP`；经单独授权并验证后，5 个服务专属文件合并到相邻的 `{service}-spring.yaml`，3 个空服务文件移除。没有导入或读取方的 dataId 与键按用户要求删除，清单与原因见分类索引的「退役项」和 `retired-dataids.json`。不得在纯注释任务中擅自再次调整结构。
@@ -35,7 +35,7 @@
 - 相同配置职责和完整键的归属必须明确，不能靠未说明的重复键覆盖完成迁移；绑定类、消费者、引用关系与必要覆盖顺序一并记录。
 - `reuse-configuration.yaml` 只承载共享变量；Nacos 登录配置来自本地引导，数据库与模型凭据通过私有环境渲染到对应 dataId，不能为省事集中到公开文档。
 - 本机私有 `config/application-dev.yml` 首选用于 Nacos 引导。Spring 同目录读到旧 `.properties` 时，对同名属性优先使用 properties。备份旧文件时移出配置搜索路径。服务器托管 Jar 继续使用服务器私有 env。
-- `storage.yaml` 已退役删除；存储连接和策略在 AI 控制台数据库管理，根密钥仅由服务 OS 环境提供。个人服务不导入公司的 OSS/SMS/钉钉/医疗业务配置。`security-jwt.yaml`（共享签名密钥）第5阶段起退役：各服务改为 Keycloak 资源服务器，签发方与受众在 `{service}-spring.yaml` 的 `spring.security.oauth2.resourceserver.*`；`security-auth.yaml` 维护认证/租户与数据权限规则。
+- `storage.yaml` 已退役删除；存储连接和策略在 AI 控制台数据库管理，根密钥仅由服务 OS 环境提供。个人服务不导入公司的 OSS/SMS/钉钉/医疗业务配置。`security-jwt.yaml`（共享签名密钥）第5阶段起退役：各服务改为 Keycloak 资源服务器，签发方与受众在 `{service}-spring.yaml` 的 `spring.security.oauth2.resourceserver.*`；`security-auth.yaml` 维护数据权限与租户规则。
 - 命名空间隔离之外，继续保持现有数据库、Redis 库号、Dubbo group、RAG 的 Qdrant collection 和对象存储前缀边界。注释不得暗改这些实际值。
 - RocketMQ 不建共享的 `rocketmq.yaml`：每个服务的账号不同，`rocketmq.name-server`、`rocketmq.producer.*` 或 `rocketmq.consumer.*` 与 `fleet.mq.topic.*`、`fleet.mq.group.*` 放各自的 `{service}-spring.yaml`，口令由私有 `GITHUB_ROCKETMQ_*` 渲染。键的写法见 [消息队列规范](MQ_SPEC.md)。
 - `ai-memory.yaml`、`message.yaml`、`report.yaml` 的空映射已从当前模板与 imports 移除；`ai.yaml`、`ai-agent.yaml`、`mcp.yaml`、`rag.yaml`、`user.yaml` 的参数统一由对应 `{service}-spring.yaml` 提供。旧远端项须在消费者切换验证后清理，不能先删导致旧服务刷新缺配置。

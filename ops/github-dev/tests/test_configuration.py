@@ -289,6 +289,26 @@ class NacosOrganizationTests(unittest.TestCase):
             check_catalog(templates, catalog, retired, {"service.yaml": {"service"}})
 
 
+class NacosCredentialTests(unittest.TestCase):
+    """服务连 Nacos 的账号只从私有环境来；缺值必须启动失败，不能回落到默认账号（默认值 nacos 就是管理员）。"""
+
+    @staticmethod
+    def profile(username, password):
+        return {"custom": {"nacos-username": username, "nacos-password": password},
+                "spring": {"cloud": {"nacos": {kind: {"username": "${custom.nacos-username}",
+                                                      "password": "${custom.nacos-password}"}
+                                               for kind in ("config", "discovery")}}}}
+
+    def test_credentials_that_only_reference_the_private_environment_pass(self):
+        configuration.check_nacos_credentials(
+            self.profile("${GITHUB_NACOS_USERNAME}", "${GITHUB_NACOS_PASSWORD}"), "svc/application-dev.yml")
+
+    def test_a_default_account_fallback_is_rejected(self):
+        with self.assertRaisesRegex(AssertionError, r"custom\.nacos-username"):
+            configuration.check_nacos_credentials(
+                self.profile("${GITHUB_NACOS_USERNAME:nacos}", "${GITHUB_NACOS_PASSWORD}"), "svc/application-dev.yml")
+
+
 class RetiredKeyTests(unittest.TestCase):
     """第5阶段退役的键（自签令牌、共享密钥、服务签名与旧 OAuth 设置）不得留在模板里。"""
 

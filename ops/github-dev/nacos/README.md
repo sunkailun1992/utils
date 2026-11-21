@@ -26,7 +26,7 @@
 | [actuator.yaml](DEFAULT_GROUP/actuator.yaml) | 管理端点访问令牌、暴露范围与健康详情策略 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [logging.yml](DEFAULT_GROUP/logging.yml) | 全局日志等级与安全结构化 HTTP/AI 投影白名单 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [local-canary.yaml](DEFAULT_GROUP/local-canary.yaml) | 本地灰度标签、就绪标记和授权，只有 dev 导入 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
-| [security-auth.yaml](DEFAULT_GROUP/security-auth.yaml) | 认证来源、数据权限与租户隔离 | ai-memory、mcp、message、rag、report、user |
+| [security-auth.yaml](DEFAULT_GROUP/security-auth.yaml) | 数据权限与租户隔离 | ai-memory、mcp、message、rag、report、user |
 | [swagger.yaml](DEFAULT_GROUP/swagger.yaml) | OpenAPI 文档和 Swagger UI 暴露开关 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [traffic-governance.yaml](DEFAULT_GROUP/traffic-governance.yaml) | 灰度治理开关与服务发现泳道元数据 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 
@@ -34,15 +34,15 @@
 
 | dataId | 用途 | 当前 dev 导入服务 |
 |---|---|---|
-| [ai-agent-spring.yaml](DEFAULT_GROUP/ai-agent-spring.yaml) | Agent 模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择 | ai-agent |
+| [ai-agent-spring.yaml](DEFAULT_GROUP/ai-agent-spring.yaml) | Agent 模型、注册、Prompt 同步、Keycloak 资源服务器和 Spring AI 模型实现选择 | ai-agent |
 | [ai-memory-spring.yaml](DEFAULT_GROUP/ai-memory-spring.yaml) | ai-memory 的主/灰度数据源；均引用个人 schema | ai-memory |
-| [ai-spring.yaml](DEFAULT_GROUP/ai-spring.yaml) | AI 主/灰度数据源、演示种子、Agent 发现和客户端签名 | ai |
+| [ai-spring.yaml](DEFAULT_GROUP/ai-spring.yaml) | AI 主/灰度数据源、演示种子、Agent 发现与调用 Agent 的令牌交换 | ai |
 | [gateway-spring.yaml](DEFAULT_GROUP/gateway-spring.yaml) | 网关路由、Redis 限流和浏览器 CORS 白名单 | gateway |
-| [mcp-spring.yaml](DEFAULT_GROUP/mcp-spring.yaml) | MCP 主/灰度数据源、Agent 注册和 OAuth 资源服务器 | mcp |
+| [mcp-spring.yaml](DEFAULT_GROUP/mcp-spring.yaml) | MCP 主/灰度数据源、Agent 注册与 Keycloak 资源服务器 | mcp |
 | [message-spring.yaml](DEFAULT_GROUP/message-spring.yaml) | message 的主/灰度数据源；均引用个人 schema | message |
 | [rag-spring.yaml](DEFAULT_GROUP/rag-spring.yaml) | RAG 主/灰度数据源、独立向量集合、嵌入模型和解析/检索引擎 | rag |
 | [report-spring.yaml](DEFAULT_GROUP/report-spring.yaml) | report 的主/灰度数据源；均引用个人 schema | report |
-| [user-spring.yaml](DEFAULT_GROUP/user-spring.yaml) | 用户服务主/灰度数据源与 OAuth 授权服务器公开入口 | user |
+| [user-spring.yaml](DEFAULT_GROUP/user-spring.yaml) | 用户服务主/灰度数据源、Keycloak 资源服务器与管理客户端 | user |
 
 ## 远端值以远端为准的项
 
