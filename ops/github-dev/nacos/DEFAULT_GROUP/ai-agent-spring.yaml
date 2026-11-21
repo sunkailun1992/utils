@@ -1,6 +1,6 @@
 # 配置分类：服务配置
 # dataId：ai-agent-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：Agent 数据源（只放 Seata AT 的 undo_log）、模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择。
+# 用途：Agent 数据源（只放 Seata AT 的 undo_log）、模型、注册、Prompt 同步、Keycloak 资源服务器和 Spring AI 模型实现选择。
 # 导入服务：ai-agent。
 # 维护：DeepSeek/Qwen 走 LiteLLM 网关，网关地址与 ${GITHUB_*_API_KEY} 运行期占位符以远端为准，发布须用 render_nacos.py --remote/--keep-remote 保值渲染；真实凭据不进 Git。
 
@@ -125,14 +125,6 @@ ai:
       password: ${custom.nacos-password:}
       # 注册信息对调用方暴露的基址；必须是调用方可达的网关入口。
       public-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
-    # 调用方服务身份校验。
-    security:
-      # 当前 Agent 服务提供方编码，参与服务身份验证。
-      provider-code: github-agent
-      # 允许调用的客户端 ID；与 AI 侧 client-id 配套，多个值按绑定类型配置。
-      allowed-client-ids: ${GITHUB_AGENT_CLIENT_ID:github-ai}
-      # 签名请求体的最大字节数；33554432 字节为 32 MiB。
-      max-body-bytes: 33554432
     # Google 原生接口的 Agent 专属参数，由 ai-agent 的 Google 流式传输配置读取。
     google:
       # 可选 Google Developer 原生 HTTP(S) 基址，无单位；代理路径止于 /gemini、不带 /v1beta，空值保持 SDK 官方入口。

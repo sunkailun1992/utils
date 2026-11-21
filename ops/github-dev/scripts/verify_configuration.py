@@ -105,6 +105,7 @@ def check_local_canary_template(source):
 RETIRED_KEYS = {
     "security-auth.yaml": ("security.auth",),
     "ai-spring.yaml": ("ai.agent-client.auth",),
+    "ai-agent-spring.yaml": ("ai.agent.security",),
     "mcp-spring.yaml": ("mcp.oauth",),
     "rag-spring.yaml": ("rag.engine.api-key",),
     "user-spring.yaml": ("oauth",),

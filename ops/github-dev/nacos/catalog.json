@@ -20,7 +20,7 @@
     },
     {
       "dataId": "ai-agent-spring.yaml",
-      "description": "Agent 数据源（只放 Seata AT 的 undo_log）、模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "Agent 数据源（只放 Seata AT 的 undo_log）、模型、注册、Prompt 同步、Keycloak 资源服务器和 Spring AI 模型实现选择；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "ai-agent"
