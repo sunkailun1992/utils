@@ -6,13 +6,13 @@
 
 # utils 安全组件参数。
 security:
-  # 身份来源：请求头直传与 JWT 二选一或并用。
+  # 身份来源：只有第5阶段之前的旧版 utils（1.x）读取；utils 2.0 起认证由 Keycloak 资源服务器负责，不读这一段，切换完成后删除（任务 23）。
   auth:
-    # 启用公共认证上下文处理；不替代各接口的权限判断。
+    # 旧版：启用公共认证上下文处理；不替代各接口的权限判断。
     enabled: true
-    # 关闭从普通请求头直接构造身份，避免伪造身份头。
+    # 旧版：关闭从普通请求头直接构造身份，避免伪造身份头。
     header-enabled: false
-    # 启用 JWT 身份解析，密钥和 issuer 见 security-jwt.yaml。
+    # 旧版：启用共享密钥 JWT 身份解析（已退役的 security-jwt.yaml）。
     jwt-enabled: true
   # 数据权限：按用户、部门归属列追加查询条件。
   data-permission:

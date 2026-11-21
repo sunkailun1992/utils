@@ -95,6 +95,12 @@
       "replacement": null,
       "reason": "AI 1.6.7 起存储连接与策略归 AI 控制台数据库，原先仅留作旧制品回滚；无服务导入、无代码读取；按「没用的全部删除」退役，Git 外私有快照保留，恢复须重新发布并恢复导入。",
       "kind": "unused-retirement"
+    },
+    {
+      "dataId": "security-jwt.yaml",
+      "replacement": null,
+      "reason": "第5阶段各服务改为 Keycloak 资源服务器（utils 2.0 起），签发方与受众在 {service}-spring.yaml 的 spring.security.oauth2.resourceserver.*，共享签名密钥不再使用；源码已无服务导入、无代码读取。线上 dataId 在切换完成后删除（第5阶段任务 23），Git 外私有快照保留。",
+      "kind": "unused-retirement"
     }
   ]
 }

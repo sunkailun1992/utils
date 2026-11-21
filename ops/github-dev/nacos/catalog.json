@@ -189,16 +189,6 @@
       ]
     },
     {
-      "dataId": "security-jwt.yaml",
-      "description": "人员访问 JWT 的签名密钥与签发方；个人 github-dev 配置，凭据由私有环境注入。",
-      "category": "安全与可观测性",
-      "consumers": [
-        "ai-memory",
-        "message",
-        "report"
-      ]
-    },
-    {
       "dataId": "swagger.yaml",
       "description": "OpenAPI 文档和 Swagger UI 暴露开关；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "安全与可观测性",
