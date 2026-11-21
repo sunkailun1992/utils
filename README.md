@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:2.0.2`
+- 发布坐标：`com:utils:2.0.3`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -191,3 +191,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `2.0.1` 给出站取令牌加超时：访问 Keycloak 令牌端点缺省连接 5 秒、读取 10 秒（`fleet.security.oauth2.token-endpoint.*`）。此前 HTTP 客户端库不限读取时间，Keycloak 卡住时取令牌的请求与线程会一直挂着；超时与 Keycloak 拒绝一样按没取到令牌处理，不调用下游。公共 API 只增不改。
 
 `2.0.2` 给 `FleetOAuth2Clients` 加 `bearerToken(注册ID)`：不经 `RestClient`/`WebClient` 的客户端（如 rag 调 RAG 引擎用的 JDK `HttpClient`）按同样的主体与缓存规则取访问令牌，没取到就报错，即 Spring Security 文档里直接使用 `OAuth2AuthorizedClientManager` 的写法。公共 API 只增不改。
+
+`2.0.3` 补全受保护资源元数据（RFC 9728）：Spring Security 7 在每条资源服务器链上发布 `/.well-known/oauth-protected-resource`（资源标识按取元数据的地址推出，401 质询的 `resource_metadata` 指向它），此前元数据里没有授权服务器，客户端无从发现去哪里取令牌；现在默认链声明授权服务器为 `issuer-uri`（Keycloak 域地址）。mcp 按 MCP 授权规范靠它让客户端发现 Keycloak。公共 API 不变。

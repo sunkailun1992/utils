@@ -126,12 +126,14 @@ public class FleetResourceServerAutoConfiguration {
      * @param jwtDecoder Spring Boot 按 issuer-uri 创建的解码器
      * @param converter  令牌转换器
      * @param properties utils 资源服务器配置
+     * @param resourceServer Spring Boot 的资源服务器配置（签发方即 Keycloak 域地址）
      * @return 过滤链
      */
     @Bean
     @Order(SecurityFilterProperties.BASIC_AUTH_ORDER)
     public SecurityFilterChain fleetApiSecurityFilterChain(HttpSecurity http, JwtDecoder jwtDecoder,
-                                                           FleetJwtAuthenticationConverter converter, FleetOAuth2Properties properties) {
+                                                           FleetJwtAuthenticationConverter converter, FleetOAuth2Properties properties,
+                                                           OAuth2ResourceServerProperties resourceServer) {
         FleetSecurityErrorHandler errors = new FleetSecurityErrorHandler();
         http.csrf(csrf -> csrf.disable());
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -139,8 +141,13 @@ public class FleetResourceServerAutoConfiguration {
             properties.getPermitPaths().forEach(path -> registry.requestMatchers(PathPatternRequestMatcher.pathPattern(path)).permitAll());
             registry.anyRequest().access(new FleetAuthorizationManager(properties.getRequiredAzp()));
         });
-        http.oauth2ResourceServer(resourceServer -> resourceServer
+        String issuer = resourceServer.getJwt().getIssuerUri();
+        http.oauth2ResourceServer(oauth2 -> oauth2
                 .jwt(jwt -> jwt.decoder(new FailClosedJwtDecoder(jwtDecoder)).jwtAuthenticationConverter(converter))
+                // RFC 9728：Spring Security 7 在每条资源服务器链上发布 /.well-known/oauth-protected-resource（资源标识按请求推出），
+                // 这里声明授权服务器就是 Keycloak 签发方，客户端据此发现去哪里取令牌。
+                .protectedResourceMetadata(metadata -> metadata.protectedResourceMetadataCustomizer(
+                        builder -> builder.authorizationServer(issuer)))
                 .authenticationEntryPoint(errors)
                 .accessDeniedHandler(errors)
                 .withObjectPostProcessor(new ObjectPostProcessor<BearerTokenAuthenticationFilter>() {

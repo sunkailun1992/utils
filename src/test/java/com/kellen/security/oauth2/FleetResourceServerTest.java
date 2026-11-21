@@ -106,6 +106,35 @@ class FleetResourceServerTest {
                 .andExpect(jsonPath("$.code").value("A0220"));
     }
 
+    /**
+     * RFC 9728：Spring Security 7 在每条资源服务器过滤链上发布受保护资源元数据，授权服务器必须是 Keycloak 签发方，
+     * 资源标识按取元数据的地址推出（插在路径前的后缀即资源路径），免认证可读。
+     */
+    @Test
+    void protectedResourceMetadataListsKeycloakAsAuthorizationServer() throws Exception {
+        mockMvc.perform(get("/.well-known/oauth-protected-resource/api/probe"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resource").value("http://localhost/api/probe"))
+                .andExpect(jsonPath("$.authorization_servers.length()").value(1))
+                .andExpect(jsonPath("$.authorization_servers[0]").value(KEYCLOAK.issuer()))
+                .andExpect(jsonPath("$.bearer_methods_supported[0]").value("header"));
+        mockMvc.perform(get("/.well-known/oauth-protected-resource"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resource").value("http://localhost"))
+                .andExpect(jsonPath("$.authorization_servers[0]").value(KEYCLOAK.issuer()));
+    }
+
+    /**
+     * RFC 9728 §5.1：401 的 Bearer 质询带元数据地址，客户端据此找到授权服务器。
+     */
+    @Test
+    void missingTokenChallengePointsToProtectedResourceMetadata() throws Exception {
+        mockMvc.perform(get("/api/probe"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string("WWW-Authenticate",
+                        containsString("resource_metadata=\"http://localhost/.well-known/oauth-protected-resource\"")));
+    }
+
     @Test
     void wrongIssuerIs401() throws Exception {
         provider.enabledUser("u1", "t1", "d1", List.of());
