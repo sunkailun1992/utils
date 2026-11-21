@@ -117,8 +117,10 @@ class NacosClient:
         self.token = None
         # 开发网直接连接，不向环境代理发送私有配置或登录凭据。
         self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
-        username, password = environment.get("GITHUB_NACOS_USERNAME"), environment.get("GITHUB_NACOS_PASSWORD")
-        require(bool(username) and bool(password), "私有环境缺少 Nacos 登录凭据")
+        # Nacos 开启客户端鉴权后，服务账号只给服务；运维脚本只用管理员账号，不回退到服务账号。
+        username = environment.get("GITHUB_NACOS_ADMIN_USERNAME")
+        password = environment.get("GITHUB_NACOS_ADMIN_PASSWORD")
+        require(bool(username) and bool(password), "私有环境缺少 Nacos 管理员凭据（GITHUB_NACOS_ADMIN_*）")
         login = self._request("POST", "/v3/auth/user/login", form={"username": username, "password": password})
         require(isinstance(login, dict) and isinstance(login.get("accessToken"), str)
                 and login["accessToken"] and not re.search(r"[\r\n]", login["accessToken"]), "Nacos 登录响应无效")

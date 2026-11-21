@@ -21,8 +21,9 @@ public class GithubNacosConfigSync {
         properties.setProperty("serverAddr", server);
         properties.setProperty("namespace", "github-dev");
         properties.setProperty("enableRemoteSyncConfig", "true");
+        // 发布与校验用 Nacos 管理员账号；服务账号只给服务。
         for (String key : List.of("username", "password")) {
-            String value = System.getenv("GITHUB_NACOS_" + key.toUpperCase());
+            String value = System.getenv("GITHUB_NACOS_ADMIN_" + key.toUpperCase());
             if (value != null && !value.isBlank()) properties.setProperty(key, value);
         }
         ConfigService client = NacosFactory.createConfigService(properties);

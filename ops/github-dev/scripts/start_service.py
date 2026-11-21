@@ -26,6 +26,12 @@ def private_environment(path):
     return values
 
 
+def service_environment(base, values):
+    """服务进程的环境：继承的环境加私有值，固定 dev 与 github-dev；Nacos 管理员账号一律不给服务。"""
+    merged = {**base, **values, "APP_ENV": "dev", "GITHUB_NACOS_DEV_NAMESPACE": "github-dev"}
+    return {key: value for key, value in merged.items() if not key.startswith("GITHUB_NACOS_ADMIN_")}
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("service", choices=SERVICES)
@@ -38,7 +44,6 @@ if __name__ == "__main__":
         raise ValueError("个人 dev 启动入口只允许 github-dev namespace")
     if not values.get("GITHUB_NACOS_SERVER_ADDR"):
         raise ValueError("缺少 GITHUB_NACOS_SERVER_ADDR")
-    values.update(APP_ENV="dev", GITHUB_NACOS_DEV_NAMESPACE="github-dev")
     repo = args.repos_root / args.service
     jars = sorted(p for p in (repo / "build/libs").glob("*.jar") if not p.name.endswith("-plain.jar"))
     if len(jars) != 1:
@@ -46,4 +51,4 @@ if __name__ == "__main__":
     command = ["java", "-jar", str(jars[0])]
     print(f"{args.service}: profile=dev, namespace=github-dev; 私有值不输出", flush=True)
     if not args.dry_run:
-        raise SystemExit(subprocess.call(command, cwd=repo, env={**os.environ, **values}))
+        raise SystemExit(subprocess.call(command, cwd=repo, env=service_environment(os.environ, values)))

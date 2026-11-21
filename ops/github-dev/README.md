@@ -12,6 +12,7 @@
 - `~/.config/kellen-github/nacos-rendered/DEFAULT_GROUP/`：包含真实连接值及通用模型密钥的私有渲染结果，文件权限 `0600`。禁止复制到仓库或 Wiki。
 - 模型密钥经用户明确确认沿用其通用自有密钥；没有复制医院、患者、问卷、报告模板、企微或设备业务配置。微信应用身份未因模型密钥授权而复制。
 - Nacos 引导只接受 `GITHUB_NACOS_*`，不再回落到旧 `NACOS_NAMESPACE`。Spring discovery/config、Dubbo 与未来启用的 AI SDK namespace 都引用同一个 `custom.namespace`。
+- Nacos 开启客户端鉴权（第5阶段）后两类账号分开：服务用 `GITHUB_NACOS_USERNAME`/`GITHUB_NACOS_PASSWORD`（`github-dev-app`，只对 `github-dev` 命名空间读写）；本目录的盘点、目录维护与配置同步脚本只用 `GITHUB_NACOS_ADMIN_USERNAME`/`GITHUB_NACOS_ADMIN_PASSWORD`，不回退到服务账号，`start_service.py` 也不把管理员账号传给服务进程。Seata 服务端另有只对 public 命名空间 `SEATA_GROUP` 读写的 `seata-server` 账号。口令都只在私有文件里。
 - Dubbo 使用独立 `GITHUB_DEV_DUBBO` 分组；Redis 使用独立逻辑库 `12`；RocketMQ 的主题、消费组、生产者组与账号统一用 `github-dev-` 前缀；RAG 使用 `github_dev_rag` collection。
 - ES 请求日志由 `elasticsearch.request-log-index=github_dev_request_log` 隔离，要求消费者使用 `com:utils:1.6.0` 并重启载入实体映射；仅切换 Nacos namespace 不会自动隔离 ES 索引。单节点开发索引使用零副本，既有 `request_log` 和 Kibana 系统索引保持原样。
 

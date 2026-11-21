@@ -128,8 +128,10 @@ class CatalogMaintenanceTests(unittest.TestCase):
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
+        # 与私有 dev.env 一致：服务账号与管理员账号并存，运维脚本只能用管理员账号。
         self.environment = {"GITHUB_NACOS_DEV_SERVER_ADDR": f"http://127.0.0.1:{self.server.server_port}",
-                            "GITHUB_NACOS_USERNAME": "unit-user", "GITHUB_NACOS_PASSWORD": "unit-password"}
+                            "GITHUB_NACOS_USERNAME": "unit-app", "GITHUB_NACOS_PASSWORD": "unit-app-password",
+                            "GITHUB_NACOS_ADMIN_USERNAME": "unit-user", "GITHUB_NACOS_ADMIN_PASSWORD": "unit-password"}
 
     def tearDown(self):
         self.server.shutdown()
@@ -251,6 +253,12 @@ class CatalogMaintenanceTests(unittest.TestCase):
         self.assertEqual(self.calls[0][1], "/nacos/v3/auth/user/login")
         self.assertEqual(self.calls[0][2]["username"], ["unit-user"])
         self.assertNotIn("unit-password", self.calls[0][1])
+
+    def test_admin_scripts_never_fall_back_to_service_account(self):
+        service_only = {key: value for key, value in self.environment.items() if "_ADMIN_" not in key}
+        with self.assertRaises(maintenance.MaintenanceError):
+            maintenance.NacosClient(service_only)
+        self.assertEqual(self.calls, [])
 
     def test_scope_mismatch_fails_before_any_login(self):
         with self.assertRaises(maintenance.MaintenanceError):
