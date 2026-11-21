@@ -7,6 +7,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.ClientAuthorizationException;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -14,6 +16,7 @@ import org.springframework.security.oauth2.client.web.client.OAuth2ClientHttpReq
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import reactor.core.publisher.Mono;
@@ -31,7 +34,9 @@ import java.util.List;
  *     没有当前用户时拒绝调用。</li>
  * </ul>
  *
- * <p>任何原因没取到令牌（Keycloak 拒绝或不可达、没有当前用户）都直接报错，绝不在不带令牌的情况下调用下游。</p>
+ * <p>任何原因没取到令牌（Keycloak 拒绝或不可达、没有当前用户）都直接报错，绝不在不带令牌的情况下调用下游。
+ * 不经 {@code RestClient}/{@code WebClient} 的客户端（如 JDK {@code HttpClient}）用 {@link #bearerToken(String)} 取令牌，
+ * 即 Spring Security 文档里直接使用 {@link OAuth2AuthorizedClientManager} 的写法，主体与缓存规则与上面两种相同。</p>
  *
  * @author 孙凯伦
  */
@@ -90,6 +95,26 @@ public class FleetOAuth2Clients {
             return next.exchange(request);
         };
         return principal.andThen(oauth2).andThen(guard);
+    }
+
+    /**
+     * 给其他 HTTP 客户端取访问令牌：客户端凭证以客户端为主体、在所有请求间共享，令牌交换以当前用户为主体，都按到期时间缓存。
+     *
+     * @param registrationId 客户端注册 ID
+     * @return 访问令牌原文，放进 {@code Authorization: Bearer} 请求头
+     * @throws IllegalArgumentException     注册 ID 不存在
+     * @throws ClientAuthorizationException 没取到令牌（Keycloak 拒绝、不可达或超时，令牌交换时没有当前用户）
+     */
+    public String bearerToken(String registrationId) {
+        ClientRegistration registration = registration(registrationId);
+        OAuth2AuthorizeRequest request = OAuth2AuthorizeRequest.withClientRegistrationId(registrationId)
+                .principal(principal(registration)).build();
+        OAuth2AuthorizedClient authorized = authorizedClientManager.authorize(request);
+        if (authorized == null || authorized.getAccessToken() == null || !StringUtils.hasText(authorized.getAccessToken().getTokenValue())) {
+            throw new ClientAuthorizationException(new OAuth2Error("unauthorized_client", "未取得访问令牌，已阻止调用下游", null),
+                    registrationId);
+        }
+        return authorized.getAccessToken().getTokenValue();
     }
 
     private ClientRegistration registration(String registrationId) {

@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:2.0.1`
+- 发布坐标：`com:utils:2.0.2`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -189,3 +189,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `2.0.0` 是第5阶段（一次发版，不兼容）：认证换成 Keycloak。服务配了 `spring.security.oauth2.resourceserver.jwt.issuer-uri` 就成为标准资源服务器（只收 RS256、校验签发方与受众，业务上下文经 Dubbo 向 user 服务取并缓存，`X-Tenant-Id` 在用户所属租户里选活动租户）；配了 `spring.security.oauth2.client.registration.*` 就有出站令牌（客户端凭证与 RFC 8693 令牌交换，`FleetOAuth2Clients`）。删除 jjwt、`JwtUtils`、自签令牌过滤器与旧认证开关，HTTP 头里的租户与身份一律不信任。用法见 [认证规范](docs/ai-coding/AUTH_SPEC.md)。
 
 `2.0.1` 给出站取令牌加超时：访问 Keycloak 令牌端点缺省连接 5 秒、读取 10 秒（`fleet.security.oauth2.token-endpoint.*`）。此前 HTTP 客户端库不限读取时间，Keycloak 卡住时取令牌的请求与线程会一直挂着；超时与 Keycloak 拒绝一样按没取到令牌处理，不调用下游。公共 API 只增不改。
+
+`2.0.2` 给 `FleetOAuth2Clients` 加 `bearerToken(注册ID)`：不经 `RestClient`/`WebClient` 的客户端（如 rag 调 RAG 引擎用的 JDK `HttpClient`）按同样的主体与缓存规则取访问令牌，没取到就报错，即 Spring Security 文档里直接使用 `OAuth2AuthorizedClientManager` 的写法。公共 API 只增不改。

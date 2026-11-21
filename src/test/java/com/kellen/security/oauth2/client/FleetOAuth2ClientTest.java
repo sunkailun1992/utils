@@ -291,6 +291,32 @@ class FleetOAuth2ClientTest {
     }
 
     @Test
+    void bearerTokenForPlainHttpClientsSharesTheClientCredentialsToken() {
+        // 不经 RestClient/WebClient 的客户端（JDK HttpClient）也从同一个已授权客户端管理器取令牌，到期前不重复申请。
+        String first = clients.bearerToken("github-rag-engine");
+        signIn("u-any", "subject-any");
+        String second = clients.bearerToken("github-rag-engine");
+        assertThat(first).startsWith("cc-").isEqualTo(second);
+        assertThat(TOKEN_REQUESTS).singleElement().satisfies(request -> assertThat(request).containsEntry("grant_type", "client_credentials"));
+    }
+
+    @Test
+    void bearerTokenForTokenExchangeNeedsTheCurrentUser() {
+        assertThatThrownBy(() -> clients.bearerToken("github-ai-agent")).isInstanceOf(ClientAuthorizationException.class);
+        assertThat(TOKEN_REQUESTS).isEmpty();
+        signIn("u-plain", "subject-plain");
+        assertThat(clients.bearerToken("github-ai-agent")).startsWith("exchanged-");
+        assertThat(TOKEN_REQUESTS).singleElement().satisfies(request -> assertThat(request).containsEntry("subject_token", "subject-plain"));
+    }
+
+    @Test
+    void bearerTokenFailsClosedWhenTheTokenEndpointRejects() {
+        rejectTokenRequests = true;
+        assertThatThrownBy(() -> clients.bearerToken("github-rag-engine")).isInstanceOf(ClientAuthorizationException.class);
+        assertThatThrownBy(() -> clients.bearerToken("github-missing")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void unknownRegistrationFailsFast() {
         assertThatThrownBy(() -> clients.interceptor("github-missing")).isInstanceOf(IllegalArgumentException.class);
     }

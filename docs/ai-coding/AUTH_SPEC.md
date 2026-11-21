@@ -81,7 +81,7 @@ fleet:
         read-timeout: 10s        # 等待令牌端点响应的超时（缺省值）
 ```
 
-- `FleetOAuth2Clients.interceptor(注册ID)` 给 `RestClient`，`webClientFilter(注册ID)` 给 `WebClient`。客户端凭证以客户端为主体，令牌在所有请求间共享、到期前不重复申请；令牌交换以当前用户为主体、按用户缓存，subject token 以 `access_token` 类型提交（Keycloak 标准令牌交换的要求）。
+- `FleetOAuth2Clients.interceptor(注册ID)` 给 `RestClient`，`webClientFilter(注册ID)` 给 `WebClient`，`bearerToken(注册ID)` 给其他 HTTP 客户端（如 JDK `HttpClient`，自己放进 `Authorization: Bearer`）。客户端凭证以客户端为主体，令牌在所有请求间共享、到期前不重复申请；令牌交换以当前用户为主体、按用户缓存，subject token 以 `access_token` 类型提交（Keycloak 标准令牌交换的要求）。
 - 没取到令牌（Keycloak 拒绝、不可达或超时，没有当前用户）一律报错，绝不在不带令牌的情况下调用下游。令牌端点缺省连接 5 秒、读取 10 秒超时（`token-endpoint.*`）：HTTP 客户端库缺省不限读取时间，不设就会在 Keycloak 卡住时一直挂着。
 - `WebClient` 的令牌交换从订阅时的安全上下文取当前用户：要在 servlet 请求线程里订阅，或用 `ServletOAuth2AuthorizedClientExchangeFilterFunction.authentication(...)` 显式传入。
 
