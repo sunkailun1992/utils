@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:2.0.4`
+- 发布坐标：`com:utils:2.0.5`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -195,3 +195,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `2.0.3` 补全受保护资源元数据（RFC 9728）：Spring Security 7 在每条资源服务器链上发布 `/.well-known/oauth-protected-resource`（资源标识按取元数据的地址推出，401 质询的 `resource_metadata` 指向它），此前元数据里没有授权服务器，客户端无从发现去哪里取令牌；现在默认链声明授权服务器为 `issuer-uri`（Keycloak 域地址）。mcp 按 MCP 授权规范靠它让客户端发现 Keycloak。公共 API 不变。
 
 `2.0.4` 修复业务上下文的 Dubbo 引用在消费服务里建不出来：引用原先写成资源服务器自动配置里的嵌套配置，消费服务的主类在 `com.kellen` 包、默认组件扫描覆盖 utils，嵌套配置被当成普通配置提前处理，早于 `@EnableDubbo` 登记引用注解处理器，条件判定不成立，除 user 外的服务把所有用户令牌按“用户不存在”拒绝（401）。现在由独立的 `FleetSecurityContextDubboAutoConfiguration`（排在 Dubbo 自动配置之后）创建；测试按消费服务的接线（`@EnableDubbo` 加组件扫描）复核，并约束 utils 登记的自动配置及其嵌套类都不是组件扫描的候选（Spring Boot 要求自动配置只由 imports 文件加载）。公共 API 不变。
+
+`2.0.5` 让业务上下文的 Dubbo 引用与各服务既有引用一样在启动时不初始化（`init = false`）：2.0.4 的引用沿用 Dubbo 默认在启动时初始化全部引用，没配注册中心的完整上下文测试（ai、ai-agent 的测试启动类）因此起不来（No such any registry to reference）；现在第一次需要业务上下文的请求才初始化并连接，初始化失败与调用失败一样按 user 服务不可用返回 503。测试覆盖不配注册中心时上下文照常启动、首个请求 503，以及本进程有提供方时首个请求才初始化并放行；user 服务里用不到的那个自引用也不再在启动时初始化。公共 API 不变。

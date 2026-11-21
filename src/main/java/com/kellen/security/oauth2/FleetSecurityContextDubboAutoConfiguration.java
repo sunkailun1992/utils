@@ -40,13 +40,16 @@ public class FleetSecurityContextDubboAutoConfiguration {
     }
 
     /**
-     * user 服务的业务上下文接口；参数沿用各服务既有引用的写法（不在启动时检查、首次调用才连接、不重试、3 秒超时、跟随灰度路由）。
+     * user 服务的业务上下文接口；参数沿用各服务既有引用的写法：启动时不初始化（{@code init = false}，Dubbo 默认在启动时初始化
+     * 全部引用，没配注册中心的上下文会因此起不来），第一次调用才初始化并连接，不在启动时检查提供方，不重试，3 秒超时，跟随灰度路由。
+     * 初始化失败（如没有注册中心）与调用失败一样，由转换器按 user 服务不可用返回 503。
      *
      * @return Dubbo 引用
      */
     @Bean
     @ConditionalOnMissingBean(SecurityContextRpcService.class)
-    @DubboReference(check = false, lazy = true, timeout = 3000, retries = 0, parameters = {"traffic.canary.enabled", "true"})
+    @DubboReference(init = false, check = false, lazy = true, timeout = 3000, retries = 0,
+            parameters = {"traffic.canary.enabled", "true"})
     public ReferenceBean<SecurityContextRpcService> securityContextRpcService() {
         return new ReferenceBean<>();
     }
