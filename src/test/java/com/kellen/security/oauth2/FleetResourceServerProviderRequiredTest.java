@@ -8,6 +8,7 @@ import org.springframework.boot.diagnostics.FailureAnalysis;
 import org.springframework.boot.diagnostics.FailureAnalyzer;
 import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.OAuth2ResourceServerAutoConfiguration;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.support.SpringFactoriesLoader;
@@ -54,6 +55,19 @@ class FleetResourceServerProviderRequiredTest {
                 .of(BeanFactory.class, new DefaultListableBeanFactory()).and(Environment.class, new StandardEnvironment());
         assertThat(SpringFactoriesLoader.forDefaultResourceLocation().load(FailureAnalyzer.class, arguments))
                 .hasAtLeastOneElementOfType(FleetSecurityContextProviderFailureAnalyzer.class);
+    }
+
+    /**
+     * 提供方在父上下文里也算：与转换器在请求时的查找口径一致（{@code ObjectProvider} 会连父上下文一起找）。
+     */
+    @Test
+    void providerInAParentContextCounts() {
+        try (AnnotationConfigApplicationContext parent = new AnnotationConfigApplicationContext()) {
+            parent.registerBean(SecurityContextRpcService.class,
+                    () -> (userId, tenantId) -> SecurityContextResult.of(SecurityContextResult.Status.USER_NOT_FOUND));
+            parent.refresh();
+            runner.withParent(parent).run(context -> assertThat(context).hasNotFailed());
+        }
     }
 
     @Test

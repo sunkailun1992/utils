@@ -1,5 +1,6 @@
 package com.kellen.security.oauth2;
 
+import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -111,7 +112,8 @@ public class FleetResourceServerAutoConfiguration {
 
     /**
      * 启动检查：资源服务器离不开业务上下文提供方，本服务既没有实现 {@link SecurityContextRpcService}、也没有 Dubbo 引用时启动失败，
-     * 不再照常启动后把每个用户令牌都当成用户不存在。只按 Bean 定义查类型，不提前初始化 Dubbo 引用（引用 {@code init = false}）。
+     * 不再照常启动后把每个用户令牌都当成用户不存在。只按 Bean 定义查类型，不提前初始化 Dubbo 引用（引用 {@code init = false}）；
+     * 连父上下文一起查，与转换器在请求时经 {@code ObjectProvider} 查找的口径一致。
      *
      * @param beanFactory Bean 工厂
      * @return 在全部单例创建之后执行的检查
@@ -119,7 +121,7 @@ public class FleetResourceServerAutoConfiguration {
     @Bean
     public SmartInitializingSingleton fleetSecurityContextProviderCheck(ListableBeanFactory beanFactory) {
         return () -> {
-            if (beanFactory.getBeanNamesForType(SecurityContextRpcService.class, true, false).length == 0) {
+            if (BeanFactoryUtils.beanNamesForTypeIncludingAncestors(beanFactory, SecurityContextRpcService.class, true, false).length == 0) {
                 throw new FleetSecurityContextProviderMissingException("资源服务器（已配置 spring.security.oauth2.resourceserver.jwt.issuer-uri）"
                         + "没有业务上下文提供方 SecurityContextRpcService：本服务既没有实现它，也没有启用 Dubbo 取得 user 服务的引用。");
             }
