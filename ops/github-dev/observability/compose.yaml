@@ -55,7 +55,7 @@ services:
       - ./generated/prometheus.json:/etc/prometheus/prometheus.json:ro
       - ./alerts.yaml:/etc/prometheus/alerts.yaml:ro
       - prometheus-data:/prometheus
-    secrets: [actuator_token, engine_token]
+    secrets: [actuator_token, prometheus_client_secret]
     mem_limit: 768m
     cpus: 0.5
     read_only: true
@@ -97,8 +97,8 @@ secrets:
     file: ./.private/otlp_token
   actuator_token:
     file: ./.private/actuator_token
-  engine_token:
-    file: ./.private/engine_token
+  prometheus_client_secret:
+    file: ./.private/prometheus_client_secret
   grafana_password:
     file: ./.private/grafana_password
 volumes:

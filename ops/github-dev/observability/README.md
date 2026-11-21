@@ -28,8 +28,8 @@ Java若运行在Mac，NAS上的Collector不能直接读Mac日志。`collector-ag
 ## 私有配置与启动前检查
 
 1. 将`.env.example`复制到Git忽略的`.env`，填写已核私网绑定和既有ES地址。地址不含内嵌凭据。API key仅私有环境提供，权限限新运行日志索引。
-2. 建立仅属主可遍历的`.private/`（0700），按现有权威配置提供`actuator_token`和`engine_token`；它们分别匹配当前服务运维令牌与Engine服务密钥，不能随机重置。另生成独立`otlp_token`和`grafana_password`，不回显或提交。Compose file secrets是只读bind，原文件0600可能让容器非root UID无法读取；给精确文件设置可读mode（例如受0700父目录保护的0444），或为容器UID设置专用ACL，并在目标实例验证，不能放宽整个私有目录。仅将需要的文件挂给对应容器。
-3. 私有`targets.json`从`targets.example.json`填真实地址。9服务必须完整；gateway和ai-agent使用受保护独立管理端口（示例17100/17310），不要把主端口或公网网关当作采集入口。其它服务仅受限私网可达。
+2. 建立仅属主可遍历的`.private/`（0700），按现有权威配置提供`actuator_token`和`prometheus_client_secret`：前者匹配当前服务运维令牌，不能随机重置；后者是Keycloak机密客户端`github-prometheus`的口令（Terraform输出`client_secrets.prometheus`，轮换后同步），Prometheus内置`oauth2`用它按客户端凭证向`keycloak_token_url`取令牌抓Engine `/metrics`（Engine只收`azp=github-prometheus`的令牌，没有共享密钥）。另生成独立`otlp_token`和`grafana_password`，不回显或提交。Compose file secrets是只读bind，原文件0600可能让容器非root UID无法读取；给精确文件设置可读mode（例如受0700父目录保护的0444），或为容器UID设置专用ACL，并在目标实例验证，不能放宽整个私有目录。仅将需要的文件挂给对应容器。
+3. 私有`targets.json`从`targets.example.json`填真实地址与Keycloak令牌端点（与Keycloak同编排时用内网`http://orb-keycloak:8080/realms/github-dev/protocol/openid-connect/token`，不经宿主端口）。9服务必须完整；gateway和ai-agent使用受保护独立管理端口（示例17100/17310），不要把主端口或公网网关当作采集入口。其它服务仅受限私网可达。
 4. 生成Prometheus配置，缺服务、URL/凭据/路径注入和未替换示例会失败：
 
 ```bash

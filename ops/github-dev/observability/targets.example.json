@@ -11,5 +11,6 @@
     "report": "JAVA_PRIVATE_HOST:7600",
     "mcp": "JAVA_PRIVATE_HOST:7700"
   },
-  "engine": "ENGINE_PRIVATE_HOST:18091"
+  "engine": "ENGINE_PRIVATE_HOST:18091",
+  "keycloak_token_url": "http://KEYCLOAK_PRIVATE_HOST:8080/realms/github-dev/protocol/openid-connect/token"
 }

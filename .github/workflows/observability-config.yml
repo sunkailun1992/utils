@@ -27,7 +27,7 @@ jobs:
         run: |
           python3 -m unittest discover -s . -p 'test_*.py' -v
           mkdir -m 700 .private
-          for name in otlp_token actuator_token engine_token grafana_password; do
+          for name in otlp_token actuator_token prometheus_client_secret grafana_password; do
             printf 'synthetic-fixture-only' > ".private/$name"
             chmod 444 ".private/$name"
           done
@@ -36,7 +36,8 @@ jobs:
           from pathlib import Path
           import render
           names = render.SERVICES
-          fixture = {'environment': 'github-dev', 'services': {name: f'127.0.0.1:{18000+i}' for i,name in enumerate(names)}, 'engine': '127.0.0.1:18091'}
+          token_url = 'http://keycloak.test:8080/realms/github-dev/protocol/openid-connect/token'
+          fixture = {'environment': 'github-dev', 'keycloak_token_url': token_url, 'services': {name: f'127.0.0.1:{18000+i}' for i,name in enumerate(names)}, 'engine': '127.0.0.1:18091'}
           Path('.private/targets.json').write_text(json.dumps(fixture))
           PY
           python3 render.py .private/targets.json --output generated/prometheus.json

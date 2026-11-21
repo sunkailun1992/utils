@@ -4,6 +4,7 @@ import ipaddress
 import json
 from pathlib import Path
 import re
+from urllib.parse import urlsplit
 
 SERVICES = ("gateway", "user", "message", "ai", "ai-agent", "ai-memory", "rag", "report", "mcp")
 
@@ -20,9 +21,27 @@ def address(value):
     return value
 
 
+def token_url(value):
+    """Keycloak令牌端点：只许无凭据、查询串与片段的http(s)地址，路径必须是OIDC令牌端点，拒绝未替换的示例。"""
+    if not isinstance(value, str) or "PRIVATE_HOST" in value:
+        raise ValueError("invalid token url")
+    parsed = urlsplit(value)
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.query
+        or parsed.fragment
+        or not re.fullmatch(r"/realms/[A-Za-z0-9_-]+/protocol/openid-connect/token", parsed.path)
+    ):
+        raise ValueError("invalid token url")
+    return value
+
+
 def render(inventory):
     """完整9服务和Engine各有一个目标，静态标签与URL分离。"""
-    if set(inventory) != {"environment", "services", "engine"}:
+    if set(inventory) != {"environment", "services", "engine", "keycloak_token_url"}:
         raise ValueError("inventory keys do not match schema")
     if inventory["environment"] != "github-dev" or set(inventory["services"]) != set(SERVICES):
         raise ValueError("inventory must contain all nine personal services")
@@ -41,7 +60,9 @@ def render(inventory):
         })
     jobs.append({
         "job_name": "fleet-rag-engine", "metrics_path": "/metrics", "scrape_timeout": "3s",
-        "authorization": {"type": "Bearer", "credentials_file": "/run/secrets/engine_token"},
+        # Engine只收Keycloak签给github-prometheus的RS256令牌；Prometheus内置oauth2按客户端凭证取令牌并在过期前续取。
+        "oauth2": {"client_id": "github-prometheus", "client_secret_file": "/run/secrets/prometheus_client_secret",
+                   "token_url": token_url(inventory["keycloak_token_url"])},
         "static_configs": [{"targets": [address(inventory["engine"])], "labels": {
             "application": "rag-engine", "environment": "github-dev"}}],
         "sample_limit": 10000, "label_limit": 30,
