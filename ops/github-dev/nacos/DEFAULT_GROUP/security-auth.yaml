@@ -1,19 +1,11 @@
 # 配置分类：安全与可观测性
 # dataId：security-auth.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：认证来源、数据权限与租户隔离。
+# 用途：数据权限与租户隔离。
 # 导入服务：ai-memory、mcp、message、rag、report、user。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
 # utils 安全组件参数。
 security:
-  # 身份来源：只有第5阶段之前的旧版 utils（1.x）读取；utils 2.0 起认证由 Keycloak 资源服务器负责，不读这一段，切换完成后删除（任务 23）。
-  auth:
-    # 旧版：启用公共认证上下文处理；不替代各接口的权限判断。
-    enabled: true
-    # 旧版：关闭从普通请求头直接构造身份，避免伪造身份头。
-    header-enabled: false
-    # 旧版：启用共享密钥 JWT 身份解析（已退役的 security-jwt.yaml）。
-    jwt-enabled: true
   # 数据权限：按用户、部门归属列追加查询条件。
   data-permission:
     # 启用数据权限拦截；只过滤下面列出的表，未写列名时用 utils 默认的本人列 create_by、部门列 create_dept。

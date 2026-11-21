@@ -79,8 +79,6 @@ rag:
     graph-status-timeout-millis: 3500
     # Python 引擎根地址，格式 http(s)://host:port，不含路径；github-dev 远端为 NAS 上的引擎，空值将明确降级/报错，不转回旧实现。
     base-url: ${GITHUB_RAG_ENGINE_URL:}
-    # Java 与 Python 一致的内部服务密钥，至少 32 字符；不使用浏览器 JWT，真实值只在远端与引擎侧，禁止提交。
-    api-key: ${GITHUB_RAG_ENGINE_API_KEY:}
     # 解析总超时，毫秒，1000–120000；应略大于引擎的解析总预算。
     parse-timeout-millis: 65000
     # 检索 HTTP 总超时，毫秒，100–3500；上游 Dubbo 为 5000 毫秒。

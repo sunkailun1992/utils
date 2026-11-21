@@ -101,6 +101,29 @@ def check_local_canary_template(source):
     assert value["traffic"]["governance"]["canary"]["enabled"] is True
 
 
+# 第5阶段退役的键：认证改由 Keycloak 资源服务器、客户端凭证与令牌交换负责后，下列键（含其下级键）已无读取方，模板不得再出现。
+RETIRED_KEYS = {
+    "security-auth.yaml": ("security.auth",),
+    "ai-spring.yaml": ("ai.agent-client.auth",),
+    "mcp-spring.yaml": ("mcp.oauth",),
+    "rag-spring.yaml": ("rag.engine.api-key",),
+    "user-spring.yaml": ("oauth",),
+}
+
+
+def check_retired_keys(config):
+    found = []
+    for data_id, paths in RETIRED_KEYS.items():
+        document = yaml_json(config[data_id])
+        for path in paths:
+            node = document
+            for part in path.split("."):
+                node = node.get(part) if isinstance(node, dict) else None
+            if node is not None:
+                found.append(f"{data_id}:{path}")
+    assert not found, f"模板仍含第5阶段退役的键：{', '.join(found)}"
+
+
 def check_catalog(config, catalog, retired, consumers):
     assert catalog["namespace"] == retired["namespace"] == "github-dev"
     assert catalog["group"] == retired["group"] == "DEFAULT_GROUP"
@@ -494,8 +517,8 @@ def check():
     check_storage_credential_scope({file.name: file.read_text() for file in CONFIG.iterdir()},
                                    json.loads((CONFIG.parent / "catalog.json").read_text()),
                                    json.loads((CONFIG.parent / "retired-dataids.json").read_text()))
+    check_retired_keys({file.name: file.read_text() for file in CONFIG.iterdir()})
     auth = yaml_json((CONFIG / "security-auth.yaml").read_text())
-    assert auth["security"]["auth"]["header-enabled"] is False
     assert auth["tenant"]["ignore-without-tenant"] is False
     inventory = migration_inventory(ROOT)
     sql = "\n".join(file.read_text() for service in DATABASE_SERVICES

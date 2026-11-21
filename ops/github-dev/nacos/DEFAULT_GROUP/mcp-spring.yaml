@@ -1,6 +1,6 @@
 # 配置分类：服务配置
 # dataId：mcp-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：MCP 主/灰度数据源、Agent 注册和 OAuth 资源服务器。
+# 用途：MCP 主/灰度数据源、Agent 注册与 Keycloak 资源服务器。
 # 导入服务：mcp。
 # 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
@@ -79,17 +79,3 @@ mcp:
       username: ${custom.nacos-username:}
       # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
       password: ${custom.nacos-password:}
-  # MCP 的 OAuth 保护。
-  oauth:
-    # 资源服务器：校验访问令牌并发布受保护资源元数据。
-    resource-server:
-      # 启用 OAuth 资源服务器校验，受保护接口必须验证访问令牌。
-      enabled: true
-      # 令牌签发方的公开入口，必须与授权服务器的 issuer 契约一致。
-      issuer: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
-      # OAuth 授权服务器公开地址，客户端通过该入口发现授权服务。
-      authorization-server: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
-      # MCP 面向客户端的公开基址，用于生成资源元数据地址。
-      external-base-url: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}
-      # 允许访问本 MCP 资源的 audience；需与授权服务器签发值一致。
-      audiences: ${GITHUB_GATEWAY_PUBLIC_URL:http://localhost:7100}/api/mcp

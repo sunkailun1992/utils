@@ -1,6 +1,6 @@
 # 配置分类：服务配置
 # dataId：ai-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：AI 主/灰度数据源、演示种子、Agent 发现和客户端签名。
+# 用途：AI 主/灰度数据源、演示种子、Agent 发现与调用 Agent 的令牌交换。
 # 导入服务：ai。
 # 维护：本轮迁移个人 PostgreSQL 数据源；其它业务值和顺序保持，凭据只在私有配置。
 
@@ -85,16 +85,6 @@ ai:
     username: ${custom.nacos-username:}
     # 连接认证密码；真实值由私有环境注入或引用，禁止写入 Git 和日志。
     password: ${custom.nacos-password:}
-  # 调用 Agent 的客户端设置。
-  agent-client:
-    # 服务身份签名。
-    auth:
-      # 启用 AI 调用 Agent 的服务身份签名；缺凭据时应拒绝调用。
-      enabled: true
-      # AI 调用方身份，需包含在 Agent 的 allowed-client-ids 中。
-      client-id: ${GITHUB_AGENT_CLIENT_ID:github-ai}
-      # 服务调用签名密钥；与人员 JWT 密钥分离，真实值不进 Git。
-      client-secret: ${GITHUB_AGENT_CLIENT_SECRET:}
 
 # utils 资源服务器与出站 OAuth2 的扩展配置（第5阶段起由 utils 2.0.0 读取）。
 fleet:

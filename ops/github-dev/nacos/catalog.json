@@ -36,7 +36,7 @@
     },
     {
       "dataId": "ai-spring.yaml",
-      "description": "AI 主/灰度数据源、演示种子、Agent 发现和客户端签名；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "AI 主/灰度数据源、演示种子、Agent 发现与调用 Agent 的令牌交换；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "ai"
@@ -83,7 +83,7 @@
     },
     {
       "dataId": "mcp-spring.yaml",
-      "description": "MCP 主/灰度数据源、Agent 注册和 OAuth 资源服务器；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "MCP 主/灰度数据源、Agent 注册与 Keycloak 资源服务器；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "mcp"
@@ -177,7 +177,7 @@
     },
     {
       "dataId": "security-auth.yaml",
-      "description": "认证来源、数据权限与租户隔离；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "数据权限与租户隔离；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "安全与可观测性",
       "consumers": [
         "ai-memory",
@@ -238,7 +238,7 @@
     },
     {
       "dataId": "user-spring.yaml",
-      "description": "用户服务主/灰度数据源与 OAuth 授权服务器公开入口；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "用户服务主/灰度数据源、Keycloak 资源服务器与管理客户端；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "user"

@@ -50,7 +50,7 @@
 
 - `ai.agent.deepseek/qwen.base-url`、`rag.vector.qwen-base-url` 指向 LiteLLM 网关；`generation-defaults-source` 为 `DEPLOYMENT`。
 - `${GITHUB_GOOGLE_API_KEY}`、`${GITHUB_DEEPSEEK_API_KEY}`、`${GITHUB_QWEN_API_KEY}`、`${GITHUB_RAG_QWEN_API_KEY}` 在远端保持原样，由服务进程的 OS 环境在运行期解析为各自的 virtual key。
-- `rag.engine.base-url`、`rag.engine.api-key`、`rag.vector.hybrid-write-enabled`、`rag.vector.default-knowledge-base` 取远端值。
+- `rag.engine.base-url`、`rag.vector.hybrid-write-enabled`、`rag.vector.default-knowledge-base` 取远端值。
 
 这两个文件不能用普通渲染发布，必须按下面的保值渲染发布，否则会把模板默认值或私有 env 里的直连凭据写回远端。
 

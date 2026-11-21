@@ -289,5 +289,19 @@ class NacosOrganizationTests(unittest.TestCase):
             check_catalog(templates, catalog, retired, {"service.yaml": {"service"}})
 
 
+class RetiredKeyTests(unittest.TestCase):
+    """第5阶段退役的键（自签令牌、共享密钥、服务签名与旧 OAuth 设置）不得留在模板里。"""
+
+    def test_phase5_retired_keys_are_absent_from_the_templates(self):
+        templates = {file.name: file.read_text() for file in configuration.CONFIG.iterdir()}
+        configuration.check_retired_keys(templates)
+
+    def test_a_retired_key_left_in_a_template_is_reported_by_path(self):
+        templates = {name: "kept: 1\n" for name in configuration.RETIRED_KEYS}
+        templates["rag-spring.yaml"] = "rag:\n  engine:\n    base-url: x\n    api-key: y\n"
+        with self.assertRaisesRegex(AssertionError, r"rag-spring\.yaml:rag\.engine\.api-key"):
+            configuration.check_retired_keys(templates)
+
+
 if __name__ == "__main__":
     unittest.main()
