@@ -1,5 +1,6 @@
 package com.kellen.security.oauth2;
 
+import com.kellen.security.oauth2.test.FakeIssuer;
 import jakarta.servlet.Filter;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 )
 class FleetResourceServerRequiredAzpTest {
 
-    static final TestKeycloak KEYCLOAK = TestKeycloak.start();
+    static final FakeIssuer KEYCLOAK = FakeIssuer.start();
 
     @DynamicPropertySource
     static void issuer(DynamicPropertyRegistry registry) {

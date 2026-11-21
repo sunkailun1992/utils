@@ -92,7 +92,7 @@ public final class SecurityContextResult implements Serializable {
          */
         OK,
         /**
-         * 令牌里的用户在 user 服务不存在（返回 401）。
+         * 令牌里的用户在 user 服务不存在，或还没关联 Keycloak 用户（账号未开通，返回 403）。
          */
         USER_NOT_FOUND,
         /**
@@ -102,6 +102,10 @@ public final class SecurityContextResult implements Serializable {
         /**
          * 用户不属于请求头指定的租户（返回 403）。
          */
-        TENANT_DENIED
+        TENANT_DENIED,
+        /**
+         * 令牌的 {@code sub} 与 user 服务给该用户登记的 Keycloak 用户不一致（返回 403）。只由资源服务器本地判定，提供方不返回。
+         */
+        SUBJECT_MISMATCH
     }
 }

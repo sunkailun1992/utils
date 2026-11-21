@@ -73,6 +73,13 @@ public class SecurityUser implements Serializable {
     private final List<String> tenantIds;
 
     /**
+     * user 服务给该用户登记的 Keycloak 用户 ID（访问令牌的 {@code sub}）；资源服务器据此核对令牌里的 {@code user_id}
+     * 确实属于这个 Keycloak 账号（OIDC Core §5.7：iss + sub 才是终端用户的稳定标识）。2.0.8 起由提供方填写，
+     * 旧版提供方或按消息还原的上下文为空。
+     */
+    private final String idpSubject;
+
+    /**
      * 构造完整的安全用户快照；空集合按空列表处理。
      *
      * @param userId           用户ID
@@ -84,6 +91,7 @@ public class SecurityUser implements Serializable {
      * @param authorities      权限码和角色码集合
      * @param enabled          账号是否启用
      * @param tenantIds        用户所属的全部租户ID
+     * @param idpSubject       user 服务登记的 Keycloak 用户 ID（访问令牌的 sub），可为空
      */
     @Builder(toBuilder = true)
     @JsonCreator
@@ -95,7 +103,8 @@ public class SecurityUser implements Serializable {
                         @JsonProperty("dataScopeDeptIds") List<String> dataScopeDeptIds,
                         @JsonProperty("authorities") List<String> authorities,
                         @JsonProperty("enabled") boolean enabled,
-                        @JsonProperty("tenantIds") List<String> tenantIds) {
+                        @JsonProperty("tenantIds") List<String> tenantIds,
+                        @JsonProperty("idpSubject") String idpSubject) {
         this.userId = userId;
         this.username = username;
         this.tenantId = tenantId;
@@ -105,6 +114,25 @@ public class SecurityUser implements Serializable {
         this.authorities = copy(authorities);
         this.enabled = enabled;
         this.tenantIds = copy(tenantIds);
+        this.idpSubject = idpSubject;
+    }
+
+    /**
+     * 构造不带 Keycloak 用户 ID 的完整快照（2.0.7 及更早的写法，保留源码兼容）。
+     *
+     * @param userId           用户ID
+     * @param username         用户名
+     * @param tenantId         活动租户ID
+     * @param deptId           部门ID
+     * @param dataScope        数据权限范围
+     * @param dataScopeDeptIds 数据权限部门ID集合
+     * @param authorities      权限码和角色码集合
+     * @param enabled          账号是否启用
+     * @param tenantIds        用户所属的全部租户ID
+     */
+    public SecurityUser(String userId, String username, String tenantId, String deptId, String dataScope,
+                        List<String> dataScopeDeptIds, List<String> authorities, boolean enabled, List<String> tenantIds) {
+        this(userId, username, tenantId, deptId, dataScope, dataScopeDeptIds, authorities, enabled, tenantIds, null);
     }
 
     /**

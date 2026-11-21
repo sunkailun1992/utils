@@ -1,0 +1,3 @@
+# 启动失败分析：资源服务器没有业务上下文提供方时给出原因与做法。
+org.springframework.boot.diagnostics.FailureAnalyzer=\
+com.kellen.security.oauth2.FleetSecurityContextProviderFailureAnalyzer

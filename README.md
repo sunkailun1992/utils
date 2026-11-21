@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:2.0.7`
+- 发布坐标：`com:utils:2.0.8`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -201,3 +201,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `2.0.6` 落实设计里的“受众默认 github-api”：服务没配 `spring.security.oauth2.resourceserver.jwt.audiences` 时，只收受众含 `github-api` 的令牌（`fleetDefaultAudienceValidator`，Spring Boot 按 issuer-uri 建解码器时装上容器里的 `OAuth2TokenValidator`），漏配不再变成不校验受众、接受本域发给别的服务的令牌；配了就照旧由 Spring Boot 校验。运维的 `verify_configuration` 同时要求配了签发方的模板显式写受众。第5阶段整体复查发现。公共 API 只增不改。
 
 `2.0.7` 新增 `com.kellen.security.TenantBoundary`：接口参数或请求体里点名的 `tenantId` 只能等于当前用户的活动租户（资源服务器按 `X-Tenant-Id` 经 user 核实后写入 `UserContextHolder`），平台超级管理员（`ROLE_PLATFORM_SUPER_ADMIN`）可以点名任一租户；不满足时抛 `AccessDeniedException`，回 403。服务在把请求里的租户写进 `TenantContextHolder` 之前先调 `TenantBoundary.require(tenantId)`。做法同芋道 `TenantSecurityWebFilter`（登录用户的租户与请求租户不一致即拒绝），依据 OWASP API Security Top 10 2023 的 API1。起因是第 5 阶段最终复核发现 user 与 message 的管理接口用请求里的 tenantId 覆盖已核实的活动租户。
+
+`2.0.8` 收掉第 5 阶段推迟的资源服务器小问题（依据见 `docs/ai-coding/AUTH_SPEC.md`）：令牌有效但 user 里没有该用户时由 401 改 403「账号未开通」（RFC 6750 §3.1，避免网关 BFF 反复重新登录）；`SecurityUser` 新增 `idpSubject`，资源服务器核对 `user_id` 属于令牌的 `sub`（OIDC Core §5.7），不一致回 403；新增 `FleetIssuedAtValidator`，`iat` 必须有且不能晚于当前时间 60 秒以上（口径同 PyJWT）；没有业务上下文提供方时启动失败，并由启动失败分析说明做法；业务上下文的 Redis 副本由 30 分钟改为 5 分钟，版本自增失败的日志写出真实的失效上限。新增 Gradle 测试夹具 `FakeIssuer`（分类器 `test-fixtures`），消费者不再各自复制。公共 API 只增不改：`SecurityUser` 保留 9 个参数的构造器，`SecurityContextResult.Status` 新增只在本地判定的 `SUBJECT_MISMATCH`。

@@ -36,6 +36,19 @@ public final class StubSecurityContextRpcService implements SecurityContextRpcSe
     }
 
     /**
+     * 登记一个启用、已关联 Keycloak 用户的用户（默认租户 t1）。
+     *
+     * @param userId      用户 ID
+     * @param idpSubject  user 服务登记的 Keycloak 用户 ID（访问令牌的 sub）
+     * @param authorities 权限码
+     */
+    public void linkedUser(String userId, String idpSubject, List<String> authorities) {
+        results.put(userId, SecurityContextResult.ok(SecurityUser.builder().userId(userId).username(userId + "-name")
+                .tenantId("t1").deptId("d1").dataScope("SELF").dataScopeDeptIds(List.of()).authorities(authorities)
+                .enabled(true).tenantIds(List.of("t1")).idpSubject(idpSubject).build()));
+    }
+
+    /**
      * 登记一个启用但没有任何租户的用户。
      *
      * @param userId 用户 ID

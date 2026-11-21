@@ -1,5 +1,6 @@
 package com.kellen.security.oauth2;
 
+import com.kellen.security.oauth2.test.FakeIssuer;
 import com.kellen.security.SecurityUser;
 import com.kellen.security.UserContextHolder;
 import com.kellen.utils.context.TenantContextHolder;
@@ -67,7 +68,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(OutputCaptureExtension.class)
 class FleetResourceServerTest {
 
-    static final TestKeycloak KEYCLOAK = TestKeycloak.start();
+    static final FakeIssuer KEYCLOAK = FakeIssuer.start();
 
     @DynamicPropertySource
     static void issuer(DynamicPropertyRegistry registry) {
@@ -217,11 +218,73 @@ class FleetResourceServerTest {
                 .andExpect(jsonPath("$.code").value("A0301"));
     }
 
+    /**
+     * 令牌有效、但 user 服务里没有这个用户（账号未开通）：已认证却无权访问，按 RFC 6750 §3.1 回 403 而不是 401，
+     * 网关 BFF 不会把它当成会话失效重新登录（Keycloak 会话仍在，重新登录拿到的还是同一个用户，形成重定向循环）。
+     */
     @Test
-    void unknownUserIs401() throws Exception {
+    void unknownUserIs403AsNotProvisioned() throws Exception {
         mockMvc.perform(get("/api/probe").header("Authorization", "Bearer " + KEYCLOAK.userToken("nobody")))
+                .andExpect(status().isForbidden())
+                .andExpect(header().string("WWW-Authenticate", containsString("Bearer")))
+                .andExpect(jsonPath("$.code").value("A0301"))
+                .andExpect(jsonPath("$.errorMessage").value("账号未开通"));
+        assertThat(UserContextHolder.get()).isNull();
+    }
+
+    /**
+     * OIDC Core §5.7：iss + sub 才是终端用户唯一稳定的标识。user_id 声明必须对上 user 服务给这个用户登记的 Keycloak 用户（sub），
+     * 否则（比如另建一个 Keycloak 账号把 user_id 属性写成别人的）回 403，不写业务上下文。
+     */
+    @Test
+    void userIdMustBelongToTheTokenSubject(CapturedOutput output) throws Exception {
+        provider.linkedUser("u3", "kc-u3", List.of("a:b"));
+        String own = KEYCLOAK.token(claims -> claims.subject("kc-u3").claim("user_id", "u3"));
+        String foreign = KEYCLOAK.token(claims -> claims.subject("kc-intruder").claim("user_id", "u3"));
+        mockMvc.perform(get("/api/needs-ab").header("Authorization", "Bearer " + own))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/probe").header("Authorization", "Bearer " + foreign))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("A0301"))
+                .andExpect(jsonPath("$.errorMessage").value("登录身份与账号不一致"));
+        assertThat(output.getAll()).contains("user_id=u3").doesNotContain(foreign).doesNotContain("kc-intruder");
+    }
+
+    /**
+     * Keycloak 不写 nbf，只校验 exp 时一张 iat 远在未来的令牌（签发方时钟错乱或伪造）可以一直用到 iat 加有效期；
+     * 与 RAG 引擎（PyJWT）同口径，iat 晚于当前时间超过 60 秒即拒绝。
+     */
+    @Test
+    void issuedInTheFutureBeyondSixtySecondsIs401() throws Exception {
+        provider.enabledUser("u1", "t1", "d1", List.of());
+        Instant now = Instant.now();
+        String future = KEYCLOAK.token(claims -> claims.claim("user_id", "u1")
+                .issueTime(Date.from(now.plusSeconds(120))).expirationTime(Date.from(now.plusSeconds(420))));
+        mockMvc.perform(get("/api/probe").header("Authorization", "Bearer " + future))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("A0220"));
+        assertThat(provider.calls()).isEmpty();
+    }
+
+    @Test
+    void issuedAtWithinSixtySecondsAheadAccepted() throws Exception {
+        provider.enabledUser("u1", "t1", "d1", List.of());
+        Instant now = Instant.now();
+        String slightlyAhead = KEYCLOAK.token(claims -> claims.claim("user_id", "u1")
+                .issueTime(Date.from(now.plusSeconds(30))).expirationTime(Date.from(now.plusSeconds(330))));
+        mockMvc.perform(get("/api/probe").header("Authorization", "Bearer " + slightlyAhead)).andExpect(status().isOk());
+    }
+
+    /**
+     * RFC 9068 §2.2：JWT 访问令牌必须带 iat。
+     */
+    @Test
+    void tokenWithoutIssuedAtIs401() throws Exception {
+        provider.enabledUser("u1", "t1", "d1", List.of());
+        String token = KEYCLOAK.token(claims -> claims.claim("user_id", "u1").issueTime(null));
+        mockMvc.perform(get("/api/probe").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+        assertThat(provider.calls()).isEmpty();
     }
 
     @Test

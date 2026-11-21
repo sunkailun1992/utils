@@ -32,10 +32,12 @@ fleet:
       context-cache-ttl: 30s     # 业务上下文本地缓存时长
 ```
 
-- 令牌校验：签发方、受众（`audiences`；没配时只收受众含 `github-api` 的令牌，2.0.6 起，模板仍须显式写出）、有效期（允许 60 秒时钟偏差）、只收 RS256。issuer 元数据按需延迟发现，Keycloak 不可达时服务照常启动，受保护接口返回 401，不放行、不打印堆栈，恢复后无需重启。
+- 令牌校验：签发方、受众（`audiences`；没配时只收受众含 `github-api` 的令牌，2.0.6 起，模板仍须显式写出）、有效期（允许 60 秒时钟偏差）、签发时间（2.0.8 起 `FleetIssuedAtValidator`：`iat` 必须有，不能晚于当前时间 60 秒以上；Keycloak 不写 `nbf`，只看 `exp` 时未来签发的令牌能一直用到 iat 加有效期，口径同 RAG 引擎的 PyJWT）、只收 RS256。Spring Security 自带的 `JwtIssuedAtValidator` 是给 DPoP 证明用的双向窗口（签发早于 60 秒也拒），不用于访问令牌。issuer 元数据按需延迟发现，Keycloak 不可达时服务照常启动，受保护接口返回 401，不放行、不打印堆栈，恢复后无需重启。
 - 默认过滤链：无状态、关 CSRF（只接 Bearer 令牌）、`permit-paths` 放行，其余要求业务上下文可用的用户或名单里的机器客户端。顺序与 Spring Boot 默认链相同，服务自己的路径专用链要用更小的顺序值；Actuator 仍由 `ActuatorSecurityConfig` 的运维令牌保护，访问令牌不能替代。
 - 受保护资源元数据（RFC 9728，2.0.3 起）：Spring Security 7 在默认链上发布 `/.well-known/oauth-protected-resource`（及 `/.well-known/oauth-protected-resource/<资源路径>`），免认证；`resource` 按取元数据的地址推出，`authorization_servers` 为 `issuer-uri`，`bearer_methods_supported` 为 `header`。401 质询带 `resource_metadata`。服务在网关后要让元数据给出网关地址，须开转发头（`server.forward-headers-strategy`）。
-- 响应：401（A0220）没带令牌、令牌无效或过期、令牌用户不存在、签发方不可达；403（A0301）停用、无权访问所请求的租户、客户端不在名单、缺少接口权限；503（C0110）user 服务暂时给不出业务上下文。都带 RFC 6750 的 `WWW-Authenticate` 头，不回显令牌。
+- 响应：401（A0220）没带令牌、令牌无效或过期（含签发时间在未来）、签发方不可达；403（A0301）账号未开通（user 里没有该用户或还没关联 Keycloak 用户，2.0.8 起由 401 改 403）、停用、无权访问所请求的租户、登录身份与账号不一致（2.0.8 起，见下）、客户端不在名单、缺少接口权限；503（C0110）user 服务暂时给不出业务上下文。令牌本身有效时一律 403、不回 401（RFC 6750 §3.1），网关 BFF 不会把它当成会话失效反复重新登录（Keycloak 会话仍在，重新登录拿到的还是同一个用户，以前会形成重定向循环）。都带 RFC 6750 的 `WWW-Authenticate` 头，不回显令牌。
+- 身份绑定（2.0.8 起）：OIDC Core §5.7 规定 iss + sub 才是终端用户的稳定标识。提供方在 `SecurityUser.idpSubject` 给出 user 登记的 Keycloak 用户 ID，资源服务器核对它等于令牌的 `sub`，不等即 403「登录身份与账号不一致」并记一行不含令牌与 sub 的警告（防止另建 Keycloak 账号把 `user_id` 属性写成别人的）。提供方没给时（2.0.7 及更早的 user、滚动升级期间的缓存副本）不核对，记警告。
+- 启动检查（2.0.8 起）：配了 `issuer-uri` 却既没有本地 `SecurityContextRpcService` 也没有 Dubbo 引用时启动失败，Spring Boot 的启动失败分析给出原因与做法（`FleetSecurityContextProviderFailureAnalyzer`）；以前会照常启动，之后每个用户令牌都被当成用户不存在。只按 Bean 定义查类型，不提前初始化 Dubbo 引用。
 - 认证结果：用户令牌为 `FleetAuthenticationToken`（名称是 `user_id`，权限是 user 服务给的权限码与 `ROLE_` 角色，`getUser()` 取 `SecurityUser`）；机器令牌为 `MachineAuthenticationToken`（名称是客户端 ID，权限是 `SCOPE_` 作用域，不写用户与租户上下文）。`@PreAuthorize` 等方法级权限照常可用。
 - 上下文：`FleetSecurityContextFilter` 把 `SecurityUser` 写入 `UserContextHolder`（数据权限插件也从这里读）与 `TenantContextHolder`，请求结束清理。
 
@@ -43,9 +45,9 @@ fleet:
 
 - 活动租户只能由请求头 `X-Tenant-Id` 在用户所属租户里选择，缺省为用户的默认租户；是否属于该租户由 user 服务判断（`TENANT_DENIED` 返回 403）。`tenantId`、`tenant-id` 等其它 HTTP 头一律不认，匿名请求不带租户上下文。权限码、角色与数据权限都按活动租户计算。
 - 接口参数或请求体里点名的 `tenantId` 不能覆盖活动租户（2.0.7 起）：服务把它写进 `TenantContextHolder` 之前先调 `TenantBoundary.require(tenantId)`，只放行自己的活动租户；平台超级管理员（`ROLE_PLATFORM_SUPER_ADMIN`，管理员分类与租户无关）可以点名任一租户；不满足时 403（A0301），且在任何业务查询之前拒绝。跨租户只给平台超级管理员，租户管理员要管理别的租户，先在 `X-Tenant-Id` 换到该租户（在那里按那个租户的权限计算）。做法同芋道 `TenantSecurityWebFilter`，依据 OWASP API Security Top 10 2023 的 API1。
-- 缓存：本地 Caffeine（`context-cache-ttl`，上限 10000）→ Redis（键 `fleet:security:ctx:<userId>:<版本>:<租户或_>`，30 分钟）→ Dubbo 调 user 服务。只缓存加载成功的结果。
-- user 服务改动用户（停用、改权限、改部门或租户）后必须调用 `SecurityUserCache.bumpVersion(userId)`：本实例立刻失效，其他实例最多 `context-cache-ttl` 后失效。
-- 提供方：user 服务实现 `SecurityContextRpcService` 并标 `@Primary`（它只用 `@DubboService` 时由 Dubbo 扫描注册，自动配置看不到，会同时生成一个自引用）。其它服务在 Dubbo 已启用时自动得到 Dubbo 引用，参数与各服务既有引用相同：启动时不初始化（`init = false`，2.0.5 起；Dubbo 默认启动时初始化全部引用，没配注册中心的上下文会起不来），首次调用才初始化并连接，不在启动时检查、不重试、3 秒超时、跟随灰度路由；初始化失败与调用失败一样返回 503（`FleetSecurityContextReferenceWithoutRegistryTest`、`FleetSecurityContextReferenceFirstCallTest` 约束）。引用由独立的 `FleetSecurityContextDubboAutoConfiguration` 创建（排在 Dubbo 自动配置之后，2.0.4 起）；utils 的自动配置不写成嵌套配置——消费服务默认扫描整个 `com.kellen`，嵌套配置会被提前扫描处理，`@ConditionalOnBean` 提前判定（`AutoConfigurationScanBoundaryTest` 约束）。
+- 缓存：本地 Caffeine（`context-cache-ttl`，上限 10000）→ Redis（键 `fleet:security:ctx:<userId>:<版本>:<租户或_>`，5 分钟，与 github-dev 域的访问令牌寿命相同；2.0.7 及以前为 30 分钟）→ Dubbo 调 user 服务。只缓存加载成功的结果。
+- user 服务改动用户（停用、改权限、改部门或租户）后必须调用 `SecurityUserCache.bumpVersion(userId)`：本实例立刻失效，其他实例最多 `context-cache-ttl` 后失效。Redis 自增失败时版本没变，各实例（含本实例）会继续读到同版本号下的旧副本，最多 Redis 时长加 `context-cache-ttl` 后读到改动，日志写出这个上限。
+- 提供方：加载成功的结果必须带 `idpSubject`（访问令牌的 `sub`）；还没关联 Keycloak 用户的账号按 `USER_NOT_FOUND` 返回。user 服务实现 `SecurityContextRpcService` 并标 `@Primary`（它只用 `@DubboService` 时由 Dubbo 扫描注册，自动配置看不到，会同时生成一个自引用）。其它服务在 Dubbo 已启用时自动得到 Dubbo 引用，参数与各服务既有引用相同：启动时不初始化（`init = false`，2.0.5 起；Dubbo 默认启动时初始化全部引用，没配注册中心的上下文会起不来），首次调用才初始化并连接，不在启动时检查、不重试、3 秒超时、跟随灰度路由；初始化失败与调用失败一样返回 503（`FleetSecurityContextReferenceWithoutRegistryTest`、`FleetSecurityContextReferenceFirstCallTest` 约束）。引用由独立的 `FleetSecurityContextDubboAutoConfiguration` 创建（排在 Dubbo 自动配置之后，2.0.4 起）；utils 的自动配置不写成嵌套配置——消费服务默认扫描整个 `com.kellen`，嵌套配置会被提前扫描处理，`@ConditionalOnBean` 提前判定（`AutoConfigurationScanBoundaryTest` 约束）。
 
 ## 服务间调用
 
@@ -103,7 +105,8 @@ fleet:
 
 ## 测试
 
-- 单元测试：`TestKeycloak`（本地随机端口提供发现文档与公钥集、签发 RS256 令牌）配 `MockMvc`，走 Spring Boot 真实的 issuer 发现；业务上下文用 `StubSecurityContextRpcService`。
+- 单元测试：测试夹具 `com.kellen.security.oauth2.test.FakeIssuer`（本机回环随机端口提供 OIDC 发现文档与公钥集、签发 RS256 令牌，2.0.8 起取代 utils 自己的 `TestKeycloak` 与各服务复制的 `FakeIssuer`）配 `MockMvc` 或真实 HTTP，走 Spring Boot 真实的 issuer 发现；业务上下文用 `StubSecurityContextRpcService`。
+- 消费者用测试夹具：`testImplementation "com:utils:${utilsVersion}:test-fixtures"`（Gradle `java-test-fixtures`，utils 不发 `.module`，按分类器依赖），不再在服务里复制签发方替身。
 - CI 集成测试：`KeycloakContainerIT` 用 Testcontainers 起 Keycloak 26.8.2，导入 `src/test/resources/keycloak/github-dev-realm.json`，验证真实登录、受众拒绝与令牌交换；本机没有 Docker 时跳过。
 - 真库测试：`KeycloakLiveTest` 对 NAS 的 `github-dev` 域跑同样三条，只在设置了 `FLEET_KC_TEST_ISSUER` 时运行。测试用户与私有 env 由本机工具 `~/.config/kellen-github/tools/kc_test_user.py ensure` 建立；运行方法：
 

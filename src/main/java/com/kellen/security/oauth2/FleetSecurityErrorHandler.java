@@ -27,8 +27,9 @@ import java.nio.charset.StandardCharsets;
  * Bearer 令牌实现（RFC 6750），响应体换成统一的 {@link ApiResponse}。不回显令牌，服务端错误只记一行警告、不打印堆栈。
  *
  * <ul>
- *     <li>401（A0220）：没带令牌、令牌无效或过期、令牌用户不存在、签发方暂不可达（拒绝访问，不放行）。</li>
- *     <li>403（A0301）：账号停用、无权访问所请求的租户、客户端不在允许名单、缺少接口所需权限。</li>
+ *     <li>401（A0220）：没带令牌、令牌无效或过期（含签发时间在未来）、签发方暂不可达（拒绝访问，不放行）。</li>
+ *     <li>403（A0301）：账号未开通（user 服务里没有该用户）、账号停用、无权访问所请求的租户、令牌与账号的 Keycloak 用户不一致、
+ *     客户端不在允许名单、缺少接口所需权限。令牌本身有效时一律 403，不回 401（RFC 6750 §3.1）。</li>
  *     <li>503（C0110）：令牌有效但 user 服务暂时给不出业务上下文。</li>
  * </ul>
  *
@@ -68,9 +69,11 @@ class FleetSecurityErrorHandler implements AuthenticationEntryPoint, AccessDenie
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication instanceof FleetAuthenticationToken token) {
             return switch (token.getStatus()) {
+                case USER_NOT_FOUND -> "账号未开通";
                 case DISABLED -> "账号已停用";
                 case TENANT_DENIED -> "无权访问所请求的租户";
-                default -> null;
+                case SUBJECT_MISMATCH -> "登录身份与账号不一致";
+                case OK -> null;
             };
         }
         if (authentication instanceof MachineAuthenticationToken) {

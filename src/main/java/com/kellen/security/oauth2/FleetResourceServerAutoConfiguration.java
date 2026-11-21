@@ -1,6 +1,8 @@
 package com.kellen.security.oauth2;
 
+import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -47,13 +49,14 @@ import java.util.List;
  *
  * <ul>
  *     <li>令牌校验用 Spring Boot 按 issuer-uri 延迟发现的解码器：签发方、受众（{@code audiences}，没配时要求 {@value #DEFAULT_AUDIENCE}）、
- *     有效期（默认允许 60 秒时钟偏差），
+ *     有效期（默认允许 60 秒时钟偏差）、签发时间（{@link FleetIssuedAtValidator}：必须有，不能晚于当前时间 60 秒以上），
  *     并让 {@code jws-algorithms}（缺省 RS256）在 issuer 方式下同样生效。</li>
  *     <li>默认过滤链：无状态、关 CSRF（只接 Bearer 令牌）、{@code fleet.security.oauth2.permit-paths} 放行，其余要求业务上下文可用的用户
  *     或名单里的机器客户端；401、403、503 返回统一 JSON。顺序与 Spring Boot 默认链相同（{@link SecurityFilterProperties#BASIC_AUTH_ORDER}），
  *     排在 Actuator 链和服务自己的路径专用链之后。</li>
  *     <li>业务上下文经 {@link SecurityUserCache} 取自 {@link SecurityContextRpcService}：本服务提供时用本地实现（提供方标 {@code @Primary}），
- *     否则用 {@link FleetSecurityContextDubboAutoConfiguration} 建的 Dubbo 引用；转换器在请求时才取提供方。</li>
+ *     否则用 {@link FleetSecurityContextDubboAutoConfiguration} 建的 Dubbo 引用；转换器在请求时才取提供方。两者都没有时启动失败
+ *     （{@link FleetSecurityContextProviderFailureAnalyzer} 给出原因与做法）。</li>
  * </ul>
  *
  * @author 孙凯伦
@@ -93,6 +96,34 @@ public class FleetResourceServerAutoConfiguration {
         JwtClaimValidator<List<String>> defaultAudience = new JwtClaimValidator<>(JwtClaimNames.AUD,
                 audience -> audience != null && audience.contains(DEFAULT_AUDIENCE));
         return jwt -> resourceServer.getJwt().getAudiences().isEmpty() ? defaultAudience.validate(jwt) : OAuth2TokenValidatorResult.success();
+    }
+
+    /**
+     * 签发时间校验：iat 必须有，且不能晚于当前时间 60 秒以上（Keycloak 不写 nbf，只看 exp 时未来签发的令牌能一直用到 iat 加有效期）。
+     * Spring Boot 按 issuer-uri 建解码器时会装上容器里的 {@link OAuth2TokenValidator} Bean。
+     *
+     * @return 令牌校验器
+     */
+    @Bean
+    public OAuth2TokenValidator<Jwt> fleetIssuedAtValidator() {
+        return new FleetIssuedAtValidator();
+    }
+
+    /**
+     * 启动检查：资源服务器离不开业务上下文提供方，本服务既没有实现 {@link SecurityContextRpcService}、也没有 Dubbo 引用时启动失败，
+     * 不再照常启动后把每个用户令牌都当成用户不存在。只按 Bean 定义查类型，不提前初始化 Dubbo 引用（引用 {@code init = false}）。
+     *
+     * @param beanFactory Bean 工厂
+     * @return 在全部单例创建之后执行的检查
+     */
+    @Bean
+    public SmartInitializingSingleton fleetSecurityContextProviderCheck(ListableBeanFactory beanFactory) {
+        return () -> {
+            if (beanFactory.getBeanNamesForType(SecurityContextRpcService.class, true, false).length == 0) {
+                throw new FleetSecurityContextProviderMissingException("资源服务器（已配置 spring.security.oauth2.resourceserver.jwt.issuer-uri）"
+                        + "没有业务上下文提供方 SecurityContextRpcService：本服务既没有实现它，也没有启用 Dubbo 取得 user 服务的引用。");
+            }
+        };
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.kellen.security.oauth2;
 
+import com.kellen.security.oauth2.test.FakeIssuer;
 import jakarta.servlet.Filter;
 import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.apache.dubbo.spring.boot.autoconfigure.DubboAutoConfiguration;
@@ -58,7 +59,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 )
 class FleetResourceServerScannedDubboReferenceTest {
 
-    static final TestKeycloak KEYCLOAK = TestKeycloak.start();
+    static final FakeIssuer KEYCLOAK = FakeIssuer.start();
 
     @DynamicPropertySource
     static void issuer(DynamicPropertyRegistry registry) {

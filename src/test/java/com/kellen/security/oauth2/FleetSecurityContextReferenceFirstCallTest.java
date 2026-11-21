@@ -1,5 +1,6 @@
 package com.kellen.security.oauth2;
 
+import com.kellen.security.oauth2.test.FakeIssuer;
 import jakarta.servlet.Filter;
 import org.apache.dubbo.config.ReferenceConfig;
 import org.apache.dubbo.config.spring.ServiceBean;
@@ -66,7 +67,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 )
 class FleetSecurityContextReferenceFirstCallTest {
 
-    static final TestKeycloak KEYCLOAK = TestKeycloak.start();
+    static final FakeIssuer KEYCLOAK = FakeIssuer.start();
 
     static final StubSecurityContextRpcService PROVIDER = new StubSecurityContextRpcService();
 

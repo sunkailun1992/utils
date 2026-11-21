@@ -1,10 +1,13 @@
 package com.kellen.config.actuator;
 
 import com.kellen.security.oauth2.FleetResourceServerAutoConfiguration;
+import com.kellen.security.oauth2.SecurityContextRpcService;
+import com.kellen.security.oauth2.SecurityContextResult;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.security.oauth2.server.resource.autoconfigure.servlet.OAuth2ResourceServerAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -60,5 +63,13 @@ class ActuatorEndpointProtectionWithResourceServerTest extends ActuatorProtectio
     @Configuration(proxyBeanMethods = false)
     @ImportAutoConfiguration({FleetResourceServerAutoConfiguration.class, OAuth2ResourceServerAutoConfiguration.class})
     static class ResourceServer {
+
+        /**
+         * 资源服务器要求有业务上下文提供方；本测试只看 Actuator 与未带令牌的请求，用不到用户上下文。
+         */
+        @Bean
+        SecurityContextRpcService securityContextRpcService() {
+            return (userId, tenantId) -> SecurityContextResult.of(SecurityContextResult.Status.USER_NOT_FOUND);
+        }
     }
 }

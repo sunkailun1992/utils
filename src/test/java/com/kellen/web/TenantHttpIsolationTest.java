@@ -4,7 +4,7 @@ import com.kellen.config.web.ReqConfig;
 import com.kellen.security.UserContextHolder;
 import com.kellen.security.oauth2.FleetResourceServerAutoConfiguration;
 import com.kellen.security.oauth2.StubSecurityContextRpcService;
-import com.kellen.security.oauth2.TestKeycloak;
+import com.kellen.security.oauth2.test.FakeIssuer;
 import com.kellen.utils.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
                 "fleet.security.oauth2.permit-paths=/auth/sessions,/error"})
 class TenantHttpIsolationTest {
 
-    static final TestKeycloak KEYCLOAK = TestKeycloak.start();
+    static final FakeIssuer KEYCLOAK = FakeIssuer.start();
 
     @DynamicPropertySource
     static void issuer(DynamicPropertyRegistry registry) {

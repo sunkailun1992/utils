@@ -4,6 +4,8 @@ plugins {
     id 'java-library'
     // maven-publish 用于把 utils 发布到 Maven Local 或远程 Maven 仓库。
     id 'maven-publish'
+    // Gradle 测试夹具：src/testFixtures 里给消费者测试用的替身（如 FakeIssuer），随主制品以 test-fixtures 分类器发布。
+    id 'java-test-fixtures'
     // Spring 依赖管理插件用于导入 Spring Boot、Spring Cloud、Spring Cloud Alibaba BOM。
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -12,7 +14,7 @@ plugins {
 group = 'com'
 
 // 设置 Maven version，必须保持与消费者项目依赖版本一致。
-version = '2.0.7'
+version = '2.0.8'
 
 // 设置项目描述，便于发布后的元数据识别。
 description = 'utils'
@@ -294,6 +296,9 @@ publishing {
             from components.java
             // 显式设置 artifactId，保持 Maven 坐标 com:utils:<version> 中的 artifactId 稳定。
             artifactId = 'utils'
+            // 测试夹具在 POM 里只能表达为 test-fixtures 分类器（本仓库不发 .module），消费者按分类器依赖，这里不再提示能力无法映射。
+            suppressPomMetadataWarningsFor('testFixturesApiElements')
+            suppressPomMetadataWarningsFor('testFixturesRuntimeElements')
             // 把 BOM 管理出的真实依赖版本写进发布 POM，避免消费者解析到无版本传递依赖。
             versionMapping {
                 usage('java-api') {

@@ -1,5 +1,6 @@
 package com.kellen.security.oauth2;
 
+import com.kellen.security.oauth2.test.FakeIssuer;
 import jakarta.servlet.Filter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,9 +39,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(OutputCaptureExtension.class)
 class FleetResourceServerIssuerUnreachableTest {
 
-    static final TestKeycloak KEYCLOAK = TestKeycloak.start();
+    static final FakeIssuer KEYCLOAK = FakeIssuer.start();
 
-    static final String UNREACHABLE_ISSUER = "http://127.0.0.1:" + closedPort() + TestKeycloak.REALM_PATH;
+    static final String UNREACHABLE_ISSUER = "http://127.0.0.1:" + closedPort() + FakeIssuer.REALM_PATH;
 
     @DynamicPropertySource
     static void issuer(DynamicPropertyRegistry registry) {

@@ -4,6 +4,9 @@ import com.github.benmanes.caffeine.cache.Ticker;
 import com.kellen.security.SecurityUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -19,13 +22,16 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * 业务上下文缓存：本地 Caffeine → Redis（按用户版本号分键）→ 加载器。Redis 用内存表模拟，时间用可拨动的时钟。
  */
+@ExtendWith(OutputCaptureExtension.class)
 class SecurityUserCacheTest {
 
     private final Map<String, String> redisData = new ConcurrentHashMap<>();
@@ -69,7 +75,7 @@ class SecurityUserCacheTest {
     private static SecurityContextResult okUser(String userId, String tenantId) {
         return SecurityContextResult.ok(SecurityUser.builder().userId(userId).username("name-" + userId).tenantId(tenantId)
                 .deptId("d1").dataScope("DEPT").dataScopeDeptIds(List.of("d1", "d2")).authorities(List.of("a:b", "ROLE_admin"))
-                .enabled(true).tenantIds(List.of(tenantId)).build());
+                .enabled(true).tenantIds(List.of(tenantId)).idpSubject("kc-" + userId).build());
     }
 
     @Test
@@ -101,6 +107,39 @@ class SecurityUserCacheTest {
         assertThat(user.getAuthorities()).containsExactly("a:b", "ROLE_admin");
         assertThat(user.isEnabled()).isTrue();
         assertThat(user.getTenantIds()).containsExactly("t1");
+        assertThat(user.getIdpSubject()).isEqualTo("kc-u1");
+    }
+
+    /**
+     * 2.0.7 及更早写进 Redis 的副本没有 idpSubject：照常读出，该字段为空。
+     */
+    @Test
+    void redisPayloadWrittenBeforeIdpSubjectStillReads() {
+        redisData.put("fleet:security:ctx:u1:0:_", "{\"status\":\"OK\",\"user\":{\"userId\":\"u1\",\"username\":\"name-u1\","
+                + "\"tenantId\":\"t1\",\"authorities\":[\"a:b\"],\"enabled\":true,\"tenantIds\":[\"t1\"]}}");
+        SecurityContextResult fromRedis = cache().get("u1", null, loader(okUser("u1", "t1")));
+        assertThat(loads).hasValue(0);
+        assertThat(fromRedis.getUser().getUserId()).isEqualTo("u1");
+        assertThat(fromRedis.getUser().getIdpSubject()).isNull();
+    }
+
+    /**
+     * Redis 副本与 Keycloak 访问令牌同寿（5 分钟）：版本自增失败时，旧副本最多再用这么久。
+     */
+    @Test
+    void redisCopyLivesAsLongAsAnAccessToken() {
+        new SecurityUserCache(redis, Duration.ofSeconds(30)).get("u1", null, loader(okUser("u1", "t1")));
+        verify(values).set(eq("fleet:security:ctx:u1:0:_"), anyString(), eq(Duration.ofMinutes(5)));
+    }
+
+    /**
+     * 版本自增失败时，本实例与其他实例都会继续读到同版本号下的 Redis 旧副本，最多 Redis 时长加本地时长后才读到改动。
+     */
+    @Test
+    void failedVersionBumpReportsTheRealStalenessBound(CapturedOutput output) {
+        when(values.increment(anyString())).thenThrow(new RedisConnectionFailureException("down"));
+        new SecurityUserCache(redis, Duration.ofSeconds(30), Duration.ofMinutes(5), 10_000, ticker).bumpVersion("u1");
+        assertThat(output.getAll()).contains("安全上下文版本自增失败").contains("330 秒");
     }
 
     @Test
