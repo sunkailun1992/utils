@@ -1,11 +1,37 @@
 # 配置分类：服务配置
 # dataId：ai-agent-spring.yaml | group：DEFAULT_GROUP | namespace：github-dev
-# 用途：Agent 模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择。
+# 用途：Agent 数据源（只放 Seata AT 的 undo_log）、模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择。
 # 导入服务：ai-agent。
 # 维护：DeepSeek/Qwen 走 LiteLLM 网关，网关地址与 ${GITHUB_*_API_KEY} 运行期占位符以远端为准，发布须用 render_nacos.py --remote/--keep-remote 保值渲染；真实凭据不进 Git。
 
-# Spring AI 框架参数。
+# Spring 框架参数（数据源与 Spring AI）。
 spring:
+  # Spring 数据源配置；第5阶段起 ai-agent 与其他服务一样接入 utils，连接池、Seata 等参数在服务 application.yml。
+  datasource:
+    # dynamic-datasource 多数据源配置。
+    dynamic:
+      # 数据源清单，名称与灰度路由的 master、gray 一致。
+      datasource:
+        # ai-agent 主库；只有 Flyway 建的 Seata AT undo_log，不放业务表。
+        master:
+          # 个人 PostgreSQL JDBC URL，库名与服务匹配；不带 connectTimeout、socketTimeout（Druid 初始化时会把其中的秒数当毫秒），连接与读取超时由 application.yml 设定。
+          url: jdbc:postgresql://${custom.infra-postgresql-host}:${custom.infra-postgresql-port}/github_dev_ai_agent?tcpKeepAlive=true
+          # 主库数据库账号；只拥有本服务独立库。
+          username: ${GITHUB_POSTGRESQL_AI_AGENT_USERNAME}
+          # 主库数据库密码；真实值仅在私有配置中。
+          password: ${GITHUB_POSTGRESQL_AI_AGENT_PASSWORD}
+          # PostgreSQL JDBC 驱动类。
+          driver-class-name: org.postgresql.Driver
+        # 灰度库；当前与主库同库，按灰度标签切换时使用。
+        gray:
+          # 灰度库复用主库的 JDBC URL。
+          url: ${spring.datasource.dynamic.datasource.master.url}
+          # 灰度库复用主库的数据库账号。
+          username: ${spring.datasource.dynamic.datasource.master.username}
+          # 灰度库复用主库的数据库密码；真实值仅在私有配置中。
+          password: ${spring.datasource.dynamic.datasource.master.password}
+          # 灰度库复用主库的 PostgreSQL JDBC 驱动类。
+          driver-class-name: ${spring.datasource.dynamic.datasource.master.driver-class-name}
   # Spring AI 自动配置。
   ai:
     # 按能力选择模型实现。

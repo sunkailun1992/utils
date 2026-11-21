@@ -1,7 +1,7 @@
 # 配置分类：共享基础设施
 # dataId：seata.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：Seata 分布式事务客户端：事务分组、TC 地址与数据源代理方式。
-# 导入服务：ai、ai-memory、mcp、message、rag、report、user。
+# 导入服务：ai、ai-agent、ai-memory、mcp、message、rag、report、user。
 # 维护：只整理注释；配置值、占位符、列表顺序保持既有语义，真实凭据不进 Git。
 
 # Seata 客户端（seata-spring-boot-starter）设置；始终开启，不设总开关，未写的键用客户端默认值。

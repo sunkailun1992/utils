@@ -1,7 +1,7 @@
 # 配置分类：共享基础设施
 # dataId：mybatis-plus.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：MyBatis-Plus 映射、逻辑删除和 MyBatis-Mate 授权。
-# 导入服务：ai、ai-memory、mcp、message、rag、report、user。
+# 导入服务：ai、ai-agent、ai-memory、mcp、message、rag、report、user。
 # 维护：个人业务库使用 PostgreSQL Boolean 逻辑删除字段；其它参数保持既有语义。
 
 # MyBatis-Plus 公共设置；mapper 位置等服务专属项仍在各服务本地配置。

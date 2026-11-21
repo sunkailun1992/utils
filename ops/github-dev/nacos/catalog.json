@@ -20,7 +20,7 @@
     },
     {
       "dataId": "ai-agent-spring.yaml",
-      "description": "Agent 模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择；个人 github-dev 配置，凭据由私有环境注入。",
+      "description": "Agent 数据源（只放 Seata AT 的 undo_log）、模型、注册、Prompt 同步、服务身份和 Spring AI 模型实现选择；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "服务配置",
       "consumers": [
         "ai-agent"
@@ -103,6 +103,7 @@
       "category": "共享基础设施",
       "consumers": [
         "ai",
+        "ai-agent",
         "ai-memory",
         "mcp",
         "message",
@@ -125,6 +126,7 @@
       "category": "共享基础设施",
       "consumers": [
         "ai",
+        "ai-agent",
         "ai-memory",
         "gateway",
         "mcp",
@@ -164,6 +166,7 @@
       "category": "共享基础设施",
       "consumers": [
         "ai",
+        "ai-agent",
         "ai-memory",
         "mcp",
         "message",
@@ -190,7 +193,6 @@
       "description": "人员访问 JWT 的签名密钥与签发方；个人 github-dev 配置，凭据由私有环境注入。",
       "category": "安全与可观测性",
       "consumers": [
-        "ai-agent",
         "ai-memory",
         "mcp",
         "message",

@@ -224,8 +224,14 @@ class NacosOrganizationTests(unittest.TestCase):
         self.assertEqual(google["api-key"], "${GITHUB_GOOGLE_API_KEY}")
         self.assertEqual(google["chat"]["options"]["model"], "${GITHUB_GOOGLE_CHAT_MODEL:gemini-3.1-flash-lite}")
         self.assertEqual(template["ai"]["agent"]["google"], {"base-url": "${GITHUB_GOOGLE_BASE_URL:}"})
-        environment = {"GITHUB_GOOGLE_API_KEY": "SYNTHETIC_GOOGLE_KEY", "GITHUB_DEEPSEEK_API_KEY": "SYNTHETIC_DEEPSEEK_KEY", "GITHUB_QWEN_API_KEY": "SYNTHETIC_QWEN_KEY"}
+        environment = {"GITHUB_GOOGLE_API_KEY": "SYNTHETIC_GOOGLE_KEY", "GITHUB_DEEPSEEK_API_KEY": "SYNTHETIC_DEEPSEEK_KEY", "GITHUB_QWEN_API_KEY": "SYNTHETIC_QWEN_KEY",
+                       "GITHUB_POSTGRESQL_AI_AGENT_USERNAME": "synthetic_agent_user", "GITHUB_POSTGRESQL_AI_AGENT_PASSWORD": "SYNTHETIC_AGENT_DB"}
         rendered = yaml_json(render_document(source, environment))
+        # 第5阶段起 ai-agent 与其他服务一样有自己的库（只放 Seata AT 的 undo_log），灰度池复用主库。
+        master = rendered["spring"]["datasource"]["dynamic"]["datasource"]["master"]
+        self.assertTrue(master["url"].endswith("/github_dev_ai_agent?tcpKeepAlive=true"))
+        self.assertEqual((master["username"], master["password"]), ("synthetic_agent_user", "SYNTHETIC_AGENT_DB"))
+        self.assertEqual(rendered["spring"]["datasource"]["dynamic"]["datasource"]["gray"]["url"], "${spring.datasource.dynamic.datasource.master.url}")
         self.assertEqual(rendered["spring"]["ai"]["google"]["genai"]["api-key"], "SYNTHETIC_GOOGLE_KEY")
         self.assertEqual(rendered["spring"]["ai"]["google"]["genai"]["chat"]["options"]["model"], "gemini-3.1-flash-lite")
         self.assertEqual(rendered["ai"]["agent"]["google"]["base-url"], "")

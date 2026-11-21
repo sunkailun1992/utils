@@ -1,7 +1,7 @@
 # 配置分类：共享基础设施
 # dataId：redis.yaml | group：DEFAULT_GROUP | namespace：github-dev
 # 用途：公共 Redis 缓存和 Spring Data Redis 共用连接。
-# 导入服务：ai、ai-memory、gateway、mcp、message、rag、report、user。
+# 导入服务：ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user。
 # 维护：连接只在 spring.data.redis 声明一次；Redisson、Spring Cache 与网关限流都读这一组，真实凭据不进 Git。
 
 # utils 公共缓存参数，由 utils 的 Redis 缓存配置读取。
