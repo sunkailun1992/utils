@@ -27,7 +27,7 @@
 | [logging.yml](DEFAULT_GROUP/logging.yml) | 全局日志等级与安全结构化 HTTP/AI 投影白名单 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [local-canary.yaml](DEFAULT_GROUP/local-canary.yaml) | 本地灰度标签、就绪标记和授权，只有 dev 导入 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [security-auth.yaml](DEFAULT_GROUP/security-auth.yaml) | 认证来源、数据权限与租户隔离 | ai-memory、mcp、message、rag、report、user |
-| [security-jwt.yaml](DEFAULT_GROUP/security-jwt.yaml) | 人员访问 JWT 的签名密钥与签发方 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
+| [security-jwt.yaml](DEFAULT_GROUP/security-jwt.yaml) | 人员访问 JWT 的签名密钥与签发方 | ai-memory、message、report |
 | [swagger.yaml](DEFAULT_GROUP/swagger.yaml) | OpenAPI 文档和 Swagger UI 暴露开关 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 | [traffic-governance.yaml](DEFAULT_GROUP/traffic-governance.yaml) | 灰度治理开关与服务发现泳道元数据 | ai、ai-agent、ai-memory、gateway、mcp、message、rag、report、user |
 

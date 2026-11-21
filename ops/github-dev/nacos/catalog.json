@@ -194,9 +194,7 @@
       "category": "安全与可观测性",
       "consumers": [
         "ai-memory",
-        "mcp",
         "message",
-        "rag",
         "report"
       ]
     },
