@@ -96,7 +96,7 @@ public abstract class EntityBase implements Serializable {
      * 排序值。
      */
     @Schema(description = "排序")
-    private Integer sorting;
+    private Integer sort;
 
     /**
      * MyBatis-Plus 乐观锁版本号，更新时回传查询到的值。

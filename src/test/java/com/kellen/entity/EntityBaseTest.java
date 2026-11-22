@@ -24,7 +24,7 @@ class EntityBaseTest {
         assertThat(Modifier.isAbstract(EntityBase.class.getModifiers())).isTrue();
         List<Field> fields = instanceFields(EntityBase.class);
         assertThat(fields).extracting(Field::getName).containsExactly("id", "code", "description", "createTime", "createBy",
-                "updateTime", "updateBy", "deleted", "label", "sorting", "version");
+                "updateTime", "updateBy", "deleted", "label", "sort", "version");
         List<Class<?>> types = fields.stream().<Class<?>>map(Field::getType).toList();
         assertThat(types).containsExactly(String.class, String.class, String.class, LocalDateTime.class, String.class,
                 LocalDateTime.class, String.class, Boolean.class, String.class, Integer.class, Integer.class);
