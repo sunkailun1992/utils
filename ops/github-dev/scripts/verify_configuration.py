@@ -371,51 +371,32 @@ def source_literals(source):
     return "".join(masked), literals
 
 
-def literal_route(token, literals, prefix=None):
+def literal_route(token, literals):
+    """Java 控制器注解里的路径字面量；只认固定区段与 {名字} 参数。"""
     quote, value = literals[token]
     assert "\\" not in value, "未支持的路径转义表达式"
-    if prefix is not None:
-        marker = "${AI_SERVICE_PREFIX}"
-        assert quote == "`" and value.startswith(marker), "AI 路径必须引用已核 AI_SERVICE_PREFIX"
-        value = value[len(marker):]
-    elif quote == "`":
-        value = re.sub(r"\$\{encodeURIComponent\(\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\)\}", r"{\1}", value)
+    assert quote != "`", "控制器路径不支持模板字面量"
     segment = r"(?:[A-Za-z0-9_.~-]+|\{[A-Za-z_$][A-Za-z0-9_$]*\})"
     assert re.fullmatch("/" + segment + "(?:/" + segment + ")*", value), "未支持的路径或动态参数表达式"
     assert not any(part in (".", "..") for part in value.split("/")), "路径不能包含跳转区段"
-    return (prefix or "") + value
+    return value
 
 
-def ai_split_paths(source, module, prefix):
-    """限定两种现有 adapter：前缀模板，或固定 root + storageRequest 相对路径。"""
-    masked, literals = source_literals(source)
-    imported = re.search(r"import\s*\{\s*AI_SERVICE_PREFIX\s*\}\s*from\s*(FLEET_LITERAL_\d+)", masked)
-    assert imported and literals[imported[1]][1] == "@/constants/auth", "AI 模块前缀导入无法核对"
-    assert not re.search(r"\bfetch\s*\(", masked), "未支持的网络表达式，不能只校验部分路径"
-    exports = len(re.findall(r"\bexport\s+(?:async\s+)?(?:const|function)\s+", masked))
-
-    def calls(name):
-        pattern = r"\b" + name + r"\s*(?:<[^(){};]+>)?\s*\("
-        return [item for item in re.finditer(pattern, masked)
-                if not re.search(r"\bfunction\s*$", masked[:item.start()])]
-
-    def argument(call):
-        match = re.match(r"\s*(FLEET_LITERAL_\d+)\s*,", masked[call.end():])
-        assert match, "请求路径必须是已支持的字符串表达式"
-        return match[1]
-
-    requests = calls("request")
-    if module == "controlPlane.ts":
-        assert requests and len(requests) == exports, "模型目录存在未解析的请求导出"
-        return {literal_route(argument(call), literals, prefix) for call in requests}
-    assert module == "storage.ts", "未支持的 AI 分模块"
-    roots = list(re.finditer(r"\bconst\s+root\s*=\s*(FLEET_LITERAL_\d+)\s*;", masked))
-    assert len(roots) == 1, "存储 root 必须是唯一固定前缀模板"
-    root = literal_route(roots[0][1], literals, prefix)
-    assert len(requests) == 1 and literals[argument(requests[0])] == ("`", "${root}${path}"), "存储请求必须按 root 与 path 组合"
-    endpoints = calls("storageRequest")
-    assert endpoints and len(endpoints) == exports, "存储模块存在未解析的请求导出"
-    return {root + literal_route(argument(call), literals) for call in endpoints}
+def top_level_parts(argument):
+    """注解参数按顶层逗号拆分，数组 {...} 里的逗号不拆。"""
+    parts, depth, start = [], 0, 0
+    for position, character in enumerate(argument):
+        if character == "{":
+            depth += 1
+        elif character == "}":
+            depth -= 1
+            assert depth >= 0, "控制器注解数组未闭合"
+        elif character == "," and depth == 0:
+            parts.append(argument[start:position].strip())
+            start = position + 1
+    assert depth == 0, "控制器注解数组未闭合"
+    parts.append(argument[start:].strip())
+    return [part for part in parts if part]
 
 
 def check_controller_endpoint(path, controllers):
@@ -435,12 +416,11 @@ def check_controller_endpoint(path, controllers):
                 argument = rest[1:end].strip()
                 if argument:
                     path_token, attributes = None, set()
-                    for part in argument.split(","):
-                        part = part.strip()
+                    for part in top_level_parts(argument):
                         if re.fullmatch(r"FLEET_LITERAL_\d+", part):
                             name, value = "path", part
                         else:
-                            attribute = re.fullmatch(r"(path|value|consumes|produces)\s*=\s*(.+)", part)
+                            attribute = re.fullmatch(r"(path|value|consumes|produces|params|headers)\s*=\s*(.+)", part, re.S)
                             assert attribute, "未支持的控制器路径注解，不能猜测路径"
                             name, value = attribute.groups()
                             name = "path" if name == "value" else name
@@ -449,46 +429,218 @@ def check_controller_endpoint(path, controllers):
                         if name == "path":
                             assert re.fullmatch(r"FLEET_LITERAL_\d+", value), "控制器路径必须是明确字符串"
                             path_token = value
+                        elif name in ("params", "headers"):
+                            # 请求参数与请求头条件只决定同一路径上选哪个方法，不改变路径；值只认字符串或字符串数组。
+                            assert re.fullmatch(r"(?:FLEET_LITERAL_\d+|\{\s*FLEET_LITERAL_\d+(?:\s*,\s*FLEET_LITERAL_\d+)*\s*\})", value), \
+                                "未支持的控制器请求条件声明"
                         else:
-                            assert re.fullmatch(r"(?:MediaType\.[A-Z_]+|FLEET_LITERAL_\d+)", value), "未支持的控制器媒体类型声明"
+                            media = r"(?:MediaType\.[A-Z_]+|FLEET_LITERAL_\d+)"
+                            assert re.fullmatch(media + r"|\{\s*" + media + r"(?:\s*,\s*" + media + r")*\s*\}", value), "未支持的控制器媒体类型声明"
                     if path_token:
                         suffix = literal_route(path_token, literals)
             endpoints.add(normalize(base.rstrip("/") + suffix))
     assert normalize(path) in endpoints, "新增前端路径没有对应的当前控制器注解"
 
 
+# admin-web 1.2.5 起的多应用结构：各应用的接口在 apps/<应用>/src/services，会话接口在 packages/auth。
+FRONTEND_REQUEST_SOURCES = ("apps/system/src/services", "apps/message/src/services", "apps/ai/src/services",
+                            "apps/rag/src/services", "packages/auth/src/endpoints.ts")
+# 路径前缀归属的服务：前端约定（即 1.2.4 的 USER/MESSAGE/AI/RAG_SERVICE_PREFIX），独立于网关路由表，长前缀在前。
+FRONTEND_PATH_SERVICES = (("/api/rag/", "rag"), ("/api/ai/", "ai"), ("/message/", "message"), ("/auth/", "user"))
+# 网关 BFF 自己处理、不转发到后端服务的路径。
+GATEWAY_LOCAL_PATHS = frozenset({"/logout"})
+# axios 实例（client）与 @admin-web/api 的 createServiceClient（api）上的请求方法。
+REQUEST_METHODS = frozenset({"get", "post", "put", "patch", "delete", "request", "getPage", "getList", "remove"})
+IDENTIFIER = r"[A-Za-z_$][A-Za-z0-9_$]*"
+
+
+def matching(masked, index, opening, closing):
+    """index 指向 opening；返回与之配对的 closing 的位置（字符串已遮住，不会误配）。"""
+    depth = 0
+    for position in range(index, len(masked)):
+        if masked[position] == opening:
+            depth += 1
+        elif masked[position] == closing:
+            depth -= 1
+            if depth == 0:
+                return position
+    raise AssertionError("括号未闭合")
+
+
+def after_generic(masked, index):
+    """跳过紧跟的泛型参数 <...>（可嵌套），返回其后第一个非空白字符的位置。"""
+    while index < len(masked) and masked[index].isspace():
+        index += 1
+    if index < len(masked) and masked[index] == "<":
+        depth, position = 0, index
+        while position < len(masked):
+            if masked.startswith("=>", position):
+                position += 2
+                continue
+            if masked[position] == "<":
+                depth += 1
+            elif masked[position] == ">":
+                depth -= 1
+                if depth == 0:
+                    index = position + 1
+                    break
+            position += 1
+        else:
+            raise AssertionError("泛型参数未闭合")
+        while index < len(masked) and masked[index].isspace():
+            index += 1
+    return index
+
+
+def first_argument(masked, opening):
+    """opening 指向调用的 '('；返回第一个参数的源码（顶层逗号或右括号之前）。"""
+    depth = 0
+    for position in range(opening + 1, len(masked)):
+        character = masked[position]
+        if character in "([{":
+            depth += 1
+        elif character in ")]}":
+            if depth == 0:
+                return masked[opening + 1:position].strip()
+            depth -= 1
+        elif character == "," and depth == 0:
+            return masked[opening + 1:position].strip()
+    raise AssertionError("调用括号未闭合")
+
+
+def frontend_route(token, literals, constants):
+    """前端路径字面量：模板里的路径常量照值代入，参数（标识符、segment()/encodeURIComponent() 包一个标识符）记为 {}。"""
+    quote, value = literals[token]
+    assert "\\" not in value, "未支持的路径转义表达式"
+    if quote == "`":
+        def parameter(match):
+            expression = match[1].strip()
+            if expression in constants:
+                return constants[expression]
+            chain = IDENTIFIER + r"(?:\." + IDENTIFIER + ")*"
+            assert re.fullmatch(r"(?:(?:segment|encodeURIComponent)\(\s*" + chain + r"\s*\)|" + chain + ")", expression), \
+                "未支持的路径参数表达式：" + expression
+            return "{}"
+        value = re.sub(r"\$\{([^{}]*)\}", parameter, value)
+    segment = r"(?:[A-Za-z0-9_.~-]+|\{\})"
+    assert re.fullmatch("/" + segment + "(?:/" + segment + ")*", value), "未支持的路径表达式：" + value
+    assert not any(part in (".", "..") for part in value.split("/")), "路径不能包含跳转区段"
+    return value
+
+
+def frontend_requests(source, name):
+    """返回一个前端文件里每个请求的网关路径；遇到解析不了的网络调用就失败，不报告部分覆盖。"""
+    masked, literals = source_literals(source)
+    assert not re.search(r"\b(?:fetch|XMLHttpRequest|EventSource|WebSocket)\b|\baxios\s*\.", masked), \
+        name + "：未支持的网络表达式，不能只校验部分路径"
+    constants = {}
+    for match in re.finditer(r"\bconst\s+(" + IDENTIFIER + r")\s*=\s*(FLEET_LITERAL_\d+)\s*;", masked):
+        _, value = literals[match[2]]
+        if value.startswith("/"):
+            assert "${" not in value, name + "：路径常量不能含表达式"
+            constants[match[1]] = value
+
+    def path_of(argument):
+        if re.fullmatch(r"FLEET_LITERAL_\d+", argument):
+            return frontend_route(argument, literals, constants)
+        assert argument in constants, name + "：请求路径必须是字面量或模块里的路径常量：" + argument
+        return constants[argument]
+
+    def url_of(argument):
+        assert argument.startswith("{") and argument.endswith("}"), name + "：请求配置必须是对象字面量"
+        urls = re.findall(r"\burl\s*:\s*([^,}]+)", argument)
+        assert len(urls) == 1 and re.fullmatch(r"FLEET_LITERAL_\d+", urls[0].strip()), name + "：请求配置的 url 必须是唯一的路径字面量"
+        return frontend_route(urls[0].strip(), literals, constants)
+
+    # 本地辅助函数：第一个形参是请求配置，函数体里用 client.request 发出（原样，或把 url 拼在路径常量后）。
+    helpers, spans = {}, []
+    for match in re.finditer(r"\bfunction\s+(" + IDENTIFIER + r")\s*(?:<[^()]*>)?\s*\(\s*(" + IDENTIFIER + r")\s*:", masked):
+        opening = masked.index("(", match.start(1))
+        body = masked.index("{", matching(masked, opening, "(", ")"))
+        end = matching(masked, body, "{", "}")
+        calls = list(re.finditer(r"\bclient\s*\.\s*request\b", masked[body:end]))
+        if not calls:
+            continue
+        assert len(calls) == 1, name + "：辅助函数只能发出一个请求"
+        position = after_generic(masked, body + calls[0].end())
+        assert masked[position] == "(", name + "：辅助函数的请求无法解析"
+        argument, config = first_argument(masked, position), match[2]
+        if argument == config:
+            base = ""
+        else:
+            assert argument.startswith("{") and re.search(r"\.\.\.\s*" + config + r"\b", argument), name + "：辅助函数必须原样转发请求配置"
+            urls = re.findall(r"\burl\s*:\s*(FLEET_LITERAL_\d+)", argument)
+            assert len(urls) == 1, name + "：辅助函数的 url 必须是唯一的模板"
+            joined = re.fullmatch(r"\$\{(" + IDENTIFIER + r")\}\$\{" + config + r"\.url\}", literals[urls[0]][1])
+            assert literals[urls[0]][0] == "`" and joined and joined[1] in constants, name + "：辅助函数的 url 必须是路径常量加 config.url"
+            base = constants[joined[1]]
+        helpers[match[1]] = base
+        spans.append((body, end))
+
+    paths = []
+    for match in re.finditer(r"\b(client|api)\s*\.\s*(" + IDENTIFIER + r")", masked):
+        if any(start <= match.start() <= end for start, end in spans):
+            continue
+        position = after_generic(masked, match.end())
+        if position >= len(masked) or masked[position] != "(":
+            continue
+        assert match[2] in REQUEST_METHODS, name + "：未支持的请求方法 " + match[1] + "." + match[2]
+        argument = first_argument(masked, position)
+        paths.append(url_of(argument) if match[2] == "request" else path_of(argument))
+    for helper, base in helpers.items():
+        for match in re.finditer(r"\b" + re.escape(helper) + r"\b", masked):
+            if re.search(r"\bfunction\s*$", masked[:match.start()]):
+                continue
+            position = after_generic(masked, match.end())
+            if position < len(masked) and masked[position] == "(":
+                paths.append(base + url_of(first_argument(masked, position)))
+    return paths
+
+
+def frontend_service(path):
+    for prefix, service in FRONTEND_PATH_SERVICES:
+        if path.startswith(prefix):
+            return service
+    raise AssertionError("前端路径不属于任何已知服务：" + path)
+
+
 def check_frontend_routes(root, routes):
-    constants = (root / "admin-web/src/constants/auth.ts").read_text()
-    modules = {"auth": ("USER", "user"), "message": ("MESSAGE", "message"),
-               "ai": ("AI", "ai"), "rag": ("RAG", "rag")}
-    checked = 0
-    for module, (constant, service) in modules.items():
-        prefix = re.search(r"export const " + constant + r"_SERVICE_PREFIX = ['\"]([^'\"]*)['\"]", constants)
-        assert prefix, constant
-        roots, controllers = set(), []
-        for file in (root / service / "src/main/java").rglob("*.java"):
-            source = file.read_text()
-            if "@RestController" in source:
-                match = re.search(r'@RequestMapping\(\s*(?:(?:value|path)\s*=\s*)?"([^"\n]+)"', source)
-                if match:
-                    roots.add(match[1])
-                    controllers.append((match[1], source))
-        source = (root / f"admin-web/src/services/{module}/index.ts").read_text()
-        paths = {match[1] for match in re.findall(r"(['\"`])(/(?:auth|api|messages)/[^'\"`\n]*)\1", source)}
-        assert paths and roots, module
+    """前端每个请求都要经网关路由到前缀所属的服务，且落在该服务某个控制器的注解路径上；返回核对的不同路径数。"""
+    web = Path(root) / "admin-web"
+    controllers = {}
+
+    def service_controllers(service):
+        if service not in controllers:
+            found = []
+            for file in sorted((Path(root) / service / "src/main/java").rglob("*.java")):
+                source = file.read_text()
+                if "@RestController" in source:
+                    match = re.search(r'@RequestMapping\(\s*(?:(?:value|path)\s*=\s*)?"([^"\n]+)"', source)
+                    if match:
+                        found.append((match[1], source))
+            assert found, "服务没有带根路径的控制器：" + service
+            controllers[service] = found
+        return controllers[service]
+
+    checked = set()
+    for relative in FRONTEND_REQUEST_SOURCES:
+        location = web / relative
+        files = [location] if location.suffix == ".ts" else sorted(location.glob("*.ts"))
+        paths = []
+        for file in files:
+            if file.is_file():
+                paths += frontend_requests(file.read_text(), str(file.relative_to(web)))
+        assert paths, "前端结构变了，没有找到请求：admin-web/" + relative
         for path in paths:
-            check_route(prefix[1] + path, service, roots, routes)
-            checked += 1
-        if module == "ai":
-            for name in ("controlPlane.ts", "storage.ts"):
-                file = root / "admin-web/src/services/ai" / name
-                assert file.is_file(), "缺少需要明确校验的 AI 分模块"
-                for path in ai_split_paths(file.read_text(), name, prefix[1]):
-                    check_route(path, service, roots, routes)
-                    _, downstream = route_destination(path, routes)
-                    check_controller_endpoint(downstream, controllers)
-                    checked += 1
-    return checked
+            if path in GATEWAY_LOCAL_PATHS:
+                continue
+            service = frontend_service(path)
+            found = service_controllers(service)
+            check_route(path, service, {base for base, _ in found}, routes)
+            _, downstream = route_destination(path, routes)
+            check_controller_endpoint(downstream, found)
+            checked.add(path)
+    return len(checked)
 
 
 def check_entity_tables(root, inventory):
@@ -558,7 +710,7 @@ def check():
     check_entity_tables(ROOT, inventory)
     print(f"PASS: {len(SERVICES)} 服务 / 27 profile / {len(imported)} dataId / "
           f"{sum(len(tables) for tables in inventory.values())} 张表（Flyway 迁移后）/ "
-          f"{frontend_paths} 前端路径（含 AI 分模块，仅静态校验）；隔离、路由和业务种子门禁通过")
+          f"{frontend_paths} 前端路径（apps 与 packages/auth，仅静态校验）；隔离、路由和业务种子门禁通过")
 
 
 if __name__ == "__main__":
