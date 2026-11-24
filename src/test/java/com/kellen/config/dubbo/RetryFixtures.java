@@ -10,6 +10,15 @@ import org.apache.dubbo.rpc.RpcContext;
 import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.RpcInvocation;
 import org.apache.dubbo.rpc.TimeoutCountDown;
+import org.apache.dubbo.rpc.TriRpcStatus;
+import org.apache.dubbo.rpc.cluster.directory.AbstractDirectory;
+import org.apache.dubbo.rpc.cluster.directory.StaticDirectory;
+import org.apache.dubbo.rpc.cluster.filter.DefaultFilterChainBuilder;
+import org.apache.dubbo.rpc.cluster.router.state.BitList;
+import org.apache.dubbo.rpc.cluster.SingleRouterChain;
+import org.apache.dubbo.rpc.cluster.support.FailoverCluster;
+import org.apache.dubbo.rpc.model.ApplicationModel;
+import org.apache.dubbo.rpc.model.ModuleModel;
 import org.apache.dubbo.rpc.model.ScopeModel;
 
 import java.time.Duration;
@@ -20,6 +29,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -73,6 +83,51 @@ final class RetryFixtures {
         return new RpcInvocation(null, method, INTERFACE, INTERFACE, new Class<?>[] {String.class}, new Object[] {"key"});
     }
 
+    /**
+     * 用 {@code StaticDirectory} 与 Dubbo 的失败转移集群把提供方组成一个调用端，带上调用端的协议层与集群层过滤器链。
+     *
+     * @param application 绑定的应用（每个测试新建）
+     * @param consumer    调用端 URL
+     * @param providers   提供方
+     * @return 集群调用端
+     */
+    @SafeVarargs
+    static Invoker<Service> cluster(ApplicationModel application, URL consumer, Invoker<Service>... providers) {
+        ModuleModel module = application.getDefaultModule();
+        DefaultFilterChainBuilder builder = new DefaultFilterChainBuilder();
+        List<Invoker<Service>> chains = new ArrayList<>();
+        for (Invoker<Service> provider : providers) {
+            chains.add(builder.buildInvokerChain(provider, CommonConstants.REFERENCE_FILTER_KEY, CommonConstants.CONSUMER));
+        }
+        StaticDirectory<Service> directory = new StaticDirectory<>(consumer.setScopeModel(module), chains);
+        directory.buildRouterChain();
+        return join(directory);
+    }
+
+    /**
+     * @param directory 目录
+     * @return 以失败转移集群包住目录、带集群层过滤器链的调用端
+     */
+    static Invoker<Service> join(AbstractDirectory<Service> directory) {
+        return new FailoverCluster().join(directory, true);
+    }
+
+    /**
+     * @return 与 {@code AbstractInvoker#waitForResultIfSync} 包法相同的“请求发出后 Triple 不可用”失败
+     */
+    static RpcException unavailableAfterSend() {
+        return new RpcException(RpcException.UNKNOWN_EXCEPTION, "wrapped",
+                new ExecutionException(TriRpcStatus.UNAVAILABLE.asException()));
+    }
+
+    /**
+     * @param startNanos 起点（{@link System#nanoTime()}）
+     * @return 至今经过的毫秒数
+     */
+    static long elapsedMillis(long startNanos) {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+    }
+
     private static Map<String, String> parameters(String... keyValues) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("interface", INTERFACE);
@@ -80,6 +135,37 @@ final class RetryFixtures {
             parameters.put(keyValues[index], keyValues[index + 1]);
         }
         return parameters;
+    }
+
+    /**
+     * 一个提供方都没有的目录（{@code StaticDirectory} 不接受空列表）。
+     */
+    static final class EmptyDirectory extends AbstractDirectory<Service> {
+
+        EmptyDirectory(URL consumer) {
+            super(consumer);
+        }
+
+        @Override
+        protected List<Invoker<Service>> doList(
+                SingleRouterChain<Service> routerChain, BitList<Invoker<Service>> invokers, Invocation invocation) {
+            return List.of();
+        }
+
+        @Override
+        public List<Invoker<Service>> getAllInvokers() {
+            return List.of();
+        }
+
+        @Override
+        public Class<Service> getInterface() {
+            return Service.class;
+        }
+
+        @Override
+        public boolean isAvailable() {
+            return false;
+        }
     }
 
     /**
