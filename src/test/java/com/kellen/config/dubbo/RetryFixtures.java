@@ -54,7 +54,8 @@ final class RetryFixtures {
     static URL consumerUrl(ScopeModel scopeModel, String... keyValues) {
         Map<String, String> parameters = parameters(keyValues);
         parameters.put("side", "consumer");
-        parameters.put("application", "retry-test-consumer");
+        // 用例可以传自己的 application，让各自的重试预算互不影响。
+        parameters.putIfAbsent("application", "retry-test-consumer");
         return new URL("consumer", "consumer.test", 0, INTERFACE, parameters).setScopeModel(scopeModel);
     }
 
