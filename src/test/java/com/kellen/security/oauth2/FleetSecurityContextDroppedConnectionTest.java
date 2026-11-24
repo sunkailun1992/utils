@@ -37,6 +37,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * （{@code NettyConnectionHandler#reconnect}）；选路发现提供方不可用还会把它移出可用列表，每秒复查一次
  * （{@code AbstractDirectory#addInvalidateInvoker}），复查前的请求得到“没有可用提供方”。11-22 的 C0110 是首轮请求约 86 毫秒
  * 全部失败、约 1 秒后恢复，与此吻合。</p>
+ *
+ * <p>2.1.1 起转换器不再自己重试：这两个用例由 Dubbo 调用端统一重试保证（协议层 {@code UnprocessedRequestFilter} 标记未发出、
+ * 集群层 {@code ConsumerRetryClusterFilter} 退避重试）。引用是直连 URL、没有声明幂等，只走第一层；排除这两个过滤器后两例都失败。</p>
  */
 class FleetSecurityContextDroppedConnectionTest {
 

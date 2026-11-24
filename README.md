@@ -6,7 +6,7 @@
 
 ## 当前定位
 
-- 发布坐标：`com:utils:2.0.8`
+- 发布坐标：`com:utils:2.1.1`
 - Java 版本：`21`
 - Gradle：`9.9.1`（wrapper 校验官方分发 SHA-256）
 - Spring Boot：`4.0.9`
@@ -207,3 +207,5 @@ AI 或新接手开发者按下面顺序阅读，不要只根据类名推断行�
 `2.0.9` 是第6阶段第三部分（不兼容）：实体基类的排序字段 `sorting` 改名 `sort`，Java 访问方法随之变为 `getSort()`、`setSort()`，对应列名 `sort`。消费方升级到 2.0.9 时，同一批上线里要用 Flyway 把各表的 `sorting` 列改名为 `sort`（`ALTER TABLE … RENAME COLUMN sorting TO sort`），查询白名单和排序字段里的 `sorting` 一并改为 `sort`，前端同批改字段；只升依赖不改列名，MyBatis-Plus 读写 `sort` 会报列不存在。做法按《Refactoring Databases》的 Rename Column：每张表只由一个服务读写、前后端同批发布，所以直接改名，不留过渡列。没升级的服务继续用 2.0.8，不受影响。回退：消费方的 Flyway 改名迁移是在服务启动时执行的，没有改名前的备份，回退要反向改名——在一个事务里把各表的 `sort` 改回 `sorting`、删掉对应的 `flyway_schema_history` 记录、确认 `undo_log` 为空，再把 utils 换回 2.0.8、各服务换回上一版，各服务 CI 固定的 utils 检出提交一并退回（逐库做法见 user、message、ai、ai-memory 的 README）。
 
 `2.1.0` 修 C0110（资源服务器偶发 503「用户安全上下文暂不可用」）：调用端到 user 的 Triple 连接断开后，Dubbo 3.3.7 在重连完成前直接拒绝请求（UNAVAILABLE、没有可用提供方），资源服务器第一次取业务上下文就回 503。现在 `FleetJwtAuthenticationConverter` 对这两类请求没到 user 的失败按 `SecurityContextLookupRetry` 指数退避加抖动重试（最多 4 次、累计 2.25 至 2.9 秒），其余失败照旧第一次就回 503；接口、配置与 Dubbo 引用不变，消费方只需升级版本。详见 `docs/ai-coding/AUTH_SPEC.md`「租户与业务上下文」。
+
+`2.1.1` 把 2.1.0 的做法推广到全部同步 Dubbo 调用（行为变化，接口兼容）：调用端协议层过滤器 `UnprocessedRequestFilter` 在连接不可用时不发请求、标记“未发出”，集群层过滤器 `ConsumerRetryClusterFilter` 包住整次调用。请求没发出的失败（Triple 连接待重连、提供方暂被移出可用列表等复查）对任何方法都按指数退避加抖动重试到这次调用的超时；请求发出后的连接类失败（Triple UNAVAILABLE、CANCELLED，含 Triple 放在结果里带回的）只对提供方声明了幂等的方法重试，最多 3 次尝试，并受 gRFC A6 的令牌桶预算约束；超时、业务异常与其它失败不重试。每次尝试里 Dubbo 自己的重试都设为 0，全服务群只有这一层重试。提供方用 `@DubboService(methods = @Method(name = "…", parameters = {"idempotent", "true"}))` 声明幂等方法，调用端同名参数优先；没声明的只有第一层。`SecurityContextLookupRetry` 已去掉，业务上下文查询改由统一重试负责。新增指标 `dubbo.consumer.retries`、`dubbo.consumer.retry.recoveries`、`dubbo.consumer.retry.giveups`。消费方只需升级版本，提供方按需加幂等声明。回滚：调用方退回 2.1.0，即回到只有业务上下文查询重试、其余调用用 Dubbo 默认失败转移；提供方的幂等声明对旧版调用方没有影响。详见 `docs/ai-coding/RPC_API_CODING_SPEC.md`「调用端统一重试」。

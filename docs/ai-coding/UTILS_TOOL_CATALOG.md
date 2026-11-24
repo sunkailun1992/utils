@@ -84,6 +84,8 @@ utils 当前没有切面。原有的请求日志切面与防重复提交从未�
 - `com.kellen.config.async.AsyncConfig`：异步线程池（线程名前缀 `async-`），任务装饰器见「可观测性」。
 - `com.kellen.config.dubbo.DubboContextPropagationFilter`：Dubbo 动态数据源、租户和 Seata XID 透传配置。
 - `com.kellen.config.dubbo.DubboExtensionPropertiesAliasConfig`：给租户、流量治理配置 Bean 补上 Dubbo 扩展按 setter 名查找用的别名，让透传过滤器拿到 Spring 绑定的配置。
+- `com.kellen.config.dubbo.UnprocessedRequestFilter`：Dubbo 调用端协议层过滤器（2.1.1 起），同步调用在连接不可用时不发请求、标记“未发出”，并记下本次提供方对该方法的幂等声明。
+- `com.kellen.config.dubbo.ConsumerRetryClusterFilter`：Dubbo 调用端集群层过滤器（2.1.1 起），全部同步调用的统一重试：未发出的透明重试到超时，声明了幂等的方法在请求发出后的连接类失败按次数、退避与令牌桶预算重试；带重试指标与日志。见 `RPC_API_CODING_SPEC.md`「调用端统一重试」。
 - `com.kellen.config.redis.RedisCacheConfig`：Redis 缓存配置，值序列化器为 Spring Data Redis 4 的 Jackson 3 `GenericJacksonJsonRedisSerializer`，多态类型只放行 `com.kellen.` 与 `java.` 包。
 - `com.kellen.config.redis.RedisLockAutoConfiguration`：自动配置，有 `RedissonClient` 时装配 `RedissonLocker` 并设入 `LockUtil`。
 - `com.kellen.config.json.JsonUtilAutoConfiguration`：自动配置，容器启动后让 `JsonUtil` 改用 Spring Boot 配好的 `JsonMapper`。

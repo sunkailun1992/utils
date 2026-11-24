@@ -42,8 +42,9 @@ public class FleetSecurityContextDubboAutoConfiguration {
     /**
      * user 服务的业务上下文接口；参数沿用各服务既有引用的写法：启动时不初始化（{@code init = false}，Dubbo 默认在启动时初始化
      * 全部引用，没配注册中心的上下文会因此起不来），第一次调用才初始化并连接，不在启动时检查提供方，3 秒超时，跟随灰度路由。
-     * Dubbo 自己不重试（{@code retries = 0}）：它的失败转移立即重试、没有退避，盖不住连接断开后约 1 至 2 秒的重连窗口；
-     * 请求还没到 user 服务的连接类失败由转换器按 {@link SecurityContextLookupRetry} 退避重试。
+     * 连接类失败由 utils 的 Dubbo 调用端统一重试处理（{@link com.kellen.config.dubbo.ConsumerRetryClusterFilter}）：请求还没发出时
+     * 退避重试到这 3 秒用完为止；user 在提供方把 {@code resolve} 声明为幂等，请求发出后的连接类失败也按次数与预算重试。
+     * 统一重试在每次尝试里都把 Dubbo 自己的重试设为 0，这里的 {@code retries = 0} 与之一致。
      * 初始化失败（如没有注册中心）与其余调用失败一样，由转换器按 user 服务不可用返回 503。
      *
      * @return Dubbo 引用

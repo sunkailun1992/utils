@@ -3,14 +3,7 @@ package com.kellen.security.oauth2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.core.NestedExceptionUtils;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.retry.RetryException;
-import org.springframework.core.retry.RetryListener;
-import org.springframework.core.retry.RetryPolicy;
-import org.springframework.core.retry.RetryState;
-import org.springframework.core.retry.RetryTemplate;
-import org.springframework.core.retry.Retryable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -32,8 +25,7 @@ import java.util.List;
  *     <li>带 {@code user_id}：经 {@link SecurityUserCache} 取业务上下文（未命中时 Dubbo 调 user 服务），
  *     活动租户取请求头 {@code X-Tenant-Id}。用户不存在（账号未开通）、停用、租户被拒，以及 {@code user_id} 不属于令牌的 {@code sub}
  *     （user 服务登记的 Keycloak 用户对不上）都生成无权限的结果，授权阶段返回 403：令牌本身有效，按 RFC 6750 §3.1 不回 401，
- *     网关 BFF 也就不会把它当成会话失效反复重新登录。请求还没到 user 服务的连接类失败（连接断开待重连、暂无可用提供方）
- *     先按 {@link SecurityContextLookupRetry} 退避重试；仍不可用（含请求时取不到提供方）抛
+ *     网关 BFF 也就不会把它当成会话失效反复重新登录。user 服务不可用（含请求时取不到提供方）抛
  *     {@link FleetSecurityContextUnavailableException}（503）。</li>
  *     <li>没有 {@code user_id}：{@code azp} 在机器客户端名单里生成 {@link MachineAuthenticationToken}，
  *     否则生成普通令牌结果，授权阶段返回 403。</li>
@@ -58,10 +50,8 @@ public class FleetJwtAuthenticationConverter implements Converter<Jwt, AbstractA
 
     private final JwtGrantedAuthoritiesConverter scopeAuthorities = new JwtGrantedAuthoritiesConverter();
 
-    private final RetryTemplate contextRetry;
-
     /**
-     * 构造转换器，业务上下文查询按 {@link SecurityContextLookupRetry#defaultPolicy()} 重试连接类失败。
+     * 构造转换器。
      *
      * @param properties     utils 资源服务器配置
      * @param cache          业务上下文缓存
@@ -69,24 +59,9 @@ public class FleetJwtAuthenticationConverter implements Converter<Jwt, AbstractA
      */
     public FleetJwtAuthenticationConverter(FleetOAuth2Properties properties, SecurityUserCache cache,
                                            ObjectProvider<SecurityContextRpcService> contextService) {
-        this(properties, cache, contextService, SecurityContextLookupRetry.defaultPolicy());
-    }
-
-    /**
-     * 按给定重试策略构造转换器（测试用更短的等待）。
-     *
-     * @param properties         utils 资源服务器配置
-     * @param cache              业务上下文缓存
-     * @param contextService     业务上下文提供方
-     * @param contextRetryPolicy 业务上下文查询的重试策略
-     */
-    FleetJwtAuthenticationConverter(FleetOAuth2Properties properties, SecurityUserCache cache,
-                                    ObjectProvider<SecurityContextRpcService> contextService, RetryPolicy contextRetryPolicy) {
         this.properties = properties;
         this.cache = cache;
         this.contextService = contextService;
-        this.contextRetry = new RetryTemplate(contextRetryPolicy);
-        this.contextRetry.setRetryListener(new ContextRetryLog());
     }
 
     @Override
@@ -134,39 +109,13 @@ public class FleetJwtAuthenticationConverter implements Converter<Jwt, AbstractA
         if (service == null) {
             throw new FleetSecurityContextUnavailableException("没有业务上下文提供方 SecurityContextRpcService", null);
         }
-        return cache.get(userId, tenantId, () -> resolve(service, userId, tenantId));
-    }
-
-    /**
-     * 向提供方查询业务上下文，连接类失败按退避重试；仍失败时按 user 服务不可用（503）处理，消息写明尝试次数与最后一次原因。
-     */
-    private SecurityContextResult resolve(SecurityContextRpcService service, String userId, String tenantId) {
-        try {
-            return contextRetry.execute(() -> service.resolve(userId, tenantId));
-        } catch (RetryException ex) {
-            Throwable last = ex.getCause();
-            if (last instanceof Error error) {
-                throw error;
+        return cache.get(userId, tenantId, () -> {
+            try {
+                return service.resolve(userId, tenantId);
+            } catch (RuntimeException ex) {
+                throw new FleetSecurityContextUnavailableException("加载用户安全上下文失败：" + ex.getMessage(), ex);
             }
-            int attempts = ex.getRetryCount() + 1;
-            String prefix = attempts > 1 ? "加载用户安全上下文失败（共尝试 " + attempts + " 次）：" : "加载用户安全上下文失败：";
-            throw new FleetSecurityContextUnavailableException(prefix + (last == null ? ex.getMessage() : last.getMessage()), last);
-        }
-    }
-
-    /**
-     * 重试后查询成功时记一行，留下连接类失败确实发生过的证据（不记令牌与业务上下文内容）。
-     */
-    private static final class ContextRetryLog implements RetryListener {
-
-        @Override
-        public void onRetryableExecution(RetryPolicy retryPolicy, Retryable<?> retryable, RetryState retryState) {
-            if (retryState.isSuccessful() && retryState.getRetryCount() > 0) {
-                Throwable first = NestedExceptionUtils.getMostSpecificCause(retryState.getExceptions().get(0));
-                log.info("加载用户安全上下文重试 {} 次后成功，第一次失败：{}：{}", retryState.getRetryCount(),
-                        first.getClass().getSimpleName(), first.getMessage());
-            }
-        }
+        });
     }
 
     private static String requestedTenant() {
