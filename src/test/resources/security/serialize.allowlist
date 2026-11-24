@@ -1,0 +1,5 @@
+# Dubbo 序列化白名单，只在 utils 的测试类路径上，不进发布的 jar。
+# FleetSecurityContextDroppedConnectionTest 用独立的 FrameworkModel 导出业务上下文服务。Triple 提供方序列化
+# SecurityContextResult（及其中的 SecurityUser）时，严格模式白名单是否已登记这个包，取决于之前跑过哪些测试，
+# 测试因此依赖执行顺序。这里按 Dubbo 官方的白名单文件放行，范围与 Dubbo 自动信任业务接口时一致（包名前三段）。
+com.kellen.security.

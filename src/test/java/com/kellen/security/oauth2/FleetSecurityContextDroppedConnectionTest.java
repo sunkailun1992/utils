@@ -1,5 +1,6 @@
 package com.kellen.security.oauth2;
 
+import com.kellen.config.dubbo.InterruptingTcpProxy;
 import org.apache.dubbo.common.utils.NetUtils;
 import org.apache.dubbo.config.ApplicationConfig;
 import org.apache.dubbo.config.ProtocolConfig;

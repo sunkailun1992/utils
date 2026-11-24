@@ -1,4 +1,4 @@
-package com.kellen.security.oauth2;
+package com.kellen.config.dubbo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * <p>监听调用方给定的本机地址（Dubbo 连本机时用的地址），只转发给本机回环地址上的提供方，测试结束关闭。</p>
  */
-final class InterruptingTcpProxy implements AutoCloseable {
+public final class InterruptingTcpProxy implements AutoCloseable {
 
     private final ServerSocket server;
 
@@ -49,28 +49,28 @@ final class InterruptingTcpProxy implements AutoCloseable {
      * @return 已开始接受连接的代理
      * @throws IOException 端口打不开
      */
-    static InterruptingTcpProxy start(InetAddress listenAddress, int targetPort) throws IOException {
+    public static InterruptingTcpProxy start(InetAddress listenAddress, int targetPort) throws IOException {
         return new InterruptingTcpProxy(listenAddress, targetPort);
     }
 
     /**
      * @return 代理监听的端口
      */
-    int port() {
+    public int port() {
         return server.getLocalPort();
     }
 
     /**
      * @return 至今接受过的调用端连接数（重连会让它增加）
      */
-    int acceptedConnections() {
+    public int acceptedConnections() {
         return accepted.get();
     }
 
     /**
      * 把现有连接的两端都立即复位。
      */
-    void resetAll() {
+    public void resetAll() {
         for (Pair pair : pairs) {
             pair.reset();
         }
