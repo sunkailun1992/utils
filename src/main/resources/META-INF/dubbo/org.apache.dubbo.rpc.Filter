@@ -1,1 +1,2 @@
 kellenContextPropagation=com.kellen.config.dubbo.DubboContextPropagationFilter
+kellenUnprocessedRequest=com.kellen.config.dubbo.UnprocessedRequestFilter
