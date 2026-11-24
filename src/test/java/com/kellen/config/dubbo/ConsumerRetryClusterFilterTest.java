@@ -15,6 +15,7 @@ import org.apache.dubbo.rpc.RpcContext;
 import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.RpcInvocation;
 import org.apache.dubbo.rpc.StatusRpcException;
+import org.apache.dubbo.rpc.TriRpcStatus;
 import org.apache.dubbo.rpc.model.ApplicationModel;
 import org.apache.dubbo.rpc.model.FrameworkModel;
 import org.apache.dubbo.rpc.model.ModuleModel;
@@ -136,6 +137,32 @@ class ConsumerRetryClusterFilterTest {
         assertThatThrownBy(() -> cluster(consumer(), provider).invoke(RetryFixtures.invocation("read")))
                 .isInstanceOf(RpcException.class)
                 .hasRootCauseInstanceOf(StatusRpcException.class);
+        assertThat(provider.calls()).isEqualTo(1);
+    }
+
+    /**
+     * Triple 请求发出后的失败不抛出，而是放在结果里：状态异常写进 AppResponse，调用端 RpcExceptionFilter 在结果监听里重抛，
+     * 结果的 future 以异常结束（真实连接下见 ConsumerRetryTripleIntegrationTest 的复位用例）。
+     */
+    @Test
+    void idempotentMethodIsRetriedWhenTheFailureComesBackInTheResult() {
+        FakeProvider provider = new FakeProvider(provider(31001, "read.idempotent", "true"))
+                .thenReturn(invocation -> AsyncRpcResult.newDefaultAsyncResult(TriRpcStatus.CANCELLED.asException(), invocation));
+
+        Result result = cluster(consumer(), provider).invoke(RetryFixtures.invocation("read"));
+
+        assertThat(result.getValue()).isEqualTo("ok:read");
+        assertThat(provider.calls()).isEqualTo(2);
+    }
+
+    @Test
+    void undeclaredMethodGetsTheFailedResultBackAsIs() {
+        FakeProvider provider = new FakeProvider(provider(31001))
+                .thenReturn(invocation -> AsyncRpcResult.newDefaultAsyncResult(TriRpcStatus.CANCELLED.asException(), invocation));
+
+        Result result = cluster(consumer(), provider).invoke(RetryFixtures.invocation("read"));
+
+        assertThatThrownBy(result::recreate).isInstanceOf(RpcException.class).hasRootCauseInstanceOf(StatusRpcException.class);
         assertThat(provider.calls()).isEqualTo(1);
     }
 

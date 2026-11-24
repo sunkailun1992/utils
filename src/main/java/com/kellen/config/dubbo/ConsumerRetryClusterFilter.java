@@ -38,6 +38,9 @@ import java.util.concurrent.TimeUnit;
  *     <li>超时、业务异常与其它失败一律不重试（见 {@link DubboFailureClassifier}）。</li>
  * </ul>
  *
+ * <p>失败有两种来法：从调用里抛出的 {@link RpcException}，以及 Triple 请求发出后放在结果里带回的失败（见 {@link #failureIn}）。
+ * 两种都按同一张分类表判定；不再重试时，抛出的照原样抛出，结果里带回的交回原结果。</p>
+ *
  * <p>每次尝试前把调用上下文附件的 {@code retries} 设为 0（{@code FailoverClusterInvoker#calculateInvokeTimes} 读后即删），
  * Dubbo 自己只试一次；同时放入这次调用的超时倒计时（{@code TimeoutCountDown}），下层按剩余时间设超时。上游请求带来了倒计时就沿用它，
  * 与 {@code RpcUtils#calculateTimeout} 的取值顺序一致。退避用 {@link DubboRetryPolicy#startBackOff()}，剩余时间不够一次退避就放弃，
@@ -104,15 +107,21 @@ public class ConsumerRetryClusterFilter implements ClusterFilter {
             attachments.setObjectAttachment(CommonConstants.TIME_COUNTDOWN_KEY, deadline);
             call.attempts++;
             RpcException failure;
+            Result failedResult = null;
             try {
-                // 业务异常随结果返回、不抛 RpcException，与成功一样原样交回，并计为一次成功。
                 Result result = invoker.invoke(invocation);
-                noteDeclaration(call, invocation);
-                budget.recordSuccess();
-                if (call.attempts > 1) {
-                    recovered(call);
+                RpcException returned = failureIn(result);
+                if (returned == null) {
+                    // 业务异常随结果返回、不是 RpcException，与成功一样原样交回，并计为一次成功。
+                    noteDeclaration(call, invocation);
+                    budget.recordSuccess();
+                    if (call.attempts > 1) {
+                        recovered(call);
+                    }
+                    return result;
                 }
-                return result;
+                failure = returned;
+                failedResult = result;
             } catch (RpcException thrown) {
                 failure = thrown;
             }
@@ -135,7 +144,7 @@ public class ConsumerRetryClusterFilter implements ClusterFilter {
                 if (call.attempts > 1) {
                     gaveUp(call, "not_retryable");
                 }
-                throw failure;
+                return giveBack(failure, failedResult);
             }
             if (giveUpReason == null) {
                 long wait = backOff.nextBackOff();
@@ -154,10 +163,42 @@ public class ConsumerRetryClusterFilter implements ClusterFilter {
             }
             if (giveUpReason != null) {
                 gaveUp(call, giveUpReason);
-                throw failure;
+                return giveBack(failure, failedResult);
             }
             count(RETRIES_METRIC, call, "layer", category == DubboFailureCategory.UNPROCESSED ? "unprocessed" : "sent");
         }
+    }
+
+    /**
+     * 取出同步调用结果里带回的框架失败。
+     *
+     * <p>Triple 请求发出后的失败（对端复位为 CANCELLED、服务端返回非 OK 状态）不从调用里抛出：
+     * {@code UnaryClientCallListener} 把状态异常写进结果，调用端 {@code RpcExceptionFilter} 在结果监听里重抛，
+     * 结果的 future 于是以异常结束，要到代理层取值时才抛。这里在同步调用返回后先取一次。</p>
+     *
+     * @param result 一次尝试的结果
+     * @return 结果里的 {@link RpcException}；成功或业务异常（不是 {@link RpcException}）返回 {@code null}
+     */
+    private static RpcException failureIn(Result result) {
+        try {
+            if (!result.hasException()) {
+                return null;
+            }
+            return result.getException() instanceof RpcException failure ? failure : null;
+        } catch (RpcException failure) {
+            // AsyncRpcResult#getAppResponse 把以异常结束的 future 包成 RpcException，原因链里是状态异常。
+            return failure;
+        }
+    }
+
+    /**
+     * 不再重试时交回最后一次的失败：从结果里取出的交回原结果，调用方看到的与没有本过滤器时一样；抛出的照原样抛出。
+     */
+    private static Result giveBack(RpcException failure, Result failedResult) {
+        if (failedResult != null) {
+            return failedResult;
+        }
+        throw failure;
     }
 
     /**
