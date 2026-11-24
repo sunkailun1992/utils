@@ -17,6 +17,7 @@ import org.apache.dubbo.rpc.Result;
 import org.apache.dubbo.rpc.RpcContext;
 import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.RpcInvocation;
+import org.apache.dubbo.rpc.TriRpcStatus;
 import org.apache.dubbo.rpc.model.ApplicationModel;
 import org.apache.dubbo.rpc.model.FrameworkModel;
 import org.apache.dubbo.rpc.model.ModuleModel;
@@ -155,7 +156,7 @@ class ConsumerRetryClusterFilterObservabilityTest {
     }
 
     @Test
-    void declarationIsLoggedOncePerMethodAndAgainWhenItChanges() {
+    void declarationIsLoggedOncePerMethodAndValue() {
         Invoker<Service> declared = cluster(consumer("retry-log-declaration"),
                 new FakeProvider(provider(31001, "read.idempotent", "true")));
         declared.invoke(RetryFixtures.invocation("read"));
@@ -167,6 +168,46 @@ class ConsumerRetryClusterFilterObservabilityTest {
                 .containsExactly(
                         "Dubbo 调用端 " + RetryFixtures.INTERFACE + "#read 的幂等声明：true",
                         "Dubbo 调用端 " + RetryFixtures.INTERFACE + "#read 的幂等声明：false");
+    }
+
+    /**
+     * 新旧版本或灰度与稳定实例的声明不一致时，调用会在两种值之间来回：每个取值只记一次，不随每次翻转刷屏。
+     */
+    @Test
+    void declarationIsLoggedOncePerValueEvenWhenItFlips() {
+        Invoker<Service> declared = cluster(consumer("retry-log-flip"),
+                new FakeProvider(provider(31001, "read.idempotent", "true")));
+        Invoker<Service> undeclared = cluster(consumer("retry-log-flip"), new FakeProvider(provider(31002)));
+
+        for (int round = 0; round < 3; round++) {
+            declared.invoke(RetryFixtures.invocation("read"));
+            undeclared.invoke(RetryFixtures.invocation("read"));
+        }
+
+        assertThat(events(Level.INFO, "幂等声明")).hasSize(2);
+    }
+
+    /**
+     * 取结果里带回的失败时不经 {@code AsyncRpcResult#getAppResponse}，免得 Dubbo 为同一次失败再记一条 ERROR。
+     */
+    @Test
+    void failuresInResultsDoNotAddDubboErrorLogs() {
+        Logger dubboResult = (Logger) LoggerFactory.getLogger(AsyncRpcResult.class);
+        ListAppender<ILoggingEvent> dubboLogs = new ListAppender<>();
+        dubboLogs.start();
+        dubboResult.addAppender(dubboLogs);
+        try {
+            FakeProvider provider = new FakeProvider(provider(31001, "read.idempotent", "true"))
+                    .thenReturn(invocation -> AsyncRpcResult.newDefaultAsyncResult(TriRpcStatus.CANCELLED.asException(), invocation));
+
+            cluster(consumer("retry-no-extra-error"), provider).invoke(RetryFixtures.invocation("read"));
+
+            assertThat(provider.calls()).isEqualTo(2);
+            assertThat(dubboLogs.list).filteredOn(event -> event.getLevel() == Level.ERROR).isEmpty();
+        } finally {
+            dubboResult.detachAppender(dubboLogs);
+            dubboLogs.stop();
+        }
     }
 
     private double count(String metric, String tagKey, String tagValue) {

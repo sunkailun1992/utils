@@ -6,7 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.common.constants.CommonConstants;
 import org.apache.dubbo.common.extension.Activate;
+import org.apache.dubbo.common.utils.StringUtils;
 import org.apache.dubbo.remoting.RemotingException;
+import org.apache.dubbo.rpc.AppResponse;
+import org.apache.dubbo.rpc.AsyncRpcResult;
 import org.apache.dubbo.rpc.Invocation;
 import org.apache.dubbo.rpc.InvokeMode;
 import org.apache.dubbo.rpc.Invoker;
@@ -22,7 +25,9 @@ import org.apache.dubbo.rpc.cluster.filter.ClusterFilter;
 import org.apache.dubbo.rpc.support.RpcUtils;
 import org.springframework.util.backoff.BackOffExecution;
 
-import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -77,9 +82,18 @@ public class ConsumerRetryClusterFilter implements ClusterFilter {
 
     private static final int MAX_DESCRIBED_CAUSES = 8;
 
+    private static final int MAX_DECLARATIONS_LOGGED = 4096;
+
+    private static final String TRIPLE_PROTOCOL = "tri";
+
+    /**
+     * Triple 调用端在方法与引用都没配超时时自己用的缺省超时，见 {@code TripleInvoker#invokeUnary}。
+     */
+    private static final long TRIPLE_DEFAULT_TIMEOUT_MILLIS = 3000;
+
     private final ConcurrentMap<String, DubboRetryBudget> budgets = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<String, Boolean> declarations = new ConcurrentHashMap<>();
+    private final Set<String> declarationsLogged = ConcurrentHashMap.newKeySet();
 
     /**
      * 由 Dubbo 扩展加载器创建，每个应用模型一个实例，预算随实例走。
@@ -94,7 +108,7 @@ public class ConsumerRetryClusterFilter implements ClusterFilter {
             return invoker.invoke(invocation);
         }
         Call call = new Call(url.getServiceInterface(), RpcUtils.getMethodName(invocation), System.nanoTime());
-        TimeoutCountDown deadline = deadline(url, invocation);
+        TimeoutCountDown deadline = deadline(invoker, url, invocation);
         DubboRetryBudget budget = budgets.computeIfAbsent(url.getApplication() + "/" + url.getServiceKey(),
                 key -> new DubboRetryBudget(DubboRetryPolicy.BUDGET_MAX_TOKENS, DubboRetryPolicy.BUDGET_TOKEN_RATIO));
         BackOffExecution backOff = DubboRetryPolicy.startBackOff();
@@ -180,15 +194,16 @@ public class ConsumerRetryClusterFilter implements ClusterFilter {
      * @return 结果里的 {@link RpcException}；成功或业务异常（不是 {@link RpcException}）返回 {@code null}
      */
     private static RpcException failureIn(Result result) {
-        try {
-            if (!result.hasException()) {
-                return null;
-            }
-            return result.getException() instanceof RpcException failure ? failure : null;
-        } catch (RpcException failure) {
-            // AsyncRpcResult#getAppResponse 把以异常结束的 future 包成 RpcException，原因链里是状态异常。
-            return failure;
+        if (result instanceof AsyncRpcResult async && async.getResponseFuture().isCompletedExceptionally()) {
+            // 直接取 future 的原因，不经 AsyncRpcResult#getAppResponse：那里会为同一次失败再记一条 ERROR。
+            CompletableFuture<AppResponse> future = async.getResponseFuture();
+            Throwable cause = future.isCancelled() ? new CancellationException("结果已被取消") : future.exceptionNow();
+            return cause instanceof RpcException failure ? failure : new RpcException(cause);
         }
+        if (!result.hasException()) {
+            return null;
+        }
+        return result.getException() instanceof RpcException failure ? failure : null;
     }
 
     /**
@@ -202,16 +217,46 @@ public class ConsumerRetryClusterFilter implements ClusterFilter {
     }
 
     /**
-     * 这次调用的截止倒计时：上游请求带来的倒计时（ConsumerContextFilter 已放进客户端附件）优先，没有就按方法超时新建。
+     * 这次调用的截止倒计时：引用自己的超时，与上游请求带来的倒计时（ConsumerContextFilter 已放进客户端附件）取较小的一个。
+     *
+     * <p>倒计时放进客户端附件后，Dubbo 按剩余时间设每次尝试的超时，并以 {@code _TO} 附件把剩余时间发给提供方；提供方处理时再调下游，
+     * 默认受这段剩余时间约束（Dubbo 的超时倒计时，同 gRPC 的截止时间传递），可在下游引用上用方法参数
+     * {@code enable-timeout-countdown=false} 关掉。</p>
      */
-    private static TimeoutCountDown deadline(URL url, Invocation invocation) {
+    private static TimeoutCountDown deadline(Invoker<?> invoker, URL url, Invocation invocation) {
         RpcContextAttachment attachments = RpcContext.getClientAttachment();
-        if (attachments.getObjectAttachment(CommonConstants.TIME_COUNTDOWN_KEY) instanceof TimeoutCountDown upstream) {
+        String method = RpcUtils.getMethodName(invocation);
+        long own = timeoutConfigured(url, method, attachments, invocation)
+                ? RpcUtils.getTimeout(url, method, attachments, invocation, CommonConstants.DEFAULT_TIMEOUT)
+                : defaultTimeout(invoker);
+        if (attachments.getObjectAttachment(CommonConstants.TIME_COUNTDOWN_KEY) instanceof TimeoutCountDown upstream
+                && upstream.timeRemaining(TimeUnit.MILLISECONDS) <= own) {
             return upstream;
         }
-        long timeout = RpcUtils.getTimeout(url, RpcUtils.getMethodName(invocation), attachments, invocation,
-                CommonConstants.DEFAULT_TIMEOUT);
-        return TimeoutCountDown.newCountDown(timeout, TimeUnit.MILLISECONDS);
+        return TimeoutCountDown.newCountDown(own, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * @return 调用上下文附件、调用对象附件或 URL（方法级或服务级）里配了超时时为真，取值顺序同 {@code RpcUtils#getTimeout}
+     */
+    private static boolean timeoutConfigured(URL url, String method, RpcContextAttachment attachments, Invocation invocation) {
+        return attachments.getObjectAttachment(CommonConstants.TIMEOUT_KEY) != null
+                || invocation.getObjectAttachment(CommonConstants.TIMEOUT_KEY) != null
+                || StringUtils.isNotEmpty(url.getMethodParameter(method, CommonConstants.TIMEOUT_KEY));
+    }
+
+    /**
+     * 方法与引用都没配超时时的缺省：Triple 调用端自己按 3000 毫秒（{@code TripleInvoker#invokeUnary}），其余协议按 Dubbo 的通用缺省。
+     */
+    private static long defaultTimeout(Invoker<?> invoker) {
+        if (invoker instanceof ClusterInvoker<?> cluster) {
+            for (Invoker<?> provider : cluster.getDirectory().getAllInvokers()) {
+                if (TRIPLE_PROTOCOL.equals(provider.getUrl().getProtocol())) {
+                    return TRIPLE_DEFAULT_TIMEOUT_MILLIS;
+                }
+            }
+        }
+        return CommonConstants.DEFAULT_TIMEOUT;
     }
 
     /**
@@ -224,14 +269,16 @@ public class ConsumerRetryClusterFilter implements ClusterFilter {
     }
 
     /**
-     * 第一次看到某个方法的幂等声明，或声明变了，记一行 INFO。
+     * 每个方法的每种幂等声明取值第一次出现时记一行 INFO。新旧版本或灰度与稳定实例声明不一致时，调用会在两种值之间来回，
+     * 按（方法，取值）只记一次，不随翻转刷屏；记过的组合有上限，泛化调用的方法名再多也不会无限增长。
      */
     private void noteDeclaration(Call call, Invocation invocation) {
         if (!(invocation.get(UnprocessedRequestFilter.IDEMPOTENT) instanceof Boolean declared)) {
             return;
         }
-        Boolean previous = declarations.put(call.service + "#" + call.method, declared);
-        if (!Objects.equals(previous, declared)) {
+        String key = call.service + "#" + call.method + "=" + declared;
+        if (!declarationsLogged.contains(key) && declarationsLogged.size() < MAX_DECLARATIONS_LOGGED
+                && declarationsLogged.add(key)) {
             log.info("Dubbo 调用端 {}#{} 的幂等声明：{}", call.service, call.method, declared);
         }
     }
@@ -272,7 +319,7 @@ public class ConsumerRetryClusterFilter implements ClusterFilter {
         }
         StringBuilder summary = new StringBuilder(failure.getClass().getSimpleName())
                 .append(" 错误码 ").append(failure.getCode());
-        Throwable current = failure.getCause();
+        Throwable current = failure;
         for (int depth = 0; current != null && depth < MAX_DESCRIBED_CAUSES; depth++) {
             if (current instanceof StatusRpcException status) {
                 return summary.append("，Triple ").append(status.getStatus().code).toString();

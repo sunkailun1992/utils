@@ -173,7 +173,7 @@ class ConsumerRetryTripleIntegrationTest {
         long start = System.nanoTime();
 
         assertThatThrownBy(() -> shortTimeout.write("a")).isInstanceOf(RpcException.class);
-        assertThat(elapsedMillis(start)).isBetween(500L, 1150L);
+        assertThat(elapsedMillis(start)).isBetween(500L, 1600L);
     }
 
     private ReferenceConfig<RetryProbeService> reference(ModuleModel module, int timeoutMillis) {

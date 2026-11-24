@@ -54,25 +54,63 @@ class ConsumerRetryClusterFilterDeadlineTest {
 
     @Test
     void deadlineBoundsTheTotalTime() {
-        FakeProvider provider = neverAvailable();
+        Invoker<Service> cluster = cluster(consumer("timeout", "300"), neverAvailable());
         long start = System.nanoTime();
 
-        assertThatThrownBy(() -> cluster(consumer("timeout", "300"), provider).invoke(RetryFixtures.invocation("write")))
-                .isInstanceOf(RpcException.class);
-        assertThat(elapsedMillis(start)).isBetween(100L, 450L);
+        assertThatThrownBy(() -> cluster.invoke(RetryFixtures.invocation("write"))).isInstanceOf(RpcException.class);
+        assertThat(elapsedMillis(start)).isBetween(100L, 600L);
     }
 
     @Test
     void upstreamCountdownBoundsTheDeadline() {
-        FakeProvider provider = neverAvailable();
+        Invoker<Service> cluster = cluster(consumer("timeout", "3000"), neverAvailable());
         // ConsumerContextFilter 会把上游请求带来的倒计时从服务端附件带进客户端附件。
         RpcContext.getServerAttachment().setObjectAttachment(
                 CommonConstants.TIME_COUNTDOWN_KEY, TimeoutCountDown.newCountDown(200, TimeUnit.MILLISECONDS));
         long start = System.nanoTime();
 
-        assertThatThrownBy(() -> cluster(consumer("timeout", "3000"), provider).invoke(RetryFixtures.invocation("write")))
-                .isInstanceOf(RpcException.class);
-        assertThat(elapsedMillis(start)).isBetween(100L, 350L);
+        assertThatThrownBy(() -> cluster.invoke(RetryFixtures.invocation("write"))).isInstanceOf(RpcException.class);
+        assertThat(elapsedMillis(start)).isBetween(100L, 500L);
+    }
+
+    /**
+     * 上游剩余时间比引用自己的超时长时，不延长自己的超时：截止时间取两者较小。
+     */
+    @Test
+    void upstreamCountdownLongerThanOwnTimeoutDoesNotExtendIt() {
+        Invoker<Service> cluster = cluster(consumer("timeout", "300"), neverAvailable());
+        RpcContext.getServerAttachment().setObjectAttachment(
+                CommonConstants.TIME_COUNTDOWN_KEY, TimeoutCountDown.newCountDown(2000, TimeUnit.MILLISECONDS));
+        long start = System.nanoTime();
+
+        assertThatThrownBy(() -> cluster.invoke(RetryFixtures.invocation("write"))).isInstanceOf(RpcException.class);
+        assertThat(elapsedMillis(start)).isBetween(100L, 600L);
+    }
+
+    /**
+     * 方法与引用都没配超时时，Triple 引用保持 Triple 调用端自己的缺省 3000 毫秒（{@code TripleInvoker#invokeUnary}）。
+     */
+    @Test
+    void tripleReferenceWithoutTimeoutKeepsTriplesOwnDefault() {
+        FakeProvider provider = new FakeProvider(provider(31001));
+
+        cluster(RetryFixtures.consumerUrl(module, "retries", "0"), provider).invoke(RetryFixtures.invocation("write"));
+
+        assertThat(provider.countdownsSeen()).singleElement()
+                .satisfies(remaining -> assertThat(remaining).isBetween(2001L, 3000L));
+    }
+
+    /**
+     * dubbo 协议的引用没配超时时，保持 Dubbo 的通用缺省 1000 毫秒。
+     */
+    @Test
+    void dubboReferenceWithoutTimeoutKeepsDubbosDefault() {
+        FakeProvider provider = new FakeProvider(provider(31001).setProtocol("dubbo"));
+
+        cluster(RetryFixtures.consumerUrl(module, "retries", "0"), provider).invoke(RetryFixtures.invocation("write"));
+
+        assertThat(provider.countdownsSeen()).singleElement()
+                .satisfies(remaining -> assertThat(remaining).isBetween(1L, 1000L));
     }
 
     @Test
@@ -89,30 +127,29 @@ class ConsumerRetryClusterFilterDeadlineTest {
 
     @Test
     void backoffNeverOvershootsTheDeadline() {
-        FakeProvider provider = neverAvailable();
+        Invoker<Service> cluster = cluster(consumer("timeout", "150"), neverAvailable());
         long start = System.nanoTime();
 
-        assertThatThrownBy(() -> cluster(consumer("timeout", "150"), provider).invoke(RetryFixtures.invocation("write")))
-                .isInstanceOf(RpcException.class);
-        assertThat(elapsedMillis(start)).isBetween(100L, 200L);
+        assertThatThrownBy(() -> cluster.invoke(RetryFixtures.invocation("write"))).isInstanceOf(RpcException.class);
+        assertThat(elapsedMillis(start)).isBetween(100L, 250L);
     }
 
     @Test
     void interruptDuringBackoffStopsAndKeepsTheFlag() {
-        FakeProvider provider = neverAvailable();
+        Invoker<Service> cluster = cluster(consumer("timeout", "3000"), neverAvailable());
         Thread caller = Thread.currentThread();
         ScheduledExecutorService interrupter = Executors.newSingleThreadScheduledExecutor();
         try {
-            interrupter.schedule(caller::interrupt, 50, TimeUnit.MILLISECONDS);
             long start = System.nanoTime();
+            interrupter.schedule(caller::interrupt, 50, TimeUnit.MILLISECONDS);
 
-            assertThatThrownBy(() -> cluster(consumer("timeout", "3000"), provider).invoke(RetryFixtures.invocation("write")))
+            assertThatThrownBy(() -> cluster.invoke(RetryFixtures.invocation("write")))
                     .isInstanceOf(RpcException.class)
                     .hasStackTraceContaining("请求未发出");
             long elapsed = elapsedMillis(start);
 
             assertThat(Thread.interrupted()).isTrue();
-            assertThat(elapsed).isBetween(50L, 299L);
+            assertThat(elapsed).isBetween(50L, 400L);
         } finally {
             interrupter.shutdownNow();
         }

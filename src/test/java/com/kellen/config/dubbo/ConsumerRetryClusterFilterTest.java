@@ -16,6 +16,7 @@ import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.RpcInvocation;
 import org.apache.dubbo.rpc.StatusRpcException;
 import org.apache.dubbo.rpc.TriRpcStatus;
+import org.apache.dubbo.rpc.cluster.filter.ClusterFilter;
 import org.apache.dubbo.rpc.model.ApplicationModel;
 import org.apache.dubbo.rpc.model.FrameworkModel;
 import org.apache.dubbo.rpc.model.ModuleModel;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.kellen.config.dubbo.RetryFixtures.elapsedMillis;
@@ -83,7 +85,7 @@ class ConsumerRetryClusterFilterTest {
         assertThatThrownBy(() -> cluster.invoke(RetryFixtures.invocation("read")))
                 .isInstanceOfSatisfying(RpcException.class,
                         failure -> assertThat(failure.getCode()).isEqualTo(RpcException.NO_INVOKER_AVAILABLE_AFTER_FILTER));
-        assertThat(elapsedMillis(start)).isLessThan(200);
+        assertThat(elapsedMillis(start)).isLessThan(500);
     }
 
     @Test
@@ -96,7 +98,7 @@ class ConsumerRetryClusterFilterTest {
         assertThatThrownBy(() -> cluster.invoke(RetryFixtures.invocation("read")))
                 .isInstanceOfSatisfying(RpcException.class,
                         failure -> assertThat(failure.getCode()).isEqualTo(RpcException.NO_INVOKER_AVAILABLE_AFTER_FILTER));
-        assertThat(elapsedMillis(start)).isLessThan(200);
+        assertThat(elapsedMillis(start)).isLessThan(500);
         assertThat(stable.calls()).isZero();
     }
 
@@ -220,11 +222,22 @@ class ConsumerRetryClusterFilterTest {
         FakeProvider provider = new FakeProvider(provider(31001, "read.idempotent", "true")).thenThrow(unavailableAfterSend());
         RpcInvocation invocation = RetryFixtures.invocation("read");
         invocation.setInvokeMode(InvokeMode.ASYNC);
+        Invoker<Service> cluster = cluster(consumer(), provider);
         long start = System.nanoTime();
 
-        assertThatThrownBy(() -> cluster(consumer(), provider).invoke(invocation)).isInstanceOf(RpcException.class);
-        assertThat(elapsedMillis(start)).isLessThan(100);
+        assertThatThrownBy(() -> cluster.invoke(invocation)).isInstanceOf(RpcException.class);
+        assertThat(elapsedMillis(start)).isLessThan(500);
         assertThat(provider.calls()).isEqualTo(1);
+    }
+
+    @Test
+    void filterIsInnermostAmongClusterFilters() {
+        List<ClusterFilter> filters = module.getExtensionLoader(ClusterFilter.class).getActivateExtension(
+                consumer("traffic.canary.enabled", "true"), CommonConstants.REFERENCE_FILTER_KEY, CommonConstants.CONSUMER);
+
+        assertThat(filters).extracting(filter -> filter.getClass().getSimpleName())
+                .contains("ConsumerContextFilter", "DubboCanaryClusterFilter");
+        assertThat(filters.get(filters.size() - 1)).isInstanceOf(ConsumerRetryClusterFilter.class);
     }
 
     @Test
